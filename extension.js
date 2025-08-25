@@ -5,10 +5,9 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('n8n Co Pilot Extension installed');
 });
 
-// Handle side panel opening
-chrome.sidePanel
-  .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch((error) => console.error('Side panel setup error:', error));
+// Handle side panel opening - remove the invalid setPanelBehavior call
+// The side panel will be opened manually when needed through the message handlers
+console.log('Side panel extension loaded successfully');
 
 // Message handling between popup/settings, content script, and side panel
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

@@ -250,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
       fallbackToContentScript();
     }
   });
-  });
   
   // Fallback to content script chat overlay
   function fallbackToContentScript() {

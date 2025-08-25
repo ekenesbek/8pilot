@@ -1,4 +1,4 @@
-// sidepanel/sidepanel.js - Full integration with chatbot logic + Theme Support
+// sidepanel.js - Integrated with chatbot functionality
 
 // Theme management
 class ThemeManager {
@@ -13,7 +13,7 @@ class ThemeManager {
     this.loadThemePreference();
     
     // Listen for system theme changes
-    this.mediaQuery.addEventListener('change', (e) => {
+    this.mediaQuery.addEventListener('change', () => {
       if (this.currentTheme === 'auto') {
         this.applySystemTheme();
       }
@@ -21,9 +21,6 @@ class ThemeManager {
     
     // Apply initial theme
     this.applyTheme();
-    
-    // Add theme toggle if needed (future feature)
-    this.setupThemeToggle();
   }
 
   loadThemePreference() {
@@ -65,11 +62,6 @@ class ThemeManager {
     this.currentTheme = theme;
     this.saveThemePreference();
     this.applyTheme();
-    
-    // Dispatch custom event for other components
-    window.dispatchEvent(new CustomEvent('themeChanged', { 
-      detail: { theme: this.getEffectiveTheme() } 
-    }));
   }
 
   getEffectiveTheme() {
@@ -77,24 +69,6 @@ class ThemeManager {
       return this.mediaQuery.matches ? 'dark' : 'light';
     }
     return this.currentTheme;
-  }
-
-  setupThemeToggle() {
-    // Create theme toggle button (hidden by default)
-    const toggle = document.createElement('button');
-    toggle.className = 'theme-toggle';
-    toggle.style.display = 'none'; // Hidden for now
-    toggle.innerHTML = '🌓';
-    toggle.title = 'Toggle theme';
-    toggle.onclick = () => this.cycleTheme();
-    document.body.appendChild(toggle);
-  }
-
-  cycleTheme() {
-    const themes = ['auto', 'light', 'dark'];
-    const currentIndex = themes.indexOf(this.currentTheme);
-    const nextTheme = themes[(currentIndex + 1) % themes.length];
-    this.setTheme(nextTheme);
   }
 }
 
@@ -144,33 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   console.log('Side panel initialized successfully');
 });
-
-// Listen for theme changes
-window.addEventListener('themeChanged', (event) => {
-  console.log('Theme changed to:', event.detail.theme);
-  
-  // Update any theme-dependent elements
-  updateThemeElements();
-});
-
-// Update elements that depend on theme
-function updateThemeElements() {
-  // Update syntax highlighting if needed
-  const codeBlocks = document.querySelectorAll('pre code');
-  codeBlocks.forEach(block => {
-    // Re-apply syntax highlighting with new theme
-    block.classList.add('theme-updated');
-  });
-  
-  // Update any canvas or chart elements if present
-  updateChartThemes();
-}
-
-// Update chart themes (placeholder for future charts)
-function updateChartThemes() {
-  // This would update any chart.js or other visualization themes
-  console.log('Updating chart themes for', themeManager.getEffectiveTheme());
-}
 
 // Get current workflow ID from URL
 function getCurrentWorkflowId(url) {
@@ -225,15 +172,10 @@ async function loadSettings() {
     const stored = await chrome.storage.sync.get([
       'openaiKey', 'anthropicKey', 'activeProvider',
       'n8nApiUrl', 'n8nApiKey', 'autoApplyWorkflows', 
-      'saveChatHistory', 'maxHistory', 'backendUrl'
+      'saveChatHistory', 'maxHistory'
     ]);
     
     settings = { ...settings, ...stored };
-    
-    // Set default backend URL if not configured
-    if (!settings.backendUrl) {
-      settings.backendUrl = 'http://localhost:8000';
-    }
     
     // Update API status
     const hasApiKey = settings.activeProvider === 'openai' 
@@ -332,7 +274,7 @@ function setupEventListeners() {
   // Navigation tabs
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
-      const tabName = e.target.closest('.nav-tab').dataset.tab;
+      const tabName = e.currentTarget.getAttribute('data-tab');
       switchTab(tabName);
     });
   });
@@ -350,21 +292,16 @@ function setupEventListeners() {
   document.getElementById('close-settings-btn').addEventListener('click', hideSettings);
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
   document.getElementById('test-connection-btn').addEventListener('click', testN8nConnection);
+  document.getElementById('reset-settings-btn').addEventListener('click', resetSettings);
 
   // Provider toggle
   document.querySelectorAll('.provider-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => switchProvider(e.target.dataset.provider));
+    btn.addEventListener('click', (e) => switchProvider(e.currentTarget.dataset.provider));
   });
 
-  // Theme selection
-  const themeSelect = document.getElementById('theme-select');
-  if (themeSelect) {
-    themeSelect.addEventListener('change', (e) => {
-      if (themeManager) {
-        themeManager.setTheme(e.target.value);
-      }
-    });
-  }
+  // History search
+  document.getElementById('history-search').addEventListener('input', (e) => searchHistory(e.target.value));
+  document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
 
   // Auto-resize textarea
   const chatInput = document.getElementById('chat-input');
@@ -373,22 +310,14 @@ function setupEventListeners() {
     chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
   });
 
-  // History search
-  document.getElementById('history-search').addEventListener('input', (e) => searchHistory(e.target.value));
-  document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
-
-  // Templates
-  document.getElementById('create-template-btn').addEventListener('click', createTemplate);
-  document.querySelectorAll('.category').forEach(cat => {
-    cat.addEventListener('click', (e) => filterTemplates(e.target.dataset.category));
-  });
+  // Workflow menu button
+  document.getElementById('workflow-menu-btn').addEventListener('click', showWorkflowMenu);
 }
 
 // Initialize UI
 function initializeUI() {
   updateSettingsUI();
   addWelcomeMessage();
-  initializeTemplates();
   switchTab('chat'); // Start with chat tab
 }
 
@@ -446,8 +375,8 @@ async function loadWorkflowStats() {
       const connectionCount = Object.keys(workflow.connections || {}).length;
       
       statsEl.innerHTML = 
-        '<span class="stat">${nodeCount} nodes</span>' +
-        '<span class="stat">${connectionCount} connections</span>';
+        `<span class="stat">${nodeCount} nodes</span>` +
+        `<span class="stat">${connectionCount} connections</span>`;
       
       // Update workflow name if we got it from API
       if (workflow.name && allWorkflowChats[currentWorkflowId]) {
@@ -461,11 +390,84 @@ async function loadWorkflowStats() {
   }
 }
 
+// Show workflow context menu
+function showWorkflowMenu(event) {
+  // Check if a menu already exists and remove it
+  const existingMenu = document.querySelector('.context-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+    return;
+  }
+  
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  
+  menu.innerHTML = `
+    <div class="context-menu-item" id="copy-workflow-id">Copy Workflow ID</div>
+    <div class="context-menu-item" id="clear-workflow-chat">Clear Chat History</div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item" id="refresh-workflow">Refresh Workflow Info</div>
+  `;
+  
+  // Position the menu
+  const rect = event.currentTarget.getBoundingClientRect();
+  menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+  menu.style.right = `${window.innerWidth - rect.right - window.scrollX}px`;
+  
+  document.body.appendChild(menu);
+  
+  // Add event listeners
+  document.getElementById('copy-workflow-id').addEventListener('click', () => {
+    if (currentWorkflowId) {
+      navigator.clipboard.writeText(currentWorkflowId);
+      showToast('Workflow ID copied to clipboard');
+    }
+    menu.remove();
+  });
+  
+  document.getElementById('clear-workflow-chat').addEventListener('click', () => {
+    clearCurrentWorkflowChat();
+    menu.remove();
+  });
+  
+  document.getElementById('refresh-workflow').addEventListener('click', () => {
+    refreshWorkflowInfo();
+    menu.remove();
+  });
+  
+  // Close menu when clicking elsewhere
+  document.addEventListener('click', function closeMenu(e) {
+    if (!menu.contains(e.target) && e.target !== event.currentTarget) {
+      menu.remove();
+      document.removeEventListener('click', closeMenu);
+    }
+  });
+}
+
+// Refresh workflow information
+async function refreshWorkflowInfo() {
+  await loadWorkflowStats();
+  showToast('Workflow info refreshed');
+}
+
+// Clear current workflow's chat history
+function clearCurrentWorkflowChat() {
+  if (!currentWorkflowId) return;
+  
+  if (confirm(`Clear chat history for "${allWorkflowChats[currentWorkflowId]?.workflowName || currentWorkflowId}"?`)) {
+    chatMemory = [];
+    allWorkflowChats[currentWorkflowId].messages = [];
+    saveCurrentChat();
+    refreshChatUI();
+    showToast('Chat history cleared');
+  }
+}
+
 // Switch between tabs
 function switchTab(tabName) {
   // Update active tab
   document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.tab === tabName);
+    tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
   });
   
   // Show/hide content
@@ -477,7 +479,7 @@ function switchTab(tabName) {
   if (tabName === 'history') {
     loadHistoryList();
   } else if (tabName === 'templates') {
-    renderTemplates();
+    loadTemplates();
   }
 }
 
@@ -528,7 +530,7 @@ function refreshChatUI() {
   messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
-// Send message with streaming
+// Send message
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const message = input.value.trim();
@@ -552,381 +554,131 @@ async function sendMessage() {
   // Add user message
   addMessage('user', message);
   
-  // Remove typing indicator (replaced by streaming)
-  hideTypingIndicator();
+  // Show typing indicator
+  showTypingIndicator();
   
   try {
-    // Call AI API with streaming
-    const response = await callAI(message);
-    
-    // Save the complete response to chat memory
-    if (response && response.trim()) {
-      // Update chat memory with the final response
-      chatMemory.push({
-        role: 'assistant',
-        content: response,
-        timestamp: Date.now()
-      });
-      
-      // Save to storage
-      if (currentWorkflowId && allWorkflowChats[currentWorkflowId]) {
-        allWorkflowChats[currentWorkflowId].messages = chatMemory;
-        allWorkflowChats[currentWorkflowId].lastActivity = Date.now();
-        saveCurrentChat();
-      }
-      
-      // Check for workflow JSON in the complete response
-      processWorkflowResponse(response);
+    // Call AI API based on provider
+    let response;
+    if (settings.activeProvider === 'openai') {
+      response = await callOpenAI(message);
+    } else {
+      response = await callAnthropic(message);
     }
+    
+    // Hide typing indicator
+    hideTypingIndicator();
+    
+    // Add AI response
+    addMessage('assistant', response);
+    
+    // Process response for workflow JSON
+    processWorkflowResponse(response);
     
   } catch (error) {
     console.error('AI API error:', error);
-    
-    // Remove any streaming message on error
-    const streamingMsg = document.getElementById('streaming-message');
-    if (streamingMsg) {
-      streamingMsg.remove();
-    }
-    
+    hideTypingIndicator();
     addMessage('assistant', `Error: ${error.message || 'Failed to get AI response'}`);
   }
 }
 
-// Call AI API with streaming
-async function callAI(message) {
-  const provider = settings.activeProvider;
-  
-  // Use our backend API with streaming
-  try {
-    const backendUrl = settings.backendUrl || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/api/v1/chat/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: message,
-        workflow_id: currentWorkflowId || 'default',
-        provider: provider
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
-    }
-
-    // Handle streaming response
-    if (response.body) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
-      
-      // Create streaming message element
-      const streamingMessageDiv = createStreamingMessage();
-      
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') break;
-              
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.chunk) {
-                  fullResponse += parsed.chunk;
-                  updateStreamingMessage(streamingMessageDiv, fullResponse);
-                }
-              } catch (e) {
-                // Skip invalid JSON chunks
-              }
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock();
-        finalizeStreamingMessage(streamingMessageDiv);
-      }
-      
-      return fullResponse;
-    } else {
-      // Fallback to non-streaming if streaming not supported
-      const data = await response.json();
-      return data.response || data.message || 'No response from backend';
-    }
-    
-  } catch (error) {
-    console.error('Backend API error:', error);
-    
-    // Fallback to direct API calls if backend is not available
-    console.log('Falling back to direct API calls...');
-    
-    if (provider === 'openai') {
-      return await callOpenAIDirect(message, settings.openaiKey);
-    } else {
-      return await callAnthropicDirect(message, settings.anthropicKey);
-    }
-  }
-}
-
-// Call OpenAI API with streaming (fallback)
-async function callOpenAIDirect(message, apiKey) {
+// Call OpenAI API
+async function callOpenAI(message) {
+  // Include system message to guide the AI with enhanced n8n-specific instructions
   const messages = [
     {
       role: 'system',
-      content: `You are an n8n expert. Help users create working n8n workflows.
+      content: `You are n8n Co Pilot, an AI assistant specializing in n8n workflow automation.
+Your goal is to help users build effective n8n workflows by providing guidance and generating workflow components.
 
-For each request provide:
-1. Brief explanation of the solution
-2. Valid JSON workflow for n8n
+When a user asks for a specific workflow or node, respond with both:
+1. A natural language explanation of the solution
+2. A JSON code block that can be directly added to their n8n workflow
 
-JSON must contain:
-- nodes: array with node parameters
-- connections: links between nodes
-- pinData: {} (empty object)
-
-Each node must have:
-- parameters: node settings
-- name: unique name
-- type: node type (e.g., "n8n-nodes-base.gmail")
-- typeVersion: 1
-- position: [x, y] coordinates
-- id: unique ID
-
-Simple structure example:
+For JSON workflow snippets, use the following format:
+\`\`\`json
 {
   "nodes": [
     {
-      "parameters": {},
-      "name": "Start",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [100, 100],
-      "id": "node1"
+      "name": "Node Name",
+      "type": "n8n-nodes-base.nodeType",
+      "parameters": { ... },
+      "position": [x, y]
     }
   ],
-  "connections": {},
-  "pinData": {}
+  "connections": { ... }
 }
+\`\`\`
 
-Create only working, tested configurations.`
+Ensure the JSON is valid and follows n8n's schema. Only include nodes and connections that are explicitly requested.`
     },
-    ...chatMemory.map(msg => ({ role: msg.role, content: msg.content })),
-    { role: 'user', content: message }
+    ...chatMemory.map(msg => ({ role: msg.role, content: msg.content }))
   ];
-
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${settings.openaiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o',              
+      model: 'gpt-4',
       messages: messages,
       temperature: 0.7,
-      max_tokens: 2048,
-      stream: true
+      max_tokens: 2000
     })
   });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'OpenAI API request failed');
-  }
-
-  // Handle streaming response
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullResponse = '';
   
-  // Create message element for streaming
-  const streamingMessageDiv = createStreamingMessage();
+  const data = await response.json();
   
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              fullResponse += delta;
-              updateStreamingMessage(streamingMessageDiv, fullResponse);
-            }
-          } catch (e) {
-            // Skip invalid JSON lines
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-    finalizeStreamingMessage(streamingMessageDiv);
+  if (data.error) {
+    console.error('OpenAI API error:', data.error);
+    throw new Error(data.error.message);
   }
   
-  return fullResponse || 'No response received';
+  if (data.choices && data.choices[0] && data.choices[0].message) {
+    return data.choices[0].message.content;
+  } else {
+    throw new Error('Unexpected API response format');
+  }
 }
 
-// Call Anthropic API with streaming (fallback)
-async function callAnthropicDirect(message, apiKey) {
-  const messages = [
-    ...chatMemory.map(msg => ({ role: msg.role, content: msg.content })),
-    { role: 'user', content: message }
-  ];
-
+// Call Anthropic API
+async function callAnthropic(message) {
+  const messages = chatMemory.map(msg => ({
+    role: msg.role,
+    content: msg.content
+  }));
+  
+  const systemPrompt = `You are n8n Co Pilot, an AI assistant specializing in n8n workflow automation. Help users build effective n8n workflows by providing guidance and generating workflow components.`;
+  
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': settings.anthropicKey,
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
       model: 'claude-3-sonnet-20240229',
-      max_tokens: 2048,
-      system: `You are n8n Co Pilot, an AI assistant specializing in n8n workflow automation. Help users build effective n8n workflows by providing guidance and generating workflow components.`,
-      messages: messages,
-      stream: true
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [...messages, { role: 'user', content: message }]
     })
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'Anthropic API request failed');
-  }
-
-  // Handle streaming response
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullResponse = '';
   
-  // Create message element for streaming
-  const streamingMessageDiv = createStreamingMessage();
+  const data = await response.json();
   
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.type === 'content_block_delta') {
-              const delta = parsed.delta?.text;
-              if (delta) {
-                fullResponse += delta;
-                updateStreamingMessage(streamingMessageDiv, fullResponse);
-              }
-            }
-          } catch (e) {
-            // Skip invalid JSON lines
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-    finalizeStreamingMessage(streamingMessageDiv);
+  if (data.error) {
+    console.error('Anthropic API error:', data.error);
+    throw new Error(data.error.message);
   }
   
-  return fullResponse || 'No response received';
-}
-
-// Create streaming message element with simple animated dot
-function createStreamingMessage() {
-  const messagesContainer = document.getElementById('chat-messages');
-  
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'chat-message assistant streaming';
-  messageDiv.id = 'streaming-message';
-  
-  const avatar = document.createElement('div');
-  avatar.className = 'message-avatar assistant';
-  avatar.textContent = 'AI';
-  
-  const contentDiv = document.createElement('div');
-  contentDiv.className = 'message-content';
-  
-  // Add simple animated dot
-  const dot = document.createElement('span');
-  dot.className = 'streaming-dot';
-  
-  contentDiv.appendChild(dot);
-  
-  messageDiv.appendChild(avatar);
-  messageDiv.appendChild(contentDiv);
-  
-  messagesContainer.appendChild(messageDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  
-  return messageDiv;
-}
-
-// Update streaming message content
-function updateStreamingMessage(messageDiv, content) {
-  const contentDiv = messageDiv.querySelector('.message-content');
-  
-  // Remove animated dot and add content
-  const dot = contentDiv.querySelector('.streaming-dot');
-  if (dot) {
-    dot.remove();
+  if (data.content && data.content[0] && data.content[0].text) {
+    return data.content[0].text;
+  } else {
+    throw new Error('Unexpected API response format');
   }
-  
-  // Add formatted content
-  contentDiv.innerHTML = formatMessage(content);
-  
-  // Auto-scroll to bottom
-  const messagesContainer = document.getElementById('chat-messages');
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// Finalize streaming message with smooth transition
-function finalizeStreamingMessage(messageDiv) {
-  const contentDiv = messageDiv.querySelector('.message-content');
-  
-  // Add finalized class for smooth transition
-  messageDiv.classList.add('finalized');
-  
-  // Smooth transition to final state
-  setTimeout(() => {
-    // Remove streaming classes and attributes
-    messageDiv.classList.remove('streaming');
-    messageDiv.removeAttribute('id');
-    
-    // Add completion effect
-    messageDiv.style.transition = 'all 0.5s ease';
-    messageDiv.style.transform = 'translateY(0)';
-    messageDiv.style.opacity = '1';
-    
-    // Remove transition after animation
-    setTimeout(() => {
-      messageDiv.style.transition = '';
-      messageDiv.style.transform = '';
-      messageDiv.style.opacity = '';
-    }, 500);
-  }, 200); // Wait for typing indicator to fade out
 }
 
 // Add message to chat
@@ -1003,11 +755,7 @@ function showTypingIndicator() {
   typingDiv.innerHTML = `
     <div class="message-avatar assistant">AI</div>
     <div class="message-content">
-      <div class="typing-indicator">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
+      <div class="streaming-dot"></div>
     </div>
   `;
   
@@ -1023,17 +771,30 @@ function hideTypingIndicator() {
   }
 }
 
+// Extract JSON from AI response
+function extractJsonFromResponse(text) {
+  const jsonRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```/g;
+  const matches = [...text.matchAll(jsonRegex)];
+  
+  if (matches.length > 0) {
+    try {
+      const jsonString = matches[0][1];
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null;
+    }
+  }
+  
+  return null;
+}
+
 // Process workflow response for JSON
 function processWorkflowResponse(response) {
   // Extract JSON from response
-  const jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-  if (jsonMatch) {
-    try {
-      const workflowJson = JSON.parse(jsonMatch[1]);
-      showWorkflowActions(workflowJson);
-    } catch (error) {
-      console.error('Failed to parse workflow JSON:', error);
-    }
+  const extractedJson = extractJsonFromResponse(response);
+  if (extractedJson) {
+    showWorkflowActions(extractedJson);
   }
 }
 
@@ -1055,9 +816,6 @@ function showWorkflowActions(workflowJson) {
         <button class="message-action-btn" data-action="copy-workflow">
           Copy JSON
         </button>
-        <button class="message-action-btn" data-action="save-template">
-          Save as Template
-        </button>
       </div>
     </div>
   `;
@@ -1078,9 +836,6 @@ function showWorkflowActions(workflowJson) {
           break;
         case 'copy-workflow':
           copyWorkflowJson(workflowData);
-          break;
-        case 'save-template':
-          saveAsTemplate(workflowData);
           break;
       }
     });
@@ -1123,6 +878,7 @@ async function applyWorkflow(workflowJson) {
 }
 
 // Apply workflow to n8n canvas via API
+// Apply workflow to n8n canvas via API
 async function applyToN8nCanvas(workflowJson) {
   try {
     // Check if n8n API is configured
@@ -1130,19 +886,33 @@ async function applyToN8nCanvas(workflowJson) {
       throw new Error('n8n API not configured. Please set n8n API URL and API key in settings.');
     }
 
-    console.log('n8n API URL:', settings.n8nApiUrl);
-    console.log('n8n API Key configured:', !!settings.n8nApiKey);
-
     // Clean incoming workflow JSON first
     const cleanIncomingJson = cleanIncomingWorkflowJson(workflowJson);
-    console.log('Original workflow JSON:', workflowJson);
-    console.log('Cleaned incoming workflow JSON:', cleanIncomingJson);
 
-    const workflowId = currentWorkflowId === 'new_workflow' 
-      ? await createNewWorkflow() 
-      : currentWorkflowId;
-
-    console.log('Applying workflow to ID:', workflowId);
+    let workflowId;
+    
+    if (currentWorkflowId === 'new_workflow') {
+      // Create a new workflow and navigate to it
+      workflowId = await createNewWorkflow();
+      
+      // We need to wait a bit for the navigation to complete
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Since we're navigating to a new page, we'll apply the workflow 
+      // via a content script message after navigation
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "applyWorkflowAfterNavigation",
+            workflowJson: cleanIncomingJson
+          });
+        }
+      });
+      
+      return; // Exit early since we're handling this via content script
+    } else {
+      workflowId = currentWorkflowId;
+    }
 
     // Get current workflow
     const getResponse = await fetch(`${settings.n8nApiUrl}/api/v1/workflows/${workflowId}`, {
@@ -1152,21 +922,16 @@ async function applyToN8nCanvas(workflowJson) {
     });
 
     if (!getResponse.ok) {
-      const errorText = await getResponse.text();
-      console.error('Failed to fetch current workflow:', getResponse.status, errorText);
-      throw new Error(`Failed to fetch current workflow: ${getResponse.status} ${errorText}`);
+      throw new Error(`Failed to fetch current workflow: ${getResponse.status}`);
     }
 
     const currentWorkflow = await getResponse.json();
-    console.log('Current workflow:', currentWorkflow);
     
     // Merge with new components
     const updatedWorkflow = mergeWorkflow(currentWorkflow, cleanIncomingJson);
-    console.log('Updated workflow:', updatedWorkflow);
     
     // Clean workflow for PUT request
     const cleanWorkflow = cleanWorkflowForPut(updatedWorkflow);
-    console.log('Clean workflow for PUT:', cleanWorkflow);
     
     // Update workflow
     const updateResponse = await fetch(`${settings.n8nApiUrl}/api/v1/workflows/${workflowId}`, {
@@ -1179,13 +944,15 @@ async function applyToN8nCanvas(workflowJson) {
     });
 
     if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
-      console.error('Failed to update workflow:', updateResponse.status, errorText);
-      throw new Error(`Failed to update workflow: ${updateResponse.status} ${errorText}`);
+      throw new Error(`Failed to update workflow: ${updateResponse.status}`);
     }
-
-    const result = await updateResponse.json();
-    console.log('Workflow updated successfully:', result);
+    
+    // Refresh the page to show the updated workflow
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.reload(tabs[0].id);
+      }
+    });
     
   } catch (error) {
     console.error('Error in applyToN8nCanvas:', error);
@@ -1194,29 +961,72 @@ async function applyToN8nCanvas(workflowJson) {
 }
 
 // Create new workflow
+// Create new workflow and navigate to it
 async function createNewWorkflow() {
-  const response = await fetch(`${settings.n8nApiUrl}/api/v1/workflows`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-N8N-API-KEY': settings.n8nApiKey
-    },
-    body: JSON.stringify({
-      name: 'New Workflow',
-      nodes: [],
-      connections: {},
-      settings: {},
-      staticData: {}
-    })
-  });
+  try {
+    const response = await fetch(`${settings.n8nApiUrl}/api/v1/workflows`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-N8N-API-KEY': settings.n8nApiKey
+      },
+      body: JSON.stringify({
+        name: 'New Workflow',
+        nodes: [],
+        connections: {},
+        settings: {},
+        staticData: {}
+      })
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to create new workflow');
+    if (!response.ok) {
+      throw new Error('Failed to create new workflow');
+    }
+
+    const newWorkflow = await response.json();
+    
+    // Navigate to the new workflow page
+    if (newWorkflow.data && newWorkflow.data.id) {
+      const workflowId = newWorkflow.data.id;
+      
+      // Get the base URL from the current n8n API URL
+      const baseUrl = new URL(settings.n8nApiUrl).origin;
+      const workflowUrl = `${baseUrl}/workflow/${workflowId}`;
+      
+      // Navigate the current tab to the new workflow
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.update(tabs[0].id, { url: workflowUrl });
+          
+          // Update our current workflow ID
+          currentWorkflowId = workflowId;
+          
+          // Create a new entry in the workflow chats
+          allWorkflowChats[workflowId] = {
+            messages: [...chatMemory], // Copy the current chat
+            workflowName: 'New Workflow',
+            lastActivity: Date.now(),
+            createdAt: Date.now()
+          };
+          
+          saveChatStorage();
+          
+          // Show toast inside the side panel
+          showToast('Created new workflow and redirecting...');
+        }
+      });
+      
+      return workflowId;
+    } else {
+      console.error('Invalid response when creating workflow:', newWorkflow);
+      throw new Error('Invalid response when creating workflow');
+    }
+  } catch (error) {
+    console.error('Error creating new workflow:', error);
+    throw error;
   }
-
-  const newWorkflow = await response.json();
-  return newWorkflow.id;
 }
+
 
 // Merge workflow with new components
 function mergeWorkflow(currentWorkflow, newComponents) {
@@ -1241,9 +1051,12 @@ function mergeWorkflow(currentWorkflow, newComponents) {
     // Add new nodes with clean structure
     let nodeCounter = result.nodes.length;
     newComponents.nodes.forEach((node, index) => {
+      // Generate a unique node ID if none exists
+      const nodeId = node.id || `node_${Date.now()}_${index}`;
+      
       const newNode = {
-        id: String(node.id), // Ensure ID is string
-        name: String(node.name),
+        id: String(nodeId), 
+        name: String(node.name || `Node ${nodeCounter + index + 1}`),
         type: String(node.type),
         typeVersion: Number(node.typeVersion || 1),
         position: [offsetX + (index * 200), offsetY],
@@ -1266,9 +1079,9 @@ function mergeWorkflow(currentWorkflow, newComponents) {
         connections.forEach(connection => {
           if (connection && connection.node && connection.type) {
             result.connections[sourceNodeId].push({
-              node: String(connection.node), // Ensure node ID is string
-              type: String(connection.type), // Ensure type is string
-              index: Number(connection.index || 0) // Ensure index is number
+              node: String(connection.node),
+              type: String(connection.type),
+              index: Number(connection.index || 0)
             });
           }
         });
@@ -1276,13 +1089,11 @@ function mergeWorkflow(currentWorkflow, newComponents) {
     });
   }
   
-  console.log('Merged workflow result:', result);
   return result;
 }
 
-// Clean workflow for PUT request - only send fields that n8n API accepts
+// Clean workflow for PUT request
 function cleanWorkflowForPut(workflow) {
-  // n8n API only accepts specific fields, remove all others
   const cleaned = {
     name: String(workflow.name || 'Untitled Workflow'),
     nodes: [],
@@ -1291,10 +1102,10 @@ function cleanWorkflowForPut(workflow) {
     staticData: workflow.staticData || {}
   };
 
-  // Clean nodes - only keep essential fields and ensure proper types
+  // Clean nodes
   cleaned.nodes = (workflow.nodes || []).map(node => {
     const cleanNode = {
-      id: String(node.id), // Ensure ID is string
+      id: String(node.id),
       name: String(node.name || 'Node'),
       type: String(node.type || 'n8n-nodes-base.start'),
       typeVersion: Number(node.typeVersion || 1),
@@ -1302,7 +1113,7 @@ function cleanWorkflowForPut(workflow) {
       parameters: node.parameters || {}
     };
     
-    // Only add additional fields if they exist and are not undefined
+    // Only add additional fields if they exist
     if (node.continueOnFail !== undefined) cleanNode.continueOnFail = Boolean(node.continueOnFail);
     if (node.disabled !== undefined) cleanNode.disabled = Boolean(node.disabled);
     if (node.notes !== undefined) cleanNode.notes = String(node.notes);
@@ -1310,12 +1121,10 @@ function cleanWorkflowForPut(workflow) {
     return cleanNode;
   });
 
-  // Clean connections - ensure proper format and types
+  // Clean connections
   if (workflow.connections && typeof workflow.connections === 'object') {
     Object.keys(workflow.connections).forEach(key => {
-      if (!Array.isArray(workflow.connections[key])) {
-        cleaned.connections[key] = [];
-      } else {
+      if (Array.isArray(workflow.connections[key])) {
         cleaned.connections[key] = workflow.connections[key].map(conn => ({
           node: String(conn.node),
           type: String(conn.type),
@@ -1325,7 +1134,42 @@ function cleanWorkflowForPut(workflow) {
     });
   }
 
-  console.log('Cleaned workflow for PUT (n8n API compatible):', cleaned);
+  return cleaned;
+}
+
+// Clean incoming workflow JSON from AI
+function cleanIncomingWorkflowJson(workflowJson) {
+  const cleaned = {
+    nodes: [],
+    connections: {}
+  };
+
+  // Clean nodes
+  if (workflowJson.nodes && Array.isArray(workflowJson.nodes)) {
+    cleaned.nodes = workflowJson.nodes.map((node, index) => {
+      const cleanNode = {
+        id: String(node.id || `node_${Date.now()}_${index}`),
+        name: String(node.name || 'Node'),
+        type: String(node.type || 'n8n-nodes-base.start'),
+        typeVersion: Number(node.typeVersion || 1),
+        position: Array.isArray(node.position) ? node.position : [0, 0],
+        parameters: node.parameters || {}
+      };
+      return cleanNode;
+    });
+  }
+
+  // Clean connections
+  if (workflowJson.connections && typeof workflowJson.connections === 'object') {
+    Object.keys(workflowJson.connections).forEach(sourceNodeId => {
+      if (workflowJson.connections[sourceNodeId] && Array.isArray(workflowJson.connections[sourceNodeId])) {
+        cleaned.connections[sourceNodeId] = workflowJson.connections[sourceNodeId].filter(conn => 
+          conn && typeof conn === 'object' && conn.node && conn.type
+        );
+      }
+    });
+  }
+
   return cleaned;
 }
 
@@ -1333,28 +1177,35 @@ function cleanWorkflowForPut(workflow) {
 function copyWorkflowJson(workflowJson) {
   const jsonString = JSON.stringify(workflowJson, null, 2);
   navigator.clipboard.writeText(jsonString).then(() => {
-    showToast('JSON copied to clipboard!', 'success');
+    showToast('JSON copied to clipboard!');
   }).catch(() => {
     showToast('Failed to copy to clipboard', 'error');
   });
 }
 
-// Save as template
-function saveAsTemplate(workflowJson) {
-  const templateName = prompt('Enter template name:');
-  if (templateName) {
-    addMessage('assistant', `Template "${templateName}" saved! (Feature coming soon)`);
-  }
-}
-
 // Show toast notification
-function showToast(message, type = 'info') {
+function showToast(message, type = 'success') {
+  // Check if there's an existing toast and remove it
+  const existingToast = document.querySelector('.toast');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
   const toast = document.createElement('div');
-  toast.className = `${type}-message`;
+  toast.className = `toast ${type || 'success'}-message`;
   toast.textContent = message;
   document.body.appendChild(toast);
   
-  setTimeout(() => toast.remove(), 3000);
+  // Add show class after a small delay to trigger animation
+  setTimeout(() => {
+    toast.classList.add('fade-in');
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('fade-in');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }, 10);
 }
 
 // History functions
@@ -1362,7 +1213,11 @@ function loadHistoryList() {
   const historyList = document.getElementById('history-list');
   historyList.innerHTML = '';
   
-  const workflows = Object.values(allWorkflowChats)
+  const workflows = Object.entries(allWorkflowChats)
+    .map(([id, workflow]) => ({
+      ...workflow,
+      workflowId: id
+    }))
     .sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0))
     .slice(0, settings.maxHistory);
   
@@ -1376,15 +1231,16 @@ function loadHistoryList() {
     item.className = 'history-item';
     item.setAttribute('data-workflow-id', workflow.workflowId);
     
-    const lastMessage = workflow.messages[workflow.messages.length - 1];
-    const preview = lastMessage ? lastMessage.content.substring(0, 100) + '...' : 'No messages';
+    const lastMessage = workflow.messages && workflow.messages.length > 0 
+      ? workflow.messages[workflow.messages.length - 1] : null;
+    const preview = lastMessage ? lastMessage.content.substring(0, 60) + '...' : 'No messages';
     
     item.innerHTML = `
-      <div class="history-item-title">${workflow.workflowName}</div>
+      <div class="history-item-title">${workflow.workflowName || workflow.workflowId}</div>
       <div class="history-item-preview">${preview}</div>
       <div class="history-item-meta">
-        <span>${workflow.messages.length} messages</span>
-        <span>${new Date(workflow.lastActivity).toLocaleDateString()}</span>
+        <span>${workflow.messages?.length || 0} messages</span>
+        <span>${new Date(workflow.lastActivity || Date.now()).toLocaleDateString()}</span>
       </div>
     `;
     
@@ -1406,8 +1262,21 @@ function loadHistoryItem(workflowId) {
 }
 
 function searchHistory(query) {
-  // TODO: Implement history search
-  console.log('Searching history for:', query);
+  const historyList = document.getElementById('history-list');
+  const items = historyList.querySelectorAll('.history-item');
+  
+  query = query.toLowerCase().trim();
+  
+  items.forEach(item => {
+    const title = item.querySelector('.history-item-title').textContent.toLowerCase();
+    const preview = item.querySelector('.history-item-preview').textContent.toLowerCase();
+    
+    if (title.includes(query) || preview.includes(query)) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
 }
 
 function clearHistory() {
@@ -1417,66 +1286,49 @@ function clearHistory() {
     saveChatStorage();
     refreshChatUI();
     loadHistoryList();
-    showToast('Chat history cleared', 'success');
+    showToast('Chat history cleared');
   }
 }
 
-// Template functions
-function initializeTemplates() {
-  // Pre-populate with some basic templates
-  window.templates = [
+// Load templates
+function loadTemplates() {
+  const templatesGrid = document.getElementById('templates-grid');
+  
+  // Sample templates - in a real implementation, these would come from storage or an API
+  const templates = [
     {
-      id: 'email-to-slack',
       name: 'Email to Slack',
-      description: 'Forward emails to Slack channel',
       category: 'automation',
-      nodes: 3,
-      workflow: {
-        nodes: [
-          { name: 'Email Trigger', type: 'n8n-nodes-base.emailReadImap' },
-          { name: 'Slack', type: 'n8n-nodes-base.slack' }
-        ]
-      }
+      description: 'Send incoming emails to a Slack channel',
+      nodes: 2
     },
     {
-      id: 'data-sync',
       name: 'Database Sync',
-      description: 'Sync data between databases',
       category: 'data',
-      nodes: 4,
-      workflow: {
-        nodes: [
-          { name: 'Schedule', type: 'n8n-nodes-base.cron' },
-          { name: 'Source DB', type: 'n8n-nodes-base.postgres' },
-          { name: 'Transform', type: 'n8n-nodes-base.set' },
-          { name: 'Target DB', type: 'n8n-nodes-base.postgres' }
-        ]
-      }
+      description: 'Sync data between two databases on a schedule',
+      nodes: 4
+    },
+    {
+      name: 'Twitter Monitor',
+      category: 'api',
+      description: 'Monitor Twitter for mentions and save to database',
+      nodes: 3
+    },
+    {
+      name: 'Form Submission Handler',
+      category: 'api',
+      description: 'Process web form submissions and send notifications',
+      nodes: 5
     }
   ];
-}
-
-function filterTemplates(category) {
-  // Update active category
-  document.querySelectorAll('.category').forEach(cat => {
-    cat.classList.toggle('active', cat.dataset.category === category);
-  });
   
-  renderTemplates(category);
-}
-
-function renderTemplates(category = 'all') {
-  const grid = document.getElementById('templates-grid');
-  grid.innerHTML = '';
+  // Clear existing templates
+  templatesGrid.innerHTML = '';
   
-  const filtered = category === 'all' 
-    ? window.templates 
-    : window.templates.filter(t => t.category === category);
-  
-  filtered.forEach(template => {
+  // Add template cards
+  templates.forEach(template => {
     const card = document.createElement('div');
     card.className = 'template-card';
-    card.setAttribute('data-template-id', template.id);
     
     card.innerHTML = `
       <div class="template-card-header">
@@ -1496,23 +1348,15 @@ function renderTemplates(category = 'all') {
       </div>
     `;
     
-    // Add click event listener
+    // Add click event to use template
     card.addEventListener('click', () => {
-      useTemplate(template);
+      const message = `Create a workflow for: ${template.name} - ${template.description}`;
+      document.getElementById('chat-input').value = message;
+      switchTab('chat');
     });
     
-    grid.appendChild(card);
+    templatesGrid.appendChild(card);
   });
-}
-
-function useTemplate(template) {
-  const message = `I'd like to use the "${template.name}" template: ${template.description}`;
-  document.getElementById('chat-input').value = message;
-  switchTab('chat');
-}
-
-function createTemplate() {
-  addMessage('assistant', 'Template creation from current workflow coming soon!');
 }
 
 // Settings functions
@@ -1547,12 +1391,6 @@ function updateSettingsUI() {
   document.getElementById('auto-apply-workflows').checked = settings.autoApplyWorkflows;
   document.getElementById('save-chat-history').checked = settings.saveChatHistory;
   document.getElementById('max-history').value = settings.maxHistory;
-  
-  // Theme setting
-  const themeSelect = document.getElementById('theme-select');
-  if (themeSelect && themeManager) {
-    themeSelect.value = themeManager.currentTheme;
-  }
 }
 
 async function saveSettings() {
@@ -1576,11 +1414,30 @@ async function saveSettings() {
     updateStatus('api', hasApiKey ? 'active' : 'error', 
       hasApiKey ? `${settings.activeProvider} configured` : 'API key required');
     
-    showToast('Settings saved!', 'success');
+    showToast('Settings saved!');
+    hideSettings();
     
   } catch (error) {
     console.error('Failed to save settings:', error);
     showToast('Failed to save settings', 'error');
+  }
+}
+
+function resetSettings() {
+  if (confirm('Reset all settings to default values?')) {
+    settings = {
+      openaiKey: '',
+      anthropicKey: '',
+      activeProvider: 'openai',
+      n8nApiUrl: '',
+      n8nApiKey: '',
+      autoApplyWorkflows: false,
+      saveChatHistory: true,
+      maxHistory: 25
+    };
+    
+    updateSettingsUI();
+    showToast('Settings reset to defaults');
   }
 }
 
@@ -1599,7 +1456,7 @@ async function testN8nConnection() {
     });
     
     if (response.ok) {
-      showToast('n8n connection successful!', 'success');
+      showToast('n8n connection successful!');
     } else {
       throw new Error('Authentication failed');
     }
@@ -1612,7 +1469,7 @@ async function testN8nConnection() {
 async function refreshSidePanel() {
   await getCurrentTabInfo();
   await loadWorkflowStats();
-  showToast('Refreshed!', 'success');
+  showToast('Refreshed!');
 }
 
 // Listen for messages from background script
@@ -1623,47 +1480,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     getCurrentTabInfo();
   }
   
-  if (request.action === 'prefillMessage') {
-    document.getElementById('chat-input').value = request.message;
-    switchTab('chat');
-  }
-  
   sendResponse({ status: 'received' });
+  return true;
 });
-
-// Clean incoming workflow JSON from AI - remove any extra fields
-function cleanIncomingWorkflowJson(workflowJson) {
-  // Extract only the essential workflow structure
-  const cleaned = {
-    nodes: [],
-    connections: {}
-  };
-
-  // Clean nodes
-  if (workflowJson.nodes && Array.isArray(workflowJson.nodes)) {
-    cleaned.nodes = workflowJson.nodes.map((node, index) => {
-      const cleanNode = {
-        id: String(node.id || `node_${Date.now()}_${index}`), // Ensure ID is string
-        name: String(node.name || 'Node'),
-        type: String(node.type || 'n8n-nodes-base.start'),
-        typeVersion: Number(node.typeVersion || 1),
-        position: Array.isArray(node.position) ? node.position : [0, 0],
-        parameters: node.parameters || {}
-      };
-      return cleanNode;
-    });
-  }
-
-  // Clean connections
-  if (workflowJson.connections && typeof workflowJson.connections === 'object') {
-    Object.keys(workflowJson.connections).forEach(sourceNodeId => {
-      if (workflowJson.connections[sourceNodeId] && Array.isArray(workflowJson.connections[sourceNodeId])) {
-        cleaned.connections[sourceNodeId] = workflowJson.connections[sourceNodeId].filter(conn => 
-          conn && typeof conn === 'object' && conn.node && conn.type
-        );
-      }
-    });
-  }
-
-  return cleaned;
-}

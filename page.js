@@ -37,28 +37,37 @@ function safeGetURL(path) {
 }
 
 // Inject the chatbot icon script on all pages
-function injectChatbotScript() {
+function injectChatbotButton() {
   if (!checkExtensionContext()) {
-    console.warn('Cannot inject chatbot script - extension context invalid');
+    console.warn('Cannot inject chatbot button - extension context invalid');
     return;
   }
 
-  // Check if chatbot scripts are already loaded
-  if (!document.getElementById('n8n-builder-chatbot-script')) {
-    const scriptUrl = safeGetURL('chatbot/chatbot.js');
-    if (scriptUrl) {
-      // Inject chatbot script
-      const script = document.createElement('script');
-      script.id = 'n8n-builder-chatbot-script';
-      script.src = scriptUrl;
-      script.onerror = () => {
-        console.error('Failed to load chatbot script');
-        extensionValid = false;
-      };
-      document.head.appendChild(script);
-      console.log('Chatbot script injected');
-    }
-  }
+  // Create a button to open the side panel
+  const button = document.createElement('button');
+  button.id = 'n8n-builder-chatbot-button';
+  button.textContent = 'Open Chat';
+  button.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    background-color: #ff6d00;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+  
+  button.addEventListener('click', () => {
+    // This will work because it's triggered by a user click
+    chrome.runtime.sendMessage({ action: "openSidePanel" });
+  });
+  
+  document.body.appendChild(button);
 }
 
 // Get all required resource URLs
@@ -270,7 +279,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Show chat action received');
     
     // Make sure the chatbot script is injected
-    injectChatbotScript();
+    injectChatbotButton();
     
     // Send a custom event to the injected script to show chat
     setTimeout(() => {
@@ -302,7 +311,7 @@ function initializeWithRetry(maxRetries = 3) {
   
   function tryInitialize() {
     if (checkExtensionContext()) {
-      injectChatbotScript();
+      injectChatbotButton();
       setupCommunicationBridge();
       
       // Check if we're on an n8n page from storage
@@ -355,6 +364,164 @@ window.addEventListener('error', (event) => {
     }, 5000);
   }
 });
+
+// Add this to your page.js message listener
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Message received in content script:', request);
+  
+  // Handle the showChat action from settings
+  if (request.action === 'showChat') {
+    console.log('Show chat action received');
+    injectChatbotScript();
+  }
+  
+  // Handle applying workflow after navigation
+  if (request.action === 'applyWorkflowAfterNavigation') {
+    console.log('Applying workflow after navigation');
+    
+    // Wait for the page to fully load
+    setTimeout(() => {
+      applyWorkflowToCanvas(request.workflowJson);
+    }, 2000);
+  }
+  
+  // Pass settings updates to the injected script
+  if (request.action === 'settingsUpdated') {
+    window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+      detail: {
+        type: 'settingsUpdated',
+        settings: request.settings
+      }
+    }));
+  }
+  
+  sendResponse({ status: 'received' });
+  return true;
+});
+
+// Function to apply workflow to canvas
+function applyWorkflowToCanvas(workflowJson) {
+  // This will need to get the n8n API details from storage
+  chrome.storage.sync.get(['n8nApiUrl', 'n8nApiKey'], async (settings) => {
+    try {
+      // Get current workflow ID from URL
+      const url = window.location.href;
+      const workflowIdMatch = url.match(/workflow\/([^/?]+)/);
+      const workflowId = workflowIdMatch ? workflowIdMatch[1] : null;
+      
+      if (!workflowId) {
+        console.error('Unable to extract workflow ID from URL');
+        return;
+      }
+      
+      // Get current workflow
+      const getResponse = await fetch(`${settings.n8nApiUrl}/api/v1/workflows/${workflowId}`, {
+        headers: {
+          'X-N8N-API-KEY': settings.n8nApiKey
+        }
+      });
+
+      if (!getResponse.ok) {
+        console.error('Failed to fetch current workflow:', getResponse.status);
+        return;
+      }
+
+      const currentWorkflow = await getResponse.json();
+      
+      // Merge with new components - this needs the merge function from your code
+      const updatedWorkflow = mergeWorkflowData(currentWorkflow, workflowJson);
+      
+      // Clean workflow for PUT request - this needs the clean function from your code
+      const cleanWorkflow = cleanWorkflowForUpdate(updatedWorkflow);
+      
+      // Update workflow
+      const updateResponse = await fetch(`${settings.n8nApiUrl}/api/v1/workflows/${workflowId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-N8N-API-KEY': settings.n8nApiKey
+        },
+        body: JSON.stringify(cleanWorkflow)
+      });
+
+      if (!updateResponse.ok) {
+        console.error('Failed to update workflow:', updateResponse.status);
+        return;
+      }
+      
+      // Reload the page to show changes
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error applying workflow to canvas:', error);
+    }
+  });
+}
+
+// Add these helper functions to page.js (copied from your chatbot.js)
+function mergeWorkflowData(currentWorkflow, newComponents) {
+  const result = { ...currentWorkflow };
+  
+  if (!result.nodes) result.nodes = [];
+  if (!result.connections) result.connections = {};
+  
+  if (newComponents.nodes && Array.isArray(newComponents.nodes)) {
+    let maxX = 0, maxY = 0;
+    
+    result.nodes.forEach(node => {
+      if (node.position && Array.isArray(node.position)) {
+        maxX = Math.max(maxX, node.position[0] || 0);
+        maxY = Math.max(maxY, node.position[1] || 0);
+      }
+    });
+    
+    const offsetX = maxX > 0 ? maxX + 200 : 100;
+    const offsetY = maxY > 0 ? maxY + 50 : 100;
+    
+    let maxNodeNum = 0;
+    result.nodes.forEach(node => {
+      const match = node.name.match(/(\d+)$/);
+      if (match) {
+        maxNodeNum = Math.max(maxNodeNum, parseInt(match[1]));
+      }
+    });
+    
+    newComponents.nodes.forEach((node, index) => {
+      const newNode = {
+        ...node,
+        name: `${node.name || 'Node'} ${maxNodeNum + index + 1}`,
+        position: [
+          offsetX + (index * 200),
+          offsetY
+        ]
+      };
+      
+      if (!newNode.parameters) newNode.parameters = {};
+      if (!newNode.type) newNode.type = 'n8n-nodes-base.start';
+      
+      result.nodes.push(newNode);
+    });
+  }
+  
+  if (newComponents.connections && typeof newComponents.connections === 'object') {
+    Object.assign(result.connections, newComponents.connections);
+  }
+  
+  return result;
+}
+
+function cleanWorkflowForUpdate(workflow) {
+  const cleanWorkflow = {
+    name: workflow.name || 'Untitled Workflow',
+    nodes: workflow.nodes || [],
+    connections: workflow.connections || {},
+    settings: workflow.settings || {},
+    staticData: workflow.staticData || {}
+  };
+
+  return JSON.parse(JSON.stringify(cleanWorkflow));
+}
+
 
 // Initialize
 console.log('Starting extension initialization...');
