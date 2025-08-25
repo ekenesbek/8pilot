@@ -1,0 +1,311 @@
+2025-08-24 20:45:32,513 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 20:45:32,513 - app.core.logging - INFO - Log level: INFO
+2025-08-24 20:45:32,513 - app.core.logging - INFO - Debug mode: False
+2025-08-24 20:55:56,667 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 20:55:56,667 - app.core.logging - INFO - Log level: INFO
+2025-08-24 20:55:56,667 - app.core.logging - INFO - Debug mode: False
+2025-08-24 20:55:56,680 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:03:24,380 - app.services.chat_service - INFO - Created new chat session f8772756-a2d9-4f80-9bb2-61ba6df95b41 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:03:24,381 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API key not configured
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 65, in _call_openai
+    raise ValueError("OpenAI API key not configured")
+ValueError: OpenAI API key not configured
+2025-08-24 21:45:35,480 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:45:38,297 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:45:38,297 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:45:38,297 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:45:38,310 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:46:26,131 - app.services.chat_service - INFO - Created new chat session a9979150-8bbc-4a86-b68d-d3eb43527928 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:46:27,194 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 21:46:27,196 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 21:50:42,505 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:50:44,232 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:50:44,232 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:50:44,232 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:50:44,245 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:50:46,323 - app.services.chat_service - INFO - Created new chat session b6b39095-9afe-4975-8bd1-248b6586d0a8 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:50:46,938 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 21:50:46,940 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 21:54:54,084 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:55:02,430 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:55:02,431 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:55:02,431 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:55:02,443 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:55:06,141 - app.services.chat_service - INFO - Created new chat session bb1d5791-753e-4387-917a-8578e0af9945 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:55:06,876 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 21:55:06,878 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 21:56:28,205 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:56:29,732 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:56:29,732 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:56:29,732 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:56:29,745 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:56:37,728 - app.services.chat_service - INFO - Created new chat session bad887d3-6019-4de1-905a-649a6a2422b0 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:56:38,729 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 21:56:38,731 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-your-***************here. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 21:58:02,491 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:58:02,891 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:58:02,891 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:58:02,891 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:58:02,904 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:59:04,912 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:59:05,374 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:59:05,375 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:59:05,375 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:59:05,387 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:59:10,545 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 21:59:12,919 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 21:59:12,919 - app.core.logging - INFO - Log level: INFO
+2025-08-24 21:59:12,919 - app.core.logging - INFO - Debug mode: True
+2025-08-24 21:59:12,932 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 21:59:16,327 - app.services.chat_service - INFO - Created new chat session 9bb6ea49-ba57-4922-b776-671ac4ce385f for workflow 9YvlzxMbXDuqb55m
+2025-08-24 21:59:17,349 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 21:59:17,350 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-proj-********************************************************************************************************************************************************T7AA. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-proj-********************************************************************************************************************************************************T7AA. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 22:01:38,317 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:01:41,610 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:01:41,610 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:01:41,610 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:01:41,623 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:01:44,213 - app.services.chat_service - INFO - Created new chat session fc597623-dd7c-4542-80ec-77e57b82a3b7 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 22:01:45,479 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-08-24 22:01:45,481 - app.api.v1.endpoints.chat - ERROR - Error in send_message: OpenAI API error: Incorrect API key provided: sk-proj-********************************************************************************************************************************************************T7AA. You can find your API key at https://platform.openai.com/account/api-keys.
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 107, in _call_openai
+    raise Exception(f"OpenAI API error: {error_data.get('error', {}).get('message', 'Unknown error')}")
+Exception: OpenAI API error: Incorrect API key provided: sk-proj-********************************************************************************************************************************************************T7AA. You can find your API key at https://platform.openai.com/account/api-keys.
+2025-08-24 22:03:15,600 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:03:16,028 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:03:16,028 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:03:16,028 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:03:16,042 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:03:27,056 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:03:27,488 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:03:27,488 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:03:27,488 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:03:27,501 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:03:50,132 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:03:50,537 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:03:50,537 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:03:50,538 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:03:50,550 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:04:26,515 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:04:28,627 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:04:28,628 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:04:28,628 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:04:28,641 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:04:33,089 - app.services.chat_service - INFO - Created new chat session f614f59e-d56d-45a0-8e1f-87a518057806 for workflow 9YvlzxMbXDuqb55m
+2025-08-24 22:04:51,265 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:16:29,015 - app.services.chat_service - INFO - Created new chat session d4489dcd-bf00-4c19-96a5-9395cfa6cc9e for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:17:15,516 - app.services.chat_service - INFO - Created new chat session b122e34a-3f91-49bf-bbc9-f77a20ad8e22 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:17:28,088 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:17:29,560 - app.api.v1.endpoints.chat - ERROR - Error in send_message: 
+Traceback (most recent call last):
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/api/v1/endpoints/chat.py", line 45, in send_message
+    ai_response = await ai_service.get_response(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 32, in get_response
+    return await self._call_openai(message, context, session_history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/VSCodeProjects/n8n-copilot/backend/app/services/ai_service.py", line 90, in _call_openai
+    response = await client.post(
+               ^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/Users/ekenesbek/.pyenv/versions/3.11.10/lib/python3.11/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+2025-08-24 22:18:21,584 - app.services.chat_service - INFO - Created new chat session 1dcd3801-88de-4a2a-b840-3e4641729af5 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:18:33,108 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:26:56,025 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:26:58,130 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:26:58,130 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:26:58,130 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:26:58,143 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:32:32,540 - app.services.chat_service - INFO - Created new chat session d001e398-eb34-41f5-9b5f-1d11df47b8d8 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:32:33,589 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:35:49,952 - app.services.chat_service - INFO - Created new chat session 1397a4c9-b5ce-45af-a862-4d063c5c0a77 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:35:51,475 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:37:14,237 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:37:15,207 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:37:15,208 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:37:15,208 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:37:15,223 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:40:24,123 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:40:27,134 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:40:27,134 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:40:27,134 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:40:27,147 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:44:49,056 - app.services.chat_service - INFO - Created new chat session 37c32282-470b-4782-9aaf-7afd49950849 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:44:50,700 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:47:55,537 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:47:56,026 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:47:56,026 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:47:56,026 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:47:56,040 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:57:51,783 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 22:57:54,071 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 22:57:54,071 - app.core.logging - INFO - Log level: INFO
+2025-08-24 22:57:54,071 - app.core.logging - INFO - Debug mode: True
+2025-08-24 22:57:54,085 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 22:58:41,353 - app.services.chat_service - INFO - Created new chat session 596f5944-c92c-4e49-9dfb-5f1e1610c09f for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:58:43,065 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 22:58:59,979 - app.services.chat_service - INFO - Created new chat session 06b97b1e-d045-4104-9a97-b0d1c0244269 for workflow jx972NPjVf7jm3Ng
+2025-08-24 22:59:01,409 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:05:57,028 - app.services.chat_service - INFO - Created new chat session 19bed545-4d0e-43d3-8ea4-836a9d768c30 for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:06:00,285 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:07:11,722 - app.services.chat_service - INFO - Created new chat session 4dd7983f-17ae-4aa9-bc1c-2a58dcefe36e for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:07:12,848 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:09:45,989 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 23:09:46,473 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 23:09:46,474 - app.core.logging - INFO - Log level: INFO
+2025-08-24 23:09:46,474 - app.core.logging - INFO - Debug mode: True
+2025-08-24 23:09:46,487 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 23:10:02,451 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 23:10:02,862 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 23:10:02,862 - app.core.logging - INFO - Log level: INFO
+2025-08-24 23:10:02,862 - app.core.logging - INFO - Debug mode: True
+2025-08-24 23:10:02,876 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 23:10:13,379 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 23:10:13,802 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 23:10:13,802 - app.core.logging - INFO - Log level: INFO
+2025-08-24 23:10:13,802 - app.core.logging - INFO - Debug mode: True
+2025-08-24 23:10:13,815 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 23:10:25,330 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 23:10:25,747 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 23:10:25,747 - app.core.logging - INFO - Log level: INFO
+2025-08-24 23:10:25,747 - app.core.logging - INFO - Debug mode: True
+2025-08-24 23:10:25,760 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 23:24:28,247 - app.services.chat_service - INFO - Created new chat session c2f9a27c-b10d-4582-b022-171c786db6bf for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:24:29,890 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:25:06,176 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-08-24 23:25:06,849 - app.core.logging - INFO - Logging configured successfully
+2025-08-24 23:25:06,849 - app.core.logging - INFO - Log level: INFO
+2025-08-24 23:25:06,849 - app.core.logging - INFO - Debug mode: True
+2025-08-24 23:25:06,864 - app.main - INFO - Starting n8n-copilot backend...
+2025-08-24 23:28:37,849 - app.services.chat_service - INFO - Created new chat session 8882c2c1-e8b8-4c03-b373-8cab628a7764 for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:28:39,857 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:35:24,889 - app.services.chat_service - INFO - Created new chat session 788d5df1-2cf8-4b9a-b69f-7332fe4a7d97 for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:35:27,224 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:38:23,103 - app.services.chat_service - INFO - Created new chat session c146394d-3c81-4f57-b8e6-2fcc2fc11854 for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:38:24,906 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:49:05,395 - app.services.chat_service - INFO - Created new chat session 6539a8b6-2eb0-4d7c-b70b-e766cdd251af for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:49:06,373 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-24 23:50:58,488 - app.services.chat_service - INFO - Created new chat session 87f0cdf5-935a-41e5-acd7-911e74b05da2 for workflow jx972NPjVf7jm3Ng
+2025-08-24 23:50:59,912 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"

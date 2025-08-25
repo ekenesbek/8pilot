@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>n8n Co Pilot</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="ai-shimmer"></div>
+  <div class="container">
+    <h1>n8n Co Pilot</h1>
+    <p>AI-powered assistant for building n8n workflows efficiently.</p>
+    
+    <div class="status-container">
+      <div id="status-indicator" class="status-indicator"></div>
+      <span id="status-text">Checking status...</span>
+    </div>
+    
+    <div class="buttons">
+      <button id="show-chat">Show AI Assistant</button>
+      <button id="settings-btn">⚙️</button>
+    </div>
+    
+    <div id="settings-panel" class="settings-panel hidden">
+      <h2>AI Provider</h2>
+      
+      <div class="toggle-container" data-selected="openai">
+        <div class="toggle-slider"></div>
+        <div class="toggle-option" data-value="openai">OpenAI</div>
+        <div class="toggle-option" data-value="anthropic">Anthropic</div>
+      </div>
+      
+      <div id="openai-section" class="api-section">
+        <div class="model-badge active">GPT-4.1</div>
+        <div class="setting">
+          <label for="openai-key">OpenAI API Key:</label>
+          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
+        </div>
+      </div>
+      
+      <div id="anthropic-section" class="api-section hidden">
+        <div class="model-badge active">Claude 3.7</div>
+        <div class="setting">
+          <label for="anthropic-key">Anthropic API Key:</label>
+          <input type="password" id="anthropic-key" placeholder="sk-ant-..." autocomplete="off">
+        </div>
+      </div>
+      
+      <h2>n8n Integration</h2>
+      <div class="api-section">
+        <div class="setting">
+          <label for="n8n-api-url">n8n API URL:</label>
+          <input type="text" id="n8n-api-url" placeholder="https://your-n8n-instance.com" autocomplete="off">
+        </div>
+        <div class="setting">
+          <label for="n8n-api-key">n8n API Key:</label>
+          <input type="password" id="n8n-api-key" placeholder="n8n_api_..." autocomplete="off">
+        </div>
+        <div class="helper-text">
+          <small>Required to apply workflow components directly to your canvas</small>
+        </div>
+      </div>
+      
+      <h2>Backend Configuration</h2>
+      <div class="api-section">
+        <div class="setting">
+          <label for="backend-url">Backend API URL:</label>
+          <input type="text" id="backend-url" placeholder="http://localhost:8000" autocomplete="off" value="http://localhost:8000">
+        </div>
+        <div class="helper-text">
+          <small>URL for the n8n-copilot backend service</small>
+        </div>
+      </div>
+      
+      <button id="save-settings">Save Settings</button>
+    </div>
+    
+    <div class="footer">
+      <p>v1.0.0 • Powered by AI</p>
+    </div>
+  </div>
+  <script src="settings.js"></script>
+</body>
+</html>
