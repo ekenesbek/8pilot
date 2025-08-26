@@ -1,6 +1,6 @@
-# n8n-copilot Backend
+# 8pilot Backend
 
-Python/FastAPI backend для расширения n8n-copilot, предоставляющий AI-функциональность и интеграцию с n8n.
+Python/FastAPI backend для расширения 8pilot, предоставляющий AI-функциональность и интеграцию с n8n.
 
 ## 🚀 Возможности
 
@@ -176,8 +176,8 @@ pytest --cov=app --cov-report=html
 ### Docker Production
 
 ```bash
-docker build -t n8n-copilot-backend .
-docker run -d -p 8000:8000 --env-file .env n8n-copilot-backend
+docker build -t 8pilot-backend .
+docker run -d -p 8000:8000 --env-file .env 8pilot-backend
 ```
 
 ## 🤝 Разработка

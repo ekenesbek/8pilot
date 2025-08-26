@@ -42,7 +42,7 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=n8n_copilot
+      - POSTGRES_DB=8pilot
       - POSTGRES_USER=n8n_user
       - POSTGRES_PASSWORD=n8n_password
     ports:

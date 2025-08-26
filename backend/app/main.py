@@ -1,5 +1,5 @@
 """
-n8n-copilot Backend - FastAPI Application
+8pilot Backend - FastAPI Application
 Main entry point for the backend service
 """
 
@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
-    logger.info("Starting n8n-copilot backend...")
+    logger.info("Starting 8pilot backend...")
     yield
     # Shutdown
-    logger.info("Shutting down n8n-copilot backend...")
+    logger.info("Shutting down 8pilot backend...")
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application"""
     
     app = FastAPI(
-        title="n8n-copilot Backend",
+        title="8pilot Backend",
         description="AI-powered workflow assistant backend for n8n",
         version="1.0.0",
         docs_url="/docs" if settings.debug else None,
@@ -70,7 +70,7 @@ def create_app() -> FastAPI:
     # Health check endpoint
     @app.get("/health")
     async def health_check():
-        return {"status": "healthy", "service": "n8n-copilot-backend"}
+        return {"status": "healthy", "service": "8pilot-backend"}
     
     return app
 

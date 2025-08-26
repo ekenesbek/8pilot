@@ -13,8 +13,8 @@ let n8nApiKey = null;
 
 // Storage keys
 const STORAGE_KEYS = {
-  WORKFLOW_CHATS: 'n8n_copilot_workflow_chats',
-  LAST_ACTIVE_WORKFLOW: 'n8n_copilot_last_workflow'
+  WORKFLOW_CHATS: '8pilot_workflow_chats',
+  LAST_ACTIVE_WORKFLOW: '8pilot_last_workflow'
 };
 
 // For accessing Chrome extension resources safely
@@ -258,7 +258,7 @@ function monitorUrlChanges() {
         loadWorkflowChat(newWorkflowId);
         
         // Update chat UI if it's open
-        const chatContainer = document.getElementById('n8n-builder-chat');
+        const chatContainer = document.getElementById('pilot-chat');
         if (chatContainer) {
           refreshChatUI();
         }
@@ -274,7 +274,7 @@ function monitorUrlChanges() {
 
 // Refresh chat UI with current workflow's messages
 function refreshChatUI() {
-  const messagesArea = document.getElementById('n8n-builder-messages');
+  const messagesArea = document.getElementById('pilot-messages');
   if (!messagesArea) return;
   
   // Clear current messages
@@ -301,7 +301,7 @@ function refreshChatUI() {
 
 // Add workflow header to chat
 function addWorkflowHeader() {
-  const messagesArea = document.getElementById('n8n-builder-messages');
+  const messagesArea = document.getElementById('pilot-messages');
   if (!messagesArea) return;
   
   const workflowInfo = allWorkflowChats[currentWorkflowId];
@@ -418,13 +418,13 @@ function getResourceURL(path) {
 
 // Inject chat CSS if not already present
 function injectChatStyles() {
-  if (document.getElementById('n8n-builder-styles')) return;
+  if (document.getElementById('pilot-styles')) return;
   sendToContentScript({ type: 'getResourceURL', path: 'chatbot/chatbot.css' });
 }
 
 function applyChatStyles(cssUrl) {
   const style = document.createElement('link');
-  style.id = 'n8n-builder-styles';
+  style.id = 'pilot-styles';
   style.rel = 'stylesheet';
   style.type = 'text/css';
   style.href = cssUrl;
@@ -438,14 +438,14 @@ function injectChatIcon() {
     return;
   }
   
-  const existingIcon = document.getElementById('n8n-builder-icon');
+  const existingIcon = document.getElementById('pilot-icon');
   if (existingIcon) existingIcon.remove();
   
   const iconUrl = getResourceURL('icons/chat-icon-48.png');
   
   const iconDiv = document.createElement('div');
-  iconDiv.id = 'n8n-builder-icon';
-  iconDiv.className = 'n8n-builder-chat-icon';
+  iconDiv.id = 'pilot-icon';
+  iconDiv.className = 'pilot-chat-icon';
   iconDiv.innerHTML = `<img src="${iconUrl}" alt="n8n Co Pilot" />`;
   document.body.appendChild(iconDiv);
   
@@ -457,7 +457,7 @@ function injectChatIcon() {
 // Create a mini toast notification
 function showMiniToast(message) {
   const toast = document.createElement('div');
-  toast.className = 'n8n-builder-mini-toast';
+  toast.className = 'pilot-mini-toast';
   toast.textContent = message;
   document.body.appendChild(toast);
   
@@ -473,7 +473,7 @@ function showMiniToast(message) {
 // Toggle chat visibility
 function toggleChat() {
   console.log('toggleChat called');
-  const existingChat = document.getElementById('n8n-builder-chat');
+  const existingChat = document.getElementById('pilot-chat');
   if (existingChat) {
     console.log('Removing existing chat');
     existingChat.remove();
@@ -491,7 +491,7 @@ function injectChatHtml(callback) {
   });
   
   window.processChatHtml = function(html) {
-    const existingOverlay = document.getElementById('n8n-builder-chat');
+    const existingOverlay = document.getElementById('pilot-chat');
     if (existingOverlay) existingOverlay.remove();
     
     const tempDiv = document.createElement('div');
@@ -533,11 +533,11 @@ function processWorkflowJson(json) {
   
   const confirmMsg = `I've extracted workflow components. Would you like to add them to your canvas?`;
   
-  const messagesArea = document.getElementById('n8n-builder-messages');
+  const messagesArea = document.getElementById('pilot-messages');
   if (!messagesArea) return;
   
   const actionDiv = document.createElement('div');
-  actionDiv.className = 'n8n-builder-message assistant-message action';
+  actionDiv.className = 'pilot-message assistant-message action';
   actionDiv.innerHTML = `
     <div class="message-avatar assistant-avatar"></div>
     <div class="message-content">
@@ -807,11 +807,11 @@ function addMessage(sender, text) {
 
 // Add message to UI and optionally to memory
 function addMessageToUI(sender, text, saveToMemory = true) {
-  const messagesArea = document.getElementById('n8n-builder-messages');
+  const messagesArea = document.getElementById('pilot-messages');
   if (!messagesArea) return;
   
   const messageDiv = document.createElement('div');
-  messageDiv.className = `n8n-builder-message ${sender}-message`;
+  messageDiv.className = `pilot-message ${sender}-message`;
   messageDiv.innerHTML = `
     <div class="message-avatar ${sender}-avatar"></div>
     <div class="message-content">${text}</div>
@@ -833,12 +833,12 @@ function addMessageToUI(sender, text, saveToMemory = true) {
 
 // Add loading indicator
 function showLoadingIndicator() {
-  const messagesArea = document.getElementById('n8n-builder-messages');
+  const messagesArea = document.getElementById('pilot-messages');
   if (!messagesArea) return;
   
   const loadingDiv = document.createElement('div');
-  loadingDiv.id = 'n8n-builder-loading';
-  loadingDiv.className = 'n8n-builder-message assistant-message loading';
+  loadingDiv.id = 'pilot-loading';
+  loadingDiv.className = 'pilot-message assistant-message loading';
   loadingDiv.innerHTML = `
     <div class="message-avatar assistant-avatar"></div>
     <div class="message-content">
@@ -855,7 +855,7 @@ function showLoadingIndicator() {
 
 // Remove loading indicator
 function removeLoadingIndicator() {
-  const loadingIndicator = document.getElementById('n8n-builder-loading');
+  const loadingIndicator = document.getElementById('pilot-loading');
   if (loadingIndicator) {
     loadingIndicator.remove();
   }
@@ -946,7 +946,7 @@ Ensure the JSON is valid and follows n8n's schema. Only include nodes and connec
 
 // Handle sending a message
 function handleSendMessage() {
-  const inputElement = document.getElementById('n8n-builder-input');
+  const inputElement = document.getElementById('pilot-input');
   if (!inputElement) return;
   
   const userMessage = inputElement.value.trim();
@@ -961,12 +961,12 @@ function handleSendMessage() {
 
 // Set up event listeners
 function setupEventListeners() {
-  const sendButton = document.getElementById('n8n-builder-send');
+  const sendButton = document.getElementById('pilot-send');
   if (sendButton) {
     sendButton.addEventListener('click', handleSendMessage);
   }
   
-  const inputField = document.getElementById('n8n-builder-input');
+  const inputField = document.getElementById('pilot-input');
   if (inputField) {
     inputField.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -976,18 +976,18 @@ function setupEventListeners() {
     });
   }
   
-  const closeButton = document.getElementById('n8n-builder-close');
+  const closeButton = document.getElementById('pilot-close');
   if (closeButton) {
     closeButton.addEventListener('click', () => {
-      const chat = document.getElementById('n8n-builder-chat');
+      const chat = document.getElementById('pilot-chat');
       if (chat) chat.remove();
     });
   }
   
-  const minimizeButton = document.getElementById('n8n-builder-minimize');
+  const minimizeButton = document.getElementById('pilot-minimize');
   if (minimizeButton) {
     minimizeButton.addEventListener('click', () => {
-      const chat = document.getElementById('n8n-builder-chat');
+      const chat = document.getElementById('pilot-chat');
       if (chat) chat.remove();
       // Show only the icon when minimized
       injectChatIcon();
@@ -999,7 +999,7 @@ function setupEventListeners() {
 function initChatbot() {
   console.log('initChatbot called');
   // First ensure we have the CSS
-  if (!document.getElementById('n8n-builder-styles')) {
+  if (!document.getElementById('pilot-styles')) {
     console.log('Requesting CSS');
     sendToContentScript({ type: 'getResourceURL', path: 'chatbot/chatbot.css' });
   }
