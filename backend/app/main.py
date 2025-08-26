@@ -14,6 +14,10 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.core.logging import setup_logging
+from app.core.database import create_tables
+
+# Import all models to ensure they are registered with Base before creating tables
+from app.models.user import User
 
 # Setup logging
 setup_logging()
@@ -24,6 +28,9 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting 8pilot backend...")
+    # Create database tables
+    create_tables()
+    logger.info("Database tables created/verified")
     yield
     # Shutdown
     logger.info("Shutting down 8pilot backend...")
