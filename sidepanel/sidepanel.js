@@ -27,14 +27,14 @@ class ThemeManager {
   }
 
   loadThemePreference() {
-    const saved = localStorage.getItem('n8n_copilot_theme');
+    const saved = localStorage.getItem('8pilot_theme');
     if (saved && ['light', 'dark', 'auto'].includes(saved)) {
       this.currentTheme = saved;
     }
   }
 
   saveThemePreference() {
-    localStorage.setItem('n8n_copilot_theme', this.currentTheme);
+    localStorage.setItem('8pilot_theme', this.currentTheme);
   }
 
   applyTheme() {
@@ -118,8 +118,8 @@ let themeManager;
 
 // Storage keys
 const STORAGE_KEYS = {
-  WORKFLOW_CHATS: 'n8n_copilot_workflow_chats',
-  LAST_ACTIVE_WORKFLOW: 'n8n_copilot_last_workflow'
+  WORKFLOW_CHATS: '8pilot_workflow_chats',
+  LAST_ACTIVE_WORKFLOW: '8pilot_last_workflow'
 };
 
 // Initialize the side panel
@@ -439,7 +439,6 @@ function updateStatus(type, status, text) {
 // Update workflow information display
 function updateWorkflowInfo() {
   const nameEl = document.getElementById('workflow-name');
-  const statsEl = document.getElementById('workflow-stats');
   const idEl = document.getElementById('workflow-id');
   
   if (currentWorkflowId) {
@@ -448,23 +447,16 @@ function updateWorkflowInfo() {
     
     nameEl.textContent = workflowName;
     idEl.textContent = currentWorkflowId;
-    
-    // Try to get actual stats from n8n API
-    loadWorkflowStats();
   } else {
     nameEl.textContent = 'No workflow detected';
-    statsEl.innerHTML = '<span class="stat">0 nodes</span><span class="stat">0 connections</span>';
     idEl.textContent = '-';
   }
 }
 
-// Load workflow stats from n8n API
+// Load workflow stats from n8n API (simplified - just update name if available)
 async function loadWorkflowStats() {
-  const statsEl = document.getElementById('workflow-stats');
-  
   if (!settings.n8nApiUrl || !settings.n8nApiKey || !currentWorkflowId || 
       currentWorkflowId === 'unknown_workflow' || currentWorkflowId === 'new_workflow') {
-    statsEl.innerHTML = '<span class="stat">- nodes</span><span class="stat">- connections</span>';
     return;
   }
   
@@ -475,12 +467,6 @@ async function loadWorkflowStats() {
     
     if (response.ok) {
       const workflow = await response.json();
-      const nodeCount = workflow.nodes?.length || 0;
-      const connectionCount = Object.keys(workflow.connections || {}).length;
-      
-      statsEl.innerHTML = 
-        '<span class="stat">${nodeCount} nodes</span>' +
-        '<span class="stat">${connectionCount} connections</span>';
       
       // Update workflow name if we got it from API
       if (workflow.name && allWorkflowChats[currentWorkflowId]) {
@@ -522,7 +508,7 @@ function addWelcomeMessage() {
     
   if (!hasApiKey) {
     addMessage('assistant', 
-      `Welcome to n8n Co Pilot! Please configure your ${settings.activeProvider} API key in settings to get started.`, 
+      `Welcome to 8pilot! Please configure your ${settings.activeProvider} API key in settings to get started.`, 
       false
     );
   } else if (!currentWorkflowId || currentWorkflowId === 'unknown_workflow') {
@@ -854,7 +840,7 @@ async function callAnthropicDirect(message, apiKey) {
     body: JSON.stringify({
       model: 'claude-3-sonnet-20240229',
       max_tokens: 2048,
-      system: `You are n8n Co Pilot, an AI assistant specializing in n8n workflow automation. Help users build effective n8n workflows by providing guidance and generating workflow components.`,
+      system: `You are 8pilot, an AI assistant specializing in n8n workflow automation. Help users build effective n8n workflows by providing guidance and generating workflow components.`,
       messages: messages,
       stream: true
     })

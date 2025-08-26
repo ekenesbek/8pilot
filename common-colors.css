@@ -1,0 +1,122 @@
+/* 8pilot Brand Colors - Common Color Scheme */
+/* This file contains all the brand colors and can be imported by other CSS files */
+
+:root {
+  /* Primary Brand Colors */
+  --primary-blue: #0ea5e9;
+  --primary-cyan: #38bdf8;
+  --primary-sky: #7dd3fc;
+  --primary-teal: #14b8a6;
+  --primary-indigo: #6366f1;
+  
+  /* Secondary Colors */
+  --secondary-blue: #0284c7;
+  --secondary-cyan: #0ea5e9;
+  --secondary-sky: #38bdf8;
+  
+  /* Accent Colors */
+  --accent-purple: #8b5cf6;
+  --accent-violet: #a855f7;
+  
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f9ff;
+  --bg-tertiary: #e0f2fe;
+  --bg-accent: #f8fafc;
+  
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-quaternary: #94a3b8;
+  --text-muted: #cbd5e0;
+  --text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e0;
+  --border-accent: #0ea5e9;
+  
+  /* Status Colors */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0ea5e9, #38bdf8, #7dd3fc);
+  --gradient-secondary: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  --gradient-accent: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  --gradient-purple: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(14, 165, 233, 0.1);
+  --shadow-md: 0 2px 8px rgba(14, 165, 233, 0.15);
+  --shadow-lg: 0 4px 12px rgba(14, 165, 233, 0.2);
+  
+  /* Button Colors */
+  --btn-primary: var(--gradient-secondary);
+  --btn-primary-hover: linear-gradient(135deg, var(--secondary-blue), var(--primary-blue));
+  --btn-secondary: var(--bg-accent);
+  --btn-secondary-hover: var(--bg-tertiary);
+  
+  /* Input Colors */
+  --input-bg: var(--bg-accent);
+  --input-bg-focus: var(--bg-primary);
+  --input-border: var(--border-primary);
+  --input-border-focus: var(--primary-blue);
+  
+  /* Message Colors */
+  --message-user-bg: var(--gradient-secondary);
+  --message-assistant-bg: var(--bg-primary);
+  --message-user-color: var(--text-inverse);
+  --message-assistant-color: var(--text-primary);
+}
+
+/* Dark theme overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #3a3a3a;
+    --bg-accent: #2a2a2a;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-tertiary: #b0b0b0;
+    --text-quaternary: #888888;
+    --text-muted: #666666;
+    --text-inverse: #1e1e1e;
+    
+    --border-primary: #404040;
+    --border-secondary: #505050;
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Utility classes for common color applications */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-muted { color: var(--text-muted); }
+.text-inverse { color: var(--text-inverse); }
+
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-accent { background-color: var(--bg-accent); }
+
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }
+.border-accent { border-color: var(--border-accent); }
+
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+.gradient-primary { background: var(--gradient-primary); }
+.gradient-secondary { background: var(--gradient-secondary); }
+.gradient-accent { background: var(--gradient-accent); }
+.gradient-purple { background: var(--gradient-purple); }

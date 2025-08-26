@@ -1,13 +1,60 @@
+/* 8pilot Brand Colors - New Color Scheme */
+:root {
+  /* Primary Brand Colors */
+  --primary-blue: #0ea5e9;
+  --primary-cyan: #38bdf8;
+  --primary-sky: #7dd3fc;
+  --primary-teal: #14b8a6;
+  --primary-indigo: #6366f1;
+  
+  /* Secondary Colors */
+  --secondary-blue: #0284c7;
+  --secondary-cyan: #0ea5e9;
+  --secondary-sky: #38bdf8;
+  
+  /* Accent Colors */
+  --accent-purple: #8b5cf6;
+  --accent-violet: #a855f7;
+  
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f9ff;
+  --bg-tertiary: #e0f2fe;
+  --bg-accent: #f8fafc;
+  
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  
+  /* Border Colors */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e0;
+  --border-accent: #0ea5e9;
+  
+  /* Status Colors */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0ea5e9, #38bdf8, #7dd3fc);
+  --gradient-secondary: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  --gradient-accent: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  --gradient-purple: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+}
+
 /* Chat Overlay Styles (chatbot.css) - Enhanced with workflow-specific features */
-.n8n-builder-container {
+.pilot-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
     width: 380px;
     height: 550px;
-    background: #fff;
+    background: var(--bg-primary);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px rgba(14, 165, 233, 0.15);
     display: flex;
     flex-direction: column;
     z-index: 999999 !important;
@@ -15,27 +62,27 @@
     border: none;
 }
 
-.n8n-builder-header {
+.pilot-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
-    background: #ff6d5a;
+    background: var(--gradient-primary);
     color: #fff;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     font-family: inherit;
     font-weight: 600;
     font-size: 16px;
-    border-bottom: 1px solid #e1e1e1;
+    border-bottom: 1px solid var(--border-primary);
 }
 
-.n8n-builder-title {
+.pilot-title {
     font-weight: 600;
     font-size: 16px;
 }
 
-.n8n-builder-controls button {
+.pilot-controls button {
     background: transparent;
     border: none;
     color: #fff;
@@ -47,14 +94,14 @@
     padding: 2px 6px;
 }
 
-.n8n-builder-controls button:hover {
+.pilot-controls button:hover {
     background: rgba(255,255,255,0.15);
 }
 
 /* Workflow Header Styles */
 .workflow-header {
-    background: #f8f9fa;
-    border-bottom: 1px solid #e1e1e1;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
     padding: 12px 20px;
     margin: 0;
 }
@@ -68,7 +115,7 @@
 .workflow-name {
     font-weight: 600;
     font-size: 14px;
-    color: #333;
+    color: var(--text-primary);
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -77,7 +124,7 @@
 
 .workflow-stats {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
     margin-top: 2px;
 }
 
@@ -94,12 +141,12 @@
     padding: 4px 6px;
     border-radius: 4px;
     transition: background 0.2s;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .clear-chat-btn:hover, .workflow-list-btn:hover {
-    background: #e9ecef;
-    color: #333;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 /* Workflow List Modal */
@@ -117,14 +164,14 @@
 }
 
 .workflow-list-content {
-    background: white;
+    background: var(--bg-primary);
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
     max-height: 80%;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
 }
 
 .workflow-list-header {
@@ -132,8 +179,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid #e1e1e1;
-    background: #f8f9fa;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
     border-radius: 12px 12px 0 0;
 }
 
@@ -141,7 +188,7 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .workflow-list-header button {
@@ -149,14 +196,14 @@
     border: none;
     font-size: 20px;
     cursor: pointer;
-    color: #666;
+    color: var(--text-tertiary);
     padding: 4px 8px;
     border-radius: 4px;
     line-height: 1;
 }
 
 .workflow-list-header button:hover {
-    background: #e9ecef;
+    background: var(--bg-tertiary);
 }
 
 .workflow-list-body {
@@ -167,36 +214,36 @@
 
 .workflow-item {
     padding: 16px 20px;
-    border-bottom: 1px solid #f1f3f4;
+    border-bottom: 1px solid var(--border-primary);
     cursor: pointer;
     transition: background 0.2s;
 }
 
 .workflow-item:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary);
 }
 
 .workflow-item.active {
-    background: #e3f2fd;
-    border-left: 4px solid #2196f3;
+    background: var(--bg-tertiary);
+    border-left: 4px solid var(--primary-blue);
 }
 
 .workflow-item-name {
     font-weight: 600;
     font-size: 14px;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 4px;
 }
 
 .workflow-item-stats {
     font-size: 12px;
-    color: #666;
+    color: var(--text-tertiary);
     margin-bottom: 2px;
 }
 
 .workflow-item-id {
     font-size: 11px;
-    color: #999;
+    color: var(--text-muted);
     font-family: monospace;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -205,19 +252,19 @@
 .no-workflows {
     padding: 40px 20px;
     text-align: center;
-    color: #666;
+    color: var(--text-tertiary);
     font-style: italic;
 }
 
 .workflow-list-footer {
     padding: 16px 20px;
-    border-top: 1px solid #e1e1e1;
-    background: #f8f9fa;
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
     border-radius: 0 0 12px 12px;
 }
 
 .workflow-list-footer button {
-    background: #dc3545;
+    background: var(--error);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -228,36 +275,36 @@
 }
 
 .workflow-list-footer button:hover {
-    background: #c82333;
+    background: #dc2626;
 }
 
-.n8n-builder-messages {
+.pilot-messages {
     flex: 1;
     overflow-y: auto;
     padding: 0;
     display: flex;
     flex-direction: column;
-    background: #f5f5f7;
-    border-bottom: 1px solid #e1e1e1;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
     border-top: none;
     border-radius: 0 0 0 0;
 }
 
 /* Adjust message area to account for workflow header */
-.n8n-builder-messages .n8n-builder-message {
+.pilot-messages .pilot-message {
     margin: 14px 20px 0 20px;
     max-width: calc(85% - 40px);
 }
 
-.n8n-builder-messages .n8n-builder-message:first-child {
+.pilot-messages .pilot-message:first-child {
     margin-top: 18px;
 }
 
-.n8n-builder-messages .n8n-builder-message:last-child {
+.pilot-messages .pilot-message:last-child {
     margin-bottom: 18px;
 }
 
-.n8n-builder-message {
+.pilot-message {
     display: flex;
     max-width: 85%;
 }
@@ -280,49 +327,49 @@
 }
 
 .user-avatar {
-    background: #6665ee;
+    background: var(--gradient-secondary);
 }
 
 .assistant-avatar {
-    background: #ff6d5a;
+    background: var(--gradient-accent);
 }
 
 .message-content {
-    background: #fff;
+    background: var(--bg-primary);
     padding: 12px 16px;
     border-radius: 18px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 1px 2px rgba(14, 165, 233, 0.1);
     word-wrap: break-word;
     font-size: 14px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--border-primary);
 }
 
 .user-message .message-content {
-    background: #6665ee;
+    background: var(--gradient-secondary);
     color: #fff;
     border-bottom-right-radius: 4px;
-    border: 1px solid #6665ee;
+    border: 1px solid var(--primary-blue);
 }
 
 .assistant-message .message-content {
-    background: #fff;
-    color: #222;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     border-bottom-left-radius: 4px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--border-primary);
 }
 
 /* Action buttons for JSON workflow application */
-.n8n-builder-actions {
+.pilot-actions {
     padding: 0 20px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
-.n8n-builder-actions.show {
+.pilot-actions.show {
     max-height: 100px;
     padding: 10px 20px;
-    border-top: 1px solid #e1e1e1;
+    border-top: 1px solid var(--border-primary);
 }
 
 .action-buttons {
@@ -341,33 +388,33 @@
 }
 
 .action-button.primary {
-    background-color: #ff6d5a;
+    background: var(--gradient-secondary);
     color: white;
 }
 
 .action-button.primary:hover {
-    background-color: #e55a4a;
+    background: linear-gradient(135deg, var(--secondary-blue), var(--primary-blue));
 }
 
 .action-button.secondary {
-    background-color: #f0f0f0;
-    color: #333;
+    background: var(--bg-accent);
+    color: var(--text-primary);
 }
 
 .action-button.secondary:hover {
-    background-color: #e0e0e0;
+    background: var(--bg-tertiary);
 }
 
-.n8n-builder-input-area {
+.pilot-input-area {
     display: flex;
     padding: 16px 20px;
-    border-top: 1px solid #e1e1e1;
-    background: #fff;
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-primary);
 }
 
-#n8n-builder-input {
+#pilot-input {
     flex: 1;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     padding: 10px 14px;
     font-size: 14px;
@@ -375,18 +422,18 @@
     height: 40px;
     outline: none;
     font-family: inherit;
-    background: #fafbfc;
-    color: #222;
+    background: var(--bg-accent);
+    color: var(--text-primary);
     transition: border 0.2s;
 }
 
-#n8n-builder-input:focus {
-    border: 1.5px solid #ff6d5a;
-    background: #fff;
+#pilot-input:focus {
+    border: 1.5px solid var(--primary-blue);
+    background: var(--bg-primary);
 }
 
-#n8n-builder-send {
-    background: #ff6d5a;
+#pilot-send {
+    background: var(--gradient-secondary);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -397,28 +444,28 @@
     cursor: pointer;
     transition: background 0.2s;
     height: 40px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.07);
+    box-shadow: 0 1px 2px rgba(14, 165, 233, 0.2);
 }
 
-#n8n-builder-send:hover {
-    background: #ff5a45;
+#pilot-send:hover {
+    background: linear-gradient(135deg, var(--secondary-blue), var(--primary-blue));
 }
 
 /* Footer styling */
-.n8n-builder-footer {
+.pilot-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: #fff;
-    border-top: 1px solid #e1e1e1;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
     font-size: 12px;
-    color: #666;
+    color: var(--text-tertiary);
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
 }
 
-.n8n-builder-status {
+.pilot-status {
     display: flex;
     align-items: center;
 }
@@ -428,21 +475,21 @@
     height: 8px;
     border-radius: 50%;
     margin-right: 6px;
-    background-color: #ccc;
+    background-color: var(--text-muted);
 }
 
 .status-indicator.active {
-    background-color: #4CAF50;
+    background-color: var(--success);
 }
 
 .status-indicator.error {
-    background-color: #F44336;
+    background-color: var(--error);
 }
 
-.n8n-builder-clear-btn {
+.pilot-clear-btn {
     background: transparent;
     border: none;
-    color: #777;
+    color: var(--text-muted);
     font-size: 12px;
     cursor: pointer;
     padding: 4px 8px;
@@ -450,33 +497,35 @@
     transition: all 0.2s;
 }
 
-.n8n-builder-clear-btn:hover {
-    background: #f0f0f0;
-    color: #333;
+.pilot-clear-btn:hover {
+    background: var(--bg-accent);
+    color: var(--text-primary);
 }
 
 pre {
-    background-color: #f1f1f1;
+    background-color: var(--bg-tertiary);
     border-radius: 4px;
     padding: 8px;
     overflow-x: auto;
+    border: 1px solid var(--border-primary);
 }
 
 code {
     font-family: monospace;
     font-size: 0.9em;
+    color: var(--text-secondary);
 }
 
-.n8n-builder-chat-icon {
+.pilot-chat-icon {
     position: fixed;
     bottom: 20px;
     right: 20px;
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: #ffffff;
-    border: 1px solid #e1e1e1;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    background: var(--gradient-secondary);
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -485,23 +534,23 @@ code {
     transition: all 0.3s ease;
 }
 
-.n8n-builder-chat-icon:hover {
+.pilot-chat-icon:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
 }
 
-.n8n-builder-chat-icon img {
+.pilot-chat-icon img {
     width: 28px;
     height: 28px;
 }
 
 /* Chat icon with notification badge for active workflow */
-.n8n-builder-chat-icon::after {
+.pilot-chat-icon::after {
     content: attr(data-messages);
     position: absolute;
     top: -5px;
     right: -5px;
-    background: #ff6d5a;
+    background: var(--gradient-secondary);
     color: white;
     border-radius: 10px;
     font-size: 10px;
@@ -512,28 +561,28 @@ code {
     display: none;
 }
 
-.n8n-builder-chat-icon[data-messages]:not([data-messages=""]):not([data-messages="0"])::after {
+.pilot-chat-icon[data-messages]:not([data-messages=""]):not([data-messages="0"])::after {
     display: block;
 }
 
 /* Mini toast notification */
-.n8n-builder-mini-toast {
+.pilot-mini-toast {
     position: fixed;
     bottom: 80px;
     right: 20px;
     padding: 10px 15px;
-    background-color: #333;
+    background-color: var(--text-primary);
     color: white;
     border-radius: 4px;
     max-width: 250px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.3s ease;
     z-index: 10000;
 }
 
-.n8n-builder-mini-toast.show {
+.pilot-mini-toast.show {
     opacity: 1;
     transform: translateY(0);
 }
@@ -550,7 +599,7 @@ code {
     display: block;
     width: 8px;
     height: 8px;
-    background-color: #9e9ea1;
+    background-color: var(--text-muted);
     border-radius: 50%;
     opacity: 0.4;
     animation: typing-dot 1.4s infinite ease-in-out both;
@@ -575,37 +624,37 @@ code {
 
 /* JSON code blocks styling */
 .message-content pre {
-    background-color: #f5f5f5;
+    background-color: var(--bg-tertiary);
     border-radius: 6px;
     padding: 12px;
     overflow-x: auto;
     margin: 8px 0;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-primary);
 }
 
 .message-content code {
     font-family: 'Roboto Mono', Consolas, Monaco, 'Andale Mono', monospace;
     font-size: 13px;
     line-height: 1.4;
-    color: #333;
+    color: var(--text-primary);
 }
 
 /* Add styling for assistant message with JSON actions */
 .assistant-message.action .message-content {
-    background: #f8f9fa;
-    border: 1px solid #ddd;
+    background: var(--bg-accent);
+    border: 1px solid var(--border-primary);
     padding: 14px 18px;
 }
 
 /* Loading message style */
-.n8n-builder-message.loading .message-content {
-    background: #f8f8f8;
+.pilot-message.loading .message-content {
+    background: var(--bg-accent);
     min-width: 80px;
 }
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 480px) {
-    .n8n-builder-container {
+    .pilot-container {
         width: calc(100vw - 40px);
         height: calc(100vh - 40px);
         bottom: 20px;
@@ -625,21 +674,21 @@ code {
 }
 
 /* Scrollbar styling for chat messages */
-.n8n-builder-messages::-webkit-scrollbar {
+.pilot-messages::-webkit-scrollbar {
     width: 6px;
 }
 
-.n8n-builder-messages::-webkit-scrollbar-track {
+.pilot-messages::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.n8n-builder-messages::-webkit-scrollbar-thumb {
-    background: #ccc;
+.pilot-messages::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
     border-radius: 3px;
 }
 
-.n8n-builder-messages::-webkit-scrollbar-thumb:hover {
-    background: #999;
+.pilot-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
 }
 
 .workflow-list-body::-webkit-scrollbar {
@@ -647,14 +696,14 @@ code {
 }
 
 .workflow-list-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--bg-accent);
 }
 
 .workflow-list-body::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: var(--text-muted);
     border-radius: 4px;
 }
 
 .workflow-list-body::-webkit-scrollbar-thumb:hover {
-    background: #999;
+    background: var(--text-tertiary);
 }

@@ -44,12 +44,12 @@ function injectChatbotScript() {
   }
 
   // Check if chatbot scripts are already loaded
-  if (!document.getElementById('n8n-builder-chatbot-script')) {
+  if (!document.getElementById('pilot-chatbot-script')) {
     const scriptUrl = safeGetURL('chatbot/chatbot.js');
     if (scriptUrl) {
       // Inject chatbot script
       const script = document.createElement('script');
-      script.id = 'n8n-builder-chatbot-script';
+      script.id = 'pilot-chatbot-script';
       script.src = scriptUrl;
       script.onerror = () => {
         console.error('Failed to load chatbot script');
@@ -130,14 +130,14 @@ function safeStorageGet(keys, callback) {
 // Setup communication bridge between content script and injected script
 function setupCommunicationBridge() {
   // Listen for events from the injected script
-  window.addEventListener('n8nCopilotInjectedEvent', async (event) => {
+  window.addEventListener('8pilotInjectedEvent', async (event) => {
     const data = event.detail;
     console.log('Event from injected script:', data);
     
     if (!checkExtensionContext()) {
       console.warn('Extension context invalid, cannot handle event:', data.type);
       // Send error response to injected script
-      window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+      window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
         detail: {
           type: 'extensionError',
           message: 'Extension context invalid - please reload the page'
@@ -151,7 +151,7 @@ function setupCommunicationBridge() {
       switch (data.type) {
         case 'getIsN8nPage':
           safeStorageGet(['isN8nPage'], (result) => {
-            window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+            window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
               detail: {
                 type: 'isN8nPageResponse',
                 isN8nPage: result.isN8nPage || false
@@ -162,7 +162,7 @@ function setupCommunicationBridge() {
           
         case 'getResourceURLs':
           const resources = getResourceURLs();
-          window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+          window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
             detail: {
               type: 'resourceURLs',
               resources: resources
@@ -174,7 +174,7 @@ function setupCommunicationBridge() {
           const url = safeGetURL(data.path);
           if (url) {
             resourceURLCache[data.path] = url;
-            window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+            window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
               detail: {
                 type: 'resourceURL',
                 path: data.path,
@@ -182,7 +182,7 @@ function setupCommunicationBridge() {
               }
             }));
           } else {
-            window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+            window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
               detail: {
                 type: 'resourceError',
                 path: data.path,
@@ -193,27 +193,27 @@ function setupCommunicationBridge() {
           break;
           
         case 'getChatHtml':
-          try {
-            const html = await fetchResource('chatbot/chatbot.html');
-            window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
-              detail: {
-                type: 'chatHtml',
-                html: html
+                      try {
+              const html = await fetchResource('chatbot/chatbot.html');
+              window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
+                detail: {
+                  type: 'chatHtml',
+                  html: html
+                }
+              }));
+              // If a callback was specified, call it with the HTML
+              if (data.callback && window[data.callback]) {
+                window[data.callback](html);
               }
-            }));
-            // If a callback was specified, call it with the HTML
-            if (data.callback && window[data.callback]) {
-              window[data.callback](html);
+            } catch (error) {
+              console.error('Error fetching chat HTML:', error);
+              window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
+                detail: {
+                  type: 'chatHtmlError',
+                  error: error.message
+                }
+              }));
             }
-          } catch (error) {
-            console.error('Error fetching chat HTML:', error);
-            window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
-              detail: {
-                type: 'chatHtmlError',
-                error: error.message
-              }
-            }));
-          }
           break;
           
         case 'getSettings':
@@ -225,7 +225,7 @@ function setupCommunicationBridge() {
                 return;
               }
               
-              window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+              window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
                 detail: {
                   type: 'settingsUpdated',
                   settings: {
@@ -274,7 +274,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     // Send a custom event to the injected script to show chat
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+      window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
         detail: {
           type: 'showChat'
         }
@@ -284,7 +284,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   // Pass settings updates to the injected script
   if (request.action === 'settingsUpdated') {
-    window.dispatchEvent(new CustomEvent('n8nCopilotContentEvent', {
+    window.dispatchEvent(new CustomEvent('8pilotContentEvent', {
       detail: {
         type: 'settingsUpdated',
         settings: request.settings
@@ -345,7 +345,7 @@ window.addEventListener('error', (event) => {
       font-family: Arial, sans-serif;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
-    toast.textContent = 'n8n Co Pilot: Extension reloaded. Please refresh the page.';
+    toast.textContent = '8pilot: Extension reloaded. Please refresh the page.';
     document.body.appendChild(toast);
     
     setTimeout(() => {
