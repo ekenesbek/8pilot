@@ -1,4 +1,351 @@
-// sidepanel/sidepanel.js - Full integration with chatbot logic + Theme Support
+// sidepanel/sidepanel.js - Full integration with chatbot logic + Theme Support + Authentication
+
+// Authentication System
+class AuthManager {
+  constructor() {
+    this.isAuthenticated = false;
+    this.isDemoMode = false;
+    this.currentUser = null;
+    this.authOverlay = document.getElementById('auth-overlay');
+    this.init();
+  }
+
+  init() {
+    this.setupAuthForms();
+    this.checkAuthStatus();
+  }
+
+  setupAuthForms() {
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const authForms = document.querySelectorAll('.auth-form');
+    const tabHeader = document.querySelector('.tab-header');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        
+        // Update active tab button
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update tab header data attribute for CSS animation
+        tabHeader.setAttribute('data-active', targetTab);
+        
+        // Show corresponding form
+        authForms.forEach(form => {
+          form.classList.remove('active');
+          if (form.id === `${targetTab}-form`) {
+            form.classList.add('active');
+          }
+        });
+        
+        this.updateAuthStatus('ready', 'Готов к авторизации');
+      });
+    });
+
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+
+    // Signup form
+    const signupForm = document.getElementById('signupForm');
+    signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+
+    // Demo mode
+    const demoBtn = document.getElementById('demo-mode');
+    demoBtn.addEventListener('click', () => this.activateDemoMode());
+  }
+
+  async handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    
+    if (!email || !password) {
+      this.showAuthMessage('error', 'Пожалуйста, заполните все поля');
+      return;
+    }
+    
+    this.updateAuthStatus('loading', 'Выполняется вход...');
+    
+    try {
+      const backendUrl = await this.getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+      
+      if (data.access_token) {
+        await this.saveAuthData(data);
+        this.updateAuthStatus('success', 'Вход выполнен успешно!');
+        this.showAuthMessage('success', 'Добро пожаловать!');
+        
+        setTimeout(() => this.hideAuthOverlay(), 1500);
+      } else {
+        throw new Error(data.detail || 'Ошибка входа');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      this.updateAuthStatus('error', 'Ошибка входа');
+      this.showAuthMessage('error', error.message || 'Неверный email или пароль');
+    }
+  }
+
+  async handleSignup(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirmPassword = document.getElementById('signup-confirm-password').value;
+    
+    if (!email || !password || !confirmPassword) {
+      this.showAuthMessage('error', 'Пожалуйста, заполните все поля');
+      return;
+    }
+    
+    if (password.length < 6) {
+      this.showAuthMessage('error', 'Пароль должен содержать минимум 6 символов');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      this.showAuthMessage('error', 'Пароли не совпадают');
+      return;
+    }
+    
+    this.updateAuthStatus('loading', 'Выполняется регистрация...');
+    
+    try {
+      const backendUrl = await this.getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+      
+      if (data.id) {
+        this.updateAuthStatus('success', 'Регистрация успешна!');
+        this.showAuthMessage('success', 'Аккаунт создан! Теперь вы можете войти.');
+        
+        // Switch to login tab
+        setTimeout(() => {
+          document.querySelector('[data-tab="login"]').click();
+          document.getElementById('login-email').value = email;
+          document.getElementById('login-password').value = password;
+        }, 2000);
+      } else {
+        throw new Error(data.detail || 'Ошибка регистрации');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      this.updateAuthStatus('error', 'Ошибка регистрации');
+      this.showAuthMessage('error', error.message || 'Ошибка при создании аккаунта');
+    }
+  }
+
+  async activateDemoMode() {
+    if (confirm('Демо режим предоставляет ограниченный доступ к функциям. Продолжить?')) {
+      await this.saveDemoData();
+      this.updateAuthStatus('success', 'Демо режим активирован!');
+      this.showAuthMessage('success', 'Переходим в демо режим...');
+      
+      setTimeout(() => this.hideAuthOverlay(), 1500);
+    }
+  }
+
+  async checkAuthStatus() {
+    try {
+      const result = await this.getStorageData(['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode']);
+      
+      if (result.isDemoMode) {
+        this.isDemoMode = true;
+        this.hideAuthOverlay();
+        this.showDemoMode();
+        return;
+      }
+      
+      if (result.isAuthenticated && result.authToken) {
+        this.isAuthenticated = true;
+        this.currentUser = result.userInfo;
+        this.hideAuthOverlay();
+        this.showAuthenticatedMode();
+        return;
+      }
+      
+      // Not authenticated, show auth overlay
+      this.showAuthOverlay();
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      this.showAuthOverlay();
+    }
+  }
+
+  async saveAuthData(data) {
+    try {
+      await this.setStorageData({
+        authToken: data.access_token,
+        userInfo: data.user,
+        isAuthenticated: true,
+        isDemoMode: false
+      });
+      
+      this.isAuthenticated = true;
+      this.currentUser = data.user;
+      this.isDemoMode = false;
+    } catch (error) {
+      console.error('Error saving auth data:', error);
+      throw error;
+    }
+  }
+
+  async saveDemoData() {
+    try {
+      await this.setStorageData({
+        isDemoMode: true,
+        demoModeActivated: new Date().toISOString(),
+        isAuthenticated: false,
+        authToken: null,
+        userInfo: null
+      });
+      
+      this.isDemoMode = true;
+      this.isAuthenticated = false;
+      this.currentUser = null;
+    } catch (error) {
+      console.error('Error saving demo data:', error);
+      throw error;
+    }
+  }
+
+  async getBackendUrl() {
+    try {
+      const result = await this.getStorageData(['backendUrl']);
+      return result.backendUrl || 'http://localhost:8000';
+    } catch (error) {
+      return 'http://localhost:8000';
+    }
+  }
+
+  async getStorageData(keys) {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.sync.get(keys, resolve);
+      } else {
+        // Fallback for non-extension context
+        const result = {};
+        keys.forEach(key => {
+          result[key] = localStorage.getItem(`8pilot_${key}`);
+        });
+        resolve(result);
+      }
+    });
+  }
+
+  async setStorageData(data) {
+    return new Promise((resolve) => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.sync.set(data, resolve);
+      } else {
+        // Fallback for non-extension context
+        Object.keys(data).forEach(key => {
+          localStorage.setItem(`8pilot_${key}`, data[key]);
+        });
+        resolve();
+      }
+    });
+  }
+
+  showAuthOverlay() {
+    this.authOverlay.classList.remove('hidden');
+  }
+
+  hideAuthOverlay() {
+    this.authOverlay.classList.add('hidden');
+  }
+
+  updateAuthStatus(type, text) {
+    const indicator = document.getElementById('auth-status-indicator');
+    const statusText = document.getElementById('auth-status-text');
+    
+    indicator.className = `status-indicator ${type}`;
+    statusText.textContent = text;
+  }
+
+  showAuthMessage(type, text) {
+    // Create and show message
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `auth-message ${type}`;
+    messageDiv.textContent = text;
+    
+    const authContainer = document.querySelector('.auth-container');
+    authContainer.appendChild(messageDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (messageDiv.parentNode) {
+        messageDiv.remove();
+      }
+    }, 5000);
+  }
+
+  showDemoMode() {
+    // Show demo mode indicators
+    const demoIndicator = document.createElement('div');
+    demoIndicator.className = 'demo-indicator';
+    demoIndicator.innerHTML = '🎭 <strong>Демо режим</strong> - Ограниченный доступ';
+    demoIndicator.style.cssText = `
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    `;
+    
+    const container = document.querySelector('.sidepanel-container');
+    container.insertBefore(demoIndicator, container.firstChild);
+  }
+
+  showAuthenticatedMode() {
+    // Show logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.style.display = 'block';
+      logoutBtn.addEventListener('click', () => this.logout());
+    }
+  }
+
+  async logout() {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+      try {
+        await this.setStorageData({
+          isAuthenticated: false,
+          isDemoMode: false,
+          authToken: null,
+          userInfo: null
+        });
+        
+        this.isAuthenticated = false;
+        this.isDemoMode = false;
+        this.currentUser = null;
+        
+        // Reload the page to show auth overlay
+        window.location.reload();
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+  }
+}
 
 // Theme management
 class ThemeManager {
@@ -126,7 +473,10 @@ const STORAGE_KEYS = {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Side panel initializing...');
   
-  // Initialize theme manager first
+  // Initialize authentication manager first
+  const authManager = new AuthManager();
+  
+  // Initialize theme manager
   themeManager = new ThemeManager();
   
   // Load settings and chat storage

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusText = document.getElementById('status-text');
   const showChatButton = document.getElementById('show-chat');
   const settingsButton = document.getElementById('settings-btn');
+  const logoutButton = document.getElementById('logout-btn');
   const settingsPanel = document.getElementById('settings-panel');
   const saveSettingsButton = document.getElementById('save-settings');
   const toggleContainer = document.querySelector('.toggle-container');
@@ -124,6 +125,104 @@ document.addEventListener('DOMContentLoaded', () => {
            url.includes('workflow') || 
            url.includes('execution') ||
            url.includes('localhost');
+  }
+  
+  // Check authentication status
+  function checkAuthenticationStatus() {
+    safeStorageGet(['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode', 'language'], (result) => {
+      // Set language if available
+      if (result.language) {
+        setLanguage(result.language);
+      }
+      
+      if (result.isDemoMode) {
+        // User is in demo mode, show demo interface
+        showDemoMode();
+        return;
+      }
+      
+      if (!result.isAuthenticated || !result.authToken) {
+        // User is not authenticated, redirect to auth page
+        window.location.href = '../auth.html';
+        return;
+      }
+      
+      // User is authenticated, continue with normal initialization
+      initializeStatus();
+    });
+  }
+  
+  // Language support
+  const translations = {
+    ru: {
+      // Add Russian translations for settings page if needed
+    },
+    en: {
+      // Add English translations for settings page if needed
+    }
+  };
+  
+  let currentLang = 'ru';
+  
+  function setLanguage(lang) {
+    currentLang = lang;
+    // Update settings page language if needed
+  }
+  
+  // Show demo mode interface
+  function showDemoMode() {
+    // Update status to show demo mode
+    statusIndicator.classList.add('active');
+    statusIndicator.classList.remove('inactive');
+    statusText.textContent = 'Демо режим';
+    
+    // Enable chat button for demo
+    showChatButton.disabled = false;
+    showChatButton.textContent = 'Демо: Open Side Panel';
+    
+    // Add demo mode indicator
+    const demoIndicator = document.createElement('div');
+    demoIndicator.style.cssText = `
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    `;
+    demoIndicator.innerHTML = '🎭 <strong>Демо режим</strong> - Ограниченный доступ к функциям';
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(demoIndicator, container.querySelector('.buttons'));
+    
+    // Load demo settings
+    loadDemoSettings();
+    
+    console.log('Demo mode activated');
+  }
+  
+  // Load demo settings
+  function loadDemoSettings() {
+    // Set default demo values
+    document.getElementById('backend-url').value = 'http://localhost:8000';
+    
+    // Show demo message in settings
+    const demoMessage = document.createElement('div');
+    demoMessage.style.cssText = `
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 12px;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    `;
+    demoMessage.innerHTML = '⚠️ <strong>Демо режим:</strong> Настройки не сохраняются';
+    
+    const settingsPanel = document.getElementById('settings-panel');
+    settingsPanel.insertBefore(demoMessage, settingsPanel.firstChild);
   }
   
   // Initialize status check with error handling
@@ -269,6 +368,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Toggle settings panel
   settingsButton.addEventListener('click', () => {
     settingsPanel.classList.toggle('hidden');
+  });
+  
+  // Logout button handler
+  logoutButton.addEventListener('click', () => {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+      // Clear authentication data
+      safeStorageSet({
+        authToken: null,
+        userInfo: null,
+        isAuthenticated: false
+      }, () => {
+        // Redirect to auth page
+        window.location.href = '../auth.html';
+      });
+    }
   });
   
   // Handle provider toggle selection
@@ -449,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize everything
   try {
     if (checkExtensionContext()) {
-      initializeStatus();
+      checkAuthenticationStatus();
       loadSettings();
       monitorExtensionContext();
       addKeyboardShortcutHint();
@@ -461,4 +575,3 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Initialization error:', error);
     handleExtensionError();
   }
-});
