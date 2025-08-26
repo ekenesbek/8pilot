@@ -235,16 +235,30 @@ async function loadSettings() {
       settings.backendUrl = 'http://localhost:8000';
     }
     
-    // Update API status
-    const hasApiKey = settings.activeProvider === 'openai' 
-      ? settings.openaiKey 
-      : settings.anthropicKey;
-    
-    updateStatus('api', hasApiKey ? 'active' : 'error', 
-      hasApiKey ? `${settings.activeProvider} configured` : 'API key required');
+    // Validate and update API status
+    updateApiStatus();
       
   } catch (error) {
     console.error('Failed to load settings:', error);
+  }
+}
+
+// Update API status based on current settings
+function updateApiStatus() {
+  const hasApiKey = settings.activeProvider === 'openai' 
+    ? settings.openaiKey 
+    : settings.anthropicKey;
+  
+  if (hasApiKey) {
+    // Basic validation of API key format
+    const isValidFormat = hasApiKey.length > 20 && hasApiKey.startsWith('sk-');
+    if (isValidFormat) {
+      updateStatus('api', 'active', `${settings.activeProvider} configured`);
+    } else {
+      updateStatus('api', 'warning', `${settings.activeProvider} key format invalid`);
+    }
+  } else {
+    updateStatus('api', 'error', `${settings.activeProvider} API key required`);
   }
 }
 
@@ -401,6 +415,25 @@ function updateStatus(type, status, text) {
     indicator.className = `status-indicator ${status}`;
     textEl.textContent = text;
   }
+  
+  // Update API status specifically
+  if (type === 'api') {
+    const hasApiKey = settings.activeProvider === 'openai' 
+      ? settings.openaiKey 
+      : settings.anthropicKey;
+    
+    if (hasApiKey) {
+      // Check if API key looks valid (basic validation)
+      const isValidFormat = hasApiKey.length > 20 && hasApiKey.startsWith('sk-');
+      if (isValidFormat) {
+        updateStatus('api', 'active', `${settings.activeProvider} configured`);
+      } else {
+        updateStatus('api', 'warning', `${settings.activeProvider} key format invalid`);
+      }
+    } else {
+      updateStatus('api', 'error', `${settings.activeProvider} API key required`);
+    }
+  }
 }
 
 // Update workflow information display
@@ -489,7 +522,7 @@ function addWelcomeMessage() {
     
   if (!hasApiKey) {
     addMessage('assistant', 
-      'Welcome to n8n Co Pilot! Please configure your AI provider in settings to get started.', 
+      `Welcome to n8n Co Pilot! Please configure your ${settings.activeProvider} API key in settings to get started.`, 
       false
     );
   } else if (!currentWorkflowId || currentWorkflowId === 'unknown_workflow') {
@@ -535,13 +568,13 @@ async function sendMessage() {
   
   if (!message) return;
   
-  // Check API key
+  // Check API key for current provider
   const apiKey = settings.activeProvider === 'openai' 
     ? settings.openaiKey 
     : settings.anthropicKey;
     
   if (!apiKey) {
-    addMessage('assistant', 'Please configure your AI provider API key in settings first.');
+    addMessage('assistant', `Please configure your ${settings.activeProvider} API key in settings first.`);
     return;
   }
   
@@ -588,13 +621,29 @@ async function sendMessage() {
       streamingMsg.remove();
     }
     
-    addMessage('assistant', `Error: ${error.message || 'Failed to get AI response'}`);
+    // Provide more specific error messages
+    let errorMessage = 'Failed to get AI response';
+    if (error.message.includes('API key')) {
+      errorMessage = `Invalid ${settings.activeProvider} API key. Please check your settings.`;
+    } else if (error.message.includes('Backend API error')) {
+      errorMessage = 'Backend service unavailable. Please check if the backend is running.';
+    } else if (error.message.includes('rate limit')) {
+      errorMessage = 'Rate limit exceeded. Please try again later.';
+    } else {
+      errorMessage = `Error: ${error.message}`;
+    }
+    
+    addMessage('assistant', errorMessage);
   }
 }
 
 // Call AI API with streaming
 async function callAI(message) {
   const provider = settings.activeProvider;
+  
+  // Get API keys based on provider
+  const openaiApiKey = provider === 'openai' ? settings.openaiKey : null;
+  const anthropicApiKey = provider === 'anthropic' ? settings.anthropicKey : null;
   
   // Use our backend API with streaming
   try {
@@ -607,7 +656,13 @@ async function callAI(message) {
       body: JSON.stringify({
         message: message,
         workflow_id: currentWorkflowId || 'default',
-        provider: provider
+        provider: provider,
+        // Pass API keys with each request
+        openai_api_key: openaiApiKey,
+        anthropic_api_key: anthropicApiKey,
+        // Pass n8n API credentials if available
+        n8n_api_url: settings.n8nApiUrl,
+        n8n_api_key: settings.n8nApiKey
       })
     });
 
@@ -1527,6 +1582,9 @@ function hideSettings() {
 function switchProvider(provider) {
   settings.activeProvider = provider;
   updateSettingsUI();
+  
+  // Update API status after switching provider
+  updateApiStatus();
 }
 
 function updateSettingsUI() {
@@ -1553,6 +1611,9 @@ function updateSettingsUI() {
   if (themeSelect && themeManager) {
     themeSelect.value = themeManager.currentTheme;
   }
+  
+  // Update API status after updating UI
+  updateApiStatus();
 }
 
 async function saveSettings() {
@@ -1568,13 +1629,8 @@ async function saveSettings() {
   try {
     await chrome.storage.sync.set(settings);
     
-    // Update API status
-    const hasApiKey = settings.activeProvider === 'openai' 
-      ? settings.openaiKey 
-      : settings.anthropicKey;
-    
-    updateStatus('api', hasApiKey ? 'active' : 'error', 
-      hasApiKey ? `${settings.activeProvider} configured` : 'API key required');
+    // Update API status after saving
+    updateApiStatus();
     
     showToast('Settings saved!', 'success');
     

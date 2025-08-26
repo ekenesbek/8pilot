@@ -15,8 +15,9 @@ class N8nService:
     """Service for n8n API integration"""
     
     def __init__(self):
-        self.default_url = settings.n8n_default_url
-        self.default_api_key = settings.n8n_default_api_key
+        # API keys are now passed from frontend, not loaded from .env
+        self.default_url = None
+        self.default_api_key = None
     
     async def test_connection(
         self, 

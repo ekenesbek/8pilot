@@ -8,7 +8,6 @@ import json
 import time
 from typing import List, Dict, Any, AsyncGenerator
 from app.models.chat import Message, StreamingChatResponse
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -16,22 +15,28 @@ class AIService:
     """Service for AI provider interactions"""
     
     def __init__(self):
-        self.openai_api_key = settings.openai_api_key
-        self.anthropic_api_key = settings.anthropic_api_key
+        # API keys are now passed with each request, not stored in settings
+        pass
         
     async def get_response(
         self, 
         message: str, 
         provider: str = "openai",
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        openai_api_key: str = None,
+        anthropic_api_key: str = None
     ) -> str:
         """Get AI response from specified provider"""
         
         if provider == "openai":
-            return await self._call_openai(message, context, session_history)
+            if not openai_api_key:
+                raise ValueError("OpenAI API key is required")
+            return await self._call_openai(message, context, session_history, openai_api_key)
         elif provider == "anthropic":
-            return await self._call_anthropic(message, context, session_history)
+            if not anthropic_api_key:
+                raise ValueError("Anthropic API key is required")
+            return await self._call_anthropic(message, context, session_history, anthropic_api_key)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
@@ -40,15 +45,21 @@ class AIService:
         message: str, 
         provider: str = "openai",
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        openai_api_key: str = None,
+        anthropic_api_key: str = None
     ) -> AsyncGenerator[StreamingChatResponse, None]:
         """Stream AI response from specified provider"""
         
         if provider == "openai":
-            async for chunk in self._stream_openai(message, context, session_history):
+            if not openai_api_key:
+                raise ValueError("OpenAI API key is required")
+            async for chunk in self._stream_openai(message, context, session_history, openai_api_key):
                 yield chunk
         elif provider == "anthropic":
-            async for chunk in self._stream_anthropic(message, context, session_history):
+            if not anthropic_api_key:
+                raise ValueError("Anthropic API key is required")
+            async for chunk in self._stream_anthropic(message, context, session_history, anthropic_api_key):
                 yield chunk
         else:
             raise ValueError(f"Unsupported provider: {provider}")
@@ -57,12 +68,13 @@ class AIService:
         self, 
         message: str, 
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        api_key: str = None
     ) -> str:
         """Call OpenAI API"""
         
-        if not self.openai_api_key:
-            raise ValueError("OpenAI API key not configured")
+        if not api_key:
+            raise ValueError("OpenAI API key is required")
         
         # Prepare messages
         messages = [
@@ -90,7 +102,7 @@ class AIService:
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {self.openai_api_key}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -113,12 +125,13 @@ class AIService:
         self, 
         message: str, 
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        api_key: str = None
     ) -> AsyncGenerator[StreamingChatResponse, None]:
         """Stream OpenAI API response"""
         
-        if not self.openai_api_key:
-            raise ValueError("OpenAI API key not configured")
+        if not api_key:
+            raise ValueError("OpenAI API key is required")
         
         # Prepare messages (same as non-streaming)
         messages = [
@@ -145,7 +158,7 @@ class AIService:
                 "POST",
                 "https://api.openai.com/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {self.openai_api_key}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -186,12 +199,13 @@ class AIService:
         self, 
         message: str, 
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        api_key: str = None
     ) -> str:
         """Call Anthropic API"""
         
-        if not self.anthropic_api_key:
-            raise ValueError("Anthropic API key not configured")
+        if not api_key:
+            raise ValueError("Anthropic API key is required")
         
         # Prepare messages for Anthropic
         messages = []
@@ -213,7 +227,7 @@ class AIService:
             response = await client.post(
                 "https://api.anthropic.com/v1/messages",
                 headers={
-                    "x-api-key": self.anthropic_api_key,
+                    "x-api-key": api_key,
                     "anthropic-version": "2023-06-01",
                     "Content-Type": "application/json"
                 },
@@ -237,12 +251,13 @@ class AIService:
         self, 
         message: str, 
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None
+        session_history: List[Message] = None,
+        api_key: str = None
     ) -> AsyncGenerator[StreamingChatResponse, None]:
         """Stream Anthropic API response"""
         
-        if not self.anthropic_api_key:
-            raise ValueError("Anthropic API key not configured")
+        if not api_key:
+            raise ValueError("Anthropic API key is required")
         
         # Prepare messages (same as non-streaming)
         messages = []
@@ -265,7 +280,7 @@ class AIService:
                 "POST",
                 "https://api.anthropic.com/v1/messages",
                 headers={
-                    "x-api-key": self.anthropic_api_key,
+                    "x-api-key": api_key,
                     "anthropic-version": "2023-06-01",
                     "Content-Type": "application/json"
                 },
