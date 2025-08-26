@@ -17,14 +17,14 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Service instances
-settings_service = SettingsService()
-n8n_service = N8nService()
+# settings_service = SettingsService()  # Remove global initialization
+# n8n_service = N8nService()  # Remove global initialization
 
 @router.get("/", response_model=UserSettings)
 async def get_user_settings():
     """Get current user settings"""
     try:
-        settings = await settings_service.get_user_settings()
+        settings = await SettingsService().get_user_settings()
         return settings
     except Exception as e:
         logger.error(f"Error getting user settings: {e}", exc_info=True)
@@ -34,7 +34,7 @@ async def get_user_settings():
 async def update_user_settings(settings_update: SettingsUpdate):
     """Update user settings"""
     try:
-        updated_settings = await settings_service.update_settings(settings_update)
+        updated_settings = await SettingsService().update_settings(settings_update)
         return updated_settings
     except Exception as e:
         logger.error(f"Error updating user settings: {e}", exc_info=True)
@@ -44,7 +44,7 @@ async def update_user_settings(settings_update: SettingsUpdate):
 async def get_n8n_instances():
     """Get all configured n8n instances"""
     try:
-        instances = await settings_service.get_n8n_instances()
+        instances = await SettingsService().get_n8n_instances()
         return instances
     except Exception as e:
         logger.error(f"Error getting n8n instances: {e}", exc_info=True)
@@ -54,7 +54,7 @@ async def get_n8n_instances():
 async def create_n8n_instance(instance: N8nInstanceCreate):
     """Create new n8n instance configuration"""
     try:
-        created_instance = await settings_service.create_n8n_instance(instance)
+        created_instance = await SettingsService().create_n8n_instance(instance)
         return created_instance
     except Exception as e:
         logger.error(f"Error creating n8n instance: {e}", exc_info=True)
@@ -67,7 +67,7 @@ async def update_n8n_instance(
 ):
     """Update n8n instance configuration"""
     try:
-        updated_instance = await settings_service.update_n8n_instance(
+        updated_instance = await SettingsService().update_n8n_instance(
             instance_id, instance_update
         )
         return updated_instance
@@ -79,7 +79,7 @@ async def update_n8n_instance(
 async def delete_n8n_instance(instance_id: str):
     """Delete n8n instance configuration"""
     try:
-        await settings_service.delete_n8n_instance(instance_id)
+        await SettingsService().delete_n8n_instance(instance_id)
         return {"message": "n8n instance deleted successfully"}
     except Exception as e:
         logger.error(f"Error deleting n8n instance: {e}", exc_info=True)
@@ -90,12 +90,12 @@ async def test_n8n_connection(instance_id: str):
     """Test connection to n8n instance"""
     try:
         # Get instance configuration
-        instance = await settings_service.get_n8n_instance(instance_id)
+        instance = await SettingsService().get_n8n_instance(instance_id)
         if not instance:
             raise HTTPException(status_code=404, detail="n8n instance not found")
         
         # Test connection
-        test_result = await n8n_service.test_connection(
+        test_result = await N8nService().test_connection(
             url=instance.url,
             api_key=instance.api_key
         )
@@ -117,7 +117,7 @@ async def test_n8n_connection(instance_id: str):
 async def set_default_n8n_instance(instance_id: str):
     """Set n8n instance as default"""
     try:
-        await settings_service.set_default_n8n_instance(instance_id)
+        await SettingsService().set_default_n8n_instance(instance_id)
         return {"message": "Default n8n instance updated successfully"}
     except Exception as e:
         logger.error(f"Error setting default n8n instance: {e}", exc_info=True)
@@ -127,7 +127,7 @@ async def set_default_n8n_instance(instance_id: str):
 async def get_ai_providers():
     """Get available AI providers and their status"""
     try:
-        providers = await settings_service.get_ai_providers_status()
+        providers = await SettingsService().get_ai_providers_status()
         return providers
     except Exception as e:
         logger.error(f"Error getting AI providers status: {e}", exc_info=True)
@@ -137,7 +137,7 @@ async def get_ai_providers():
 async def reset_settings():
     """Reset settings to default values"""
     try:
-        await settings_service.reset_to_defaults()
+        await SettingsService().reset_to_defaults()
         return {"message": "Settings reset to defaults successfully"}
     except Exception as e:
         logger.error(f"Error resetting settings: {e}", exc_info=True)
@@ -147,7 +147,7 @@ async def reset_settings():
 async def export_settings():
     """Export user settings"""
     try:
-        settings_data = await settings_service.export_settings()
+        settings_data = await SettingsService().export_settings()
         return {
             "message": "Settings exported successfully",
             "data": settings_data
@@ -160,7 +160,7 @@ async def export_settings():
 async def import_settings(settings_data: dict):
     """Import user settings"""
     try:
-        await settings_service.import_settings(settings_data)
+        await SettingsService().import_settings(settings_data)
         return {"message": "Settings imported successfully"}
     except Exception as e:
         logger.error(f"Error importing settings: {e}", exc_info=True)

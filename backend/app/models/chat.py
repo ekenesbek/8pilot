@@ -40,6 +40,14 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     provider: Literal["openai", "anthropic"] = "openai"
     context: Optional[dict] = {}
+    
+    # API keys passed from frontend
+    openai_api_key: Optional[str] = None
+    anthropic_api_key: Optional[str] = None
+    
+    # n8n API credentials passed from frontend
+    n8n_api_url: Optional[str] = None
+    n8n_api_key: Optional[str] = None
 
 class ChatResponse(BaseModel):
     """Response from AI provider"""

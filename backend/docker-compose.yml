@@ -10,10 +10,11 @@ services:
       - DEBUG=true
       - PORT=8000
       - HOST=0.0.0.0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - N8N_DEFAULT_URL=${N8N_DEFAULT_URL}
-      - N8N_DEFAULT_API_KEY=${N8N_DEFAULT_API_KEY}
+      # API keys are now passed from frontend, not loaded from .env
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - N8N_DEFAULT_URL=${N8N_DEFAULT_URL}
+      # - N8N_DEFAULT_API_KEY=${N8N_DEFAULT_API_KEY}
     volumes:
       - ./logs:/app/logs
       - .:/app

@@ -34,14 +34,12 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     redis_url: Optional[str] = "redis://localhost:6379"
     
-    # AI Providers
-    openai_api_key: Optional[str] = None
-    anthropic_api_key: Optional[str] = None
+    # AI Providers - API keys will be passed from frontend
     default_ai_provider: str = "openai"
     
-    # n8n Integration
-    n8n_default_url: Optional[str] = None
-    n8n_default_api_key: Optional[str] = None
+    # n8n Integration - API keys will be passed from frontend
+    # n8n_default_url: Optional[str] = None
+    # n8n_default_api_key: Optional[str] = None
     
     # Chat settings
     max_chat_history: int = 100
@@ -59,12 +57,14 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        # Allow extra fields from .env file to be ignored
+        extra = "ignore"
 
 # Get the backend directory path
 BACKEND_DIR = Path(__file__).parent.parent
 ENV_FILE = BACKEND_DIR / ".env"
 
-# Load .env file manually if it exists
+# Load .env file manually if it exists (only for basic app settings)
 if ENV_FILE.exists():
     print(f"Loading .env file from: {ENV_FILE}")
     from dotenv import load_dotenv
@@ -83,7 +83,7 @@ else:
 # Create settings instance
 settings = Settings()
 
-# Override with environment variables if present
+# Override with environment variables if present (only basic app settings)
 if os.getenv("DEBUG"):
     settings.debug = os.getenv("DEBUG").lower() == "true"
 
@@ -96,27 +96,13 @@ if os.getenv("PORT"):
 if os.getenv("HOST"):
     settings.host = os.getenv("HOST")
 
-if os.getenv("OPENAI_API_KEY"):
-    settings.openai_api_key = os.getenv("OPENAI_API_KEY")
-
-if os.getenv("ANTHROPIC_API_KEY"):
-    settings.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-
-if os.getenv("N8N_DEFAULT_URL"):
-    settings.n8n_default_url = os.getenv("N8N_DEFAULT_URL")
-
-if os.getenv("N8N_DEFAULT_API_KEY"):
-    settings.n8n_default_api_key = os.getenv("N8N_DEFAULT_API_KEY")
+# Note: API keys are no longer loaded from environment variables
+# They will be passed from the frontend with each request
 
 # Debug output
-print(f"Loaded OpenAI API key: {settings.openai_api_key[:20] if settings.openai_api_key else 'None'}...")
-print(f"Loaded n8n URL: {settings.n8n_default_url}")
 print(f"Debug mode: {settings.debug}")
-
-# Additional debug info
-print(f"Environment OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', 'Not set')[:20] if os.getenv('OPENAI_API_KEY') else 'Not set'}")
-print(f"Settings OPENAI_API_KEY: {settings.openai_api_key[:20] if settings.openai_api_key else 'Not set'}")
 print(f"Current working directory: {os.getcwd()}")
 print(f"Backend directory: {BACKEND_DIR}")
 print(f"ENV file path: {ENV_FILE}")
 print(f"Alternative ENV file path: {BACKEND_DIR.parent / '.env'}")
+print("Note: API keys are now passed from frontend, not loaded from .env")

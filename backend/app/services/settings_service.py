@@ -19,10 +19,11 @@ class SettingsService:
     
     def __init__(self):
         # In-memory storage (replace with database in production)
+        # API keys are now passed from frontend, not loaded from .env
         self.user_settings = UserSettings(
             user_id="default_user",
-            openai_api_key=settings.openai_api_key,
-            anthropic_api_key=settings.anthropic_api_key,
+            openai_api_key=None,  # Will be set from frontend
+            anthropic_api_key=None,  # Will be set from frontend
             active_provider=settings.default_ai_provider,
             auto_apply_workflows=False,
             save_chat_history=True,
@@ -37,18 +38,19 @@ class SettingsService:
         self.n8n_instances: Dict[str, N8nInstance] = {}
         
         # Initialize with default n8n instance if configured
-        if settings.n8n_default_url and settings.n8n_default_api_key:
-            default_instance = N8nInstance(
-                instance_id="default",
-                name="Default n8n Instance",
-                url=settings.n8n_default_url,
-                api_key=settings.n8n_default_api_key,
-                is_default=True,
-                is_active=True,
-                created_at=datetime.utcnow()
-            )
-            self.n8n_instances["default"] = default_instance
-            self.user_settings.default_n8n_instance = "default"
+        # API keys are now passed from frontend, not loaded from .env
+        # if settings.n8n_default_url and settings.n8n_default_api_key:
+        #     default_instance = N8nInstance(
+        #         instance_id="default",
+        #         name="Default n8n Instance",
+        #         url=settings.n8n_default_url,
+        #         api_key=settings.n8n_default_api_key,
+        #         is_default=True,
+        #         is_active=True,
+        #         created_at=datetime.utcnow()
+        #     )
+        #     self.n8n_instances["default"] = default_instance
+        #     self.user_settings.default_n8n_instance = "default"
     
     async def get_user_settings(self) -> UserSettings:
         """Get current user settings"""

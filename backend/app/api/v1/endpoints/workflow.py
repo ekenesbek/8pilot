@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Service instances
 workflow_service = WorkflowService()
-n8n_service = N8nService()
+# n8n_service = N8nService()  # Remove global initialization
 
 @router.get("/{workflow_id}", response_model=Workflow)
 async def get_workflow(workflow_id: str):
@@ -61,6 +61,9 @@ async def apply_workflow_to_n8n(
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
         
+        # Create n8n service instance
+        n8n_service = N8nService()
+        
         # Apply to n8n
         result = await n8n_service.apply_workflow(workflow)
         
@@ -87,6 +90,7 @@ async def apply_workflow_to_n8n(
 async def execute_workflow(workflow_id: str):
     """Execute workflow on n8n instance"""
     try:
+        n8n_service = N8nService()
         execution = await n8n_service.execute_workflow(workflow_id)
         return execution
     except Exception as e:
