@@ -114,10 +114,11 @@ class AuthManager {
     this.init();
   }
 
-  init() {
+  async init() {
     console.log('AuthManager: Initializing...');
     this.setupAuthForms();
-    this.checkAuthStatus();
+    console.log('Auth forms setup complete, checking auth status...');
+    await this.checkAuthStatus();
     console.log('AuthManager: Initialization complete');
   }
 
@@ -370,10 +371,13 @@ class AuthManager {
   }
 
   async checkAuthStatus() {
+    console.log('checkAuthStatus called');
     try {
       const result = await this.getStorageData(['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode']);
+      console.log('Storage data result:', result);
       
       if (result.isDemoMode) {
+        console.log('Demo mode detected, showing demo mode');
         this.isDemoMode = true;
         this.hideAuthOverlay();
         this.showDemoMode();
@@ -381,21 +385,25 @@ class AuthManager {
       }
       
       if (result.isAuthenticated && result.authToken) {
+        console.log('User is authenticated, verifying token');
         // Verify token with backend
         const isValid = await this.verifyToken(result.authToken);
         if (isValid) {
+          console.log('Token is valid, showing authenticated mode');
           this.isAuthenticated = true;
           this.currentUser = result.userInfo;
           this.hideAuthOverlay();
           this.showAuthenticatedMode();
           return;
         } else {
+          console.log('Token is invalid, clearing auth data');
           // Token is invalid, clear it
           await this.clearAuthData();
         }
       }
       
       // Not authenticated, show auth overlay
+      console.log('Not authenticated, showing auth overlay');
       this.showAuthOverlay();
     } catch (error) {
       console.error('Error checking auth status:', error);
@@ -589,11 +597,15 @@ class AuthManager {
   }
 
   showAuthOverlay() {
+    console.log('showAuthOverlay called');
     this.authOverlay.classList.remove('hidden');
+    console.log('Auth overlay shown');
   }
 
   hideAuthOverlay() {
+    console.log('hideAuthOverlay called');
     this.authOverlay.classList.add('hidden');
+    console.log('Auth overlay hidden');
   }
 
 
@@ -663,6 +675,7 @@ class AuthManager {
   }
 
   showDemoMode() {
+    console.log('showDemoMode called');
     // Show demo mode indicators
     const demoIndicator = document.createElement('div');
     demoIndicator.className = 'demo-indicator';
@@ -679,15 +692,24 @@ class AuthManager {
     `;
     
     const container = document.querySelector('.sidepanel-container');
-    container.insertBefore(demoIndicator, container.firstChild);
+    if (container) {
+      container.insertBefore(demoIndicator, container.firstChild);
+      console.log('Demo indicator added to container');
+    } else {
+      console.error('Container not found for demo indicator');
+    }
   }
 
   showAuthenticatedMode() {
+    console.log('showAuthenticatedMode called');
     // Show logout button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.style.display = 'block';
       logoutBtn.addEventListener('click', () => this.logout());
+      console.log('Logout button shown and listener added');
+    } else {
+      console.error('Logout button not found');
     }
     
     // Update user info display
@@ -889,7 +911,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Initialize authentication manager first
   console.log('Creating AuthManager...');
-  const authManager = new AuthManager();
+  window.authManager = new AuthManager();
+  console.log('AuthManager created:', window.authManager);
   
   // Initialize theme manager
   console.log('Creating ThemeManager...');
@@ -922,6 +945,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initializeUI();
   
   console.log('Side panel initialized successfully');
+  console.log('Final authManager state:', window.authManager);
 });
 
 // Listen for theme changes
@@ -1118,6 +1142,7 @@ function saveCurrentChat() {
 
 // Setup all event listeners
 function setupEventListeners() {
+  console.log('Setting up event listeners...');
   // Language switcher (both top and old positions)
   const langBtns = document.querySelectorAll('.lang-btn');
   console.log('Found language buttons:', langBtns.length);
@@ -1155,8 +1180,17 @@ function setupEventListeners() {
   // Settings functionality
   document.getElementById('close-settings-btn').addEventListener('click', hideSettings);
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
-  document.getElementById('test-backend-btn').addEventListener('click', testBackendConnection);
   document.getElementById('test-connection-btn').addEventListener('click', testN8nConnection);
+  document.getElementById('logout-settings-btn').addEventListener('click', () => {
+    console.log('Logout button clicked, authManager:', window.authManager);
+    if (window.authManager) {
+      window.authManager.logout();
+    } else {
+      console.error('authManager not available');
+      // Fallback: reload page to show auth overlay
+      window.location.reload();
+    }
+  });
 
   // Provider toggle
   document.querySelectorAll('.provider-btn').forEach(btn => {
@@ -1189,14 +1223,18 @@ function setupEventListeners() {
   document.querySelectorAll('.category').forEach(cat => {
     cat.addEventListener('click', (e) => filterTemplates(e.target.dataset.category));
   });
+  
+  console.log('Event listeners setup complete');
 }
 
 // Initialize UI
 function initializeUI() {
+  console.log('Initializing UI...');
   updateSettingsUI();
   addWelcomeMessage();
   initializeTemplates();
   switchTab('chat'); // Start with chat tab
+  console.log('UI initialization complete');
 }
 
 // Update status indicators

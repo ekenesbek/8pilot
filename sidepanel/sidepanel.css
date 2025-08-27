@@ -978,9 +978,15 @@ body {
 
 .settings-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--border-primary);
+}
+
+.settings-actions .primary-btn,
+.settings-actions .danger-btn {
+  padding: 8px 14px;
+  font-size: 12px;
 }
 
 /* Loading States */
