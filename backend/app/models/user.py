@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from pydantic.networks import EmailStr
 from typing import Optional
 from datetime import datetime
@@ -23,7 +23,13 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8, description="Password must be at least 8 characters long")
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None

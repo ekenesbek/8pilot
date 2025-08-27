@@ -61,6 +61,13 @@ class UserService:
                 detail="Email already registered"
             )
         
+        # Validate password length (additional check)
+        if len(user_data.password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 8 characters long"
+            )
+        
         # Create new user
         hashed_password = self.get_password_hash(user_data.password)
         db_user = User(
@@ -159,6 +166,13 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Current password is incorrect"
+            )
+        
+        # Validate new password length
+        if len(new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be at least 8 characters long"
             )
         
         user.hashed_password = self.get_password_hash(new_password)
