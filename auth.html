@@ -3,7 +3,395 @@
 <head>
   <meta charset="UTF-8">
   <title>8pilot - Авторизация</title>
-  <link rel="stylesheet" href="auth.css">
+  <style>
+    /* 8pilot Brand Colors - Light Theme */
+    :root {
+      /* Primary Brand Colors */
+      --primary-blue: #0ea5e9;
+      --primary-cyan: #38bdf8;
+      --primary-sky: #7dd3fc;
+      --primary-teal: #14b8a6;
+      --primary-indigo: #6366f1;
+      
+      /* Secondary Colors */
+      --secondary-blue: #0284c7;
+      --secondary-cyan: #0ea5e9;
+      --secondary-sky: #38bdf8;
+      
+      /* Accent Colors */
+      --accent-purple: #8b5cf6;
+      --accent-violet: #a855f7;
+      
+      /* Background Colors - Light */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f0f9ff;
+      --bg-tertiary: #e0f2fe;
+      --bg-accent: #f8fafc;
+      
+      /* Text Colors - Light */
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-tertiary: #64748b;
+      --text-muted: #94a3b8;
+      
+      /* Border Colors */
+      --border-primary: #e2e8f0;
+      --border-secondary: #cbd5e0;
+      --border-accent: #0ea5e9;
+      
+      /* Status Colors */
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #0ea5e9, #38bdf8, #7dd3fc);
+      --gradient-secondary: linear-gradient(135deg, #0ea5e9, #38bdf8);
+      --gradient-accent: linear-gradient(135deg, #0ea5e9, #14b8a6);
+      --gradient-purple: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(14, 165, 233, 0.1);
+      --shadow-md: 0 2px 8px rgba(14, 165, 233, 0.15);
+      --shadow-lg: 0 4px 12px rgba(14, 165, 233, 0.2);
+    }
+
+    /* Dark theme support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1e;
+        --bg-secondary: #2a2a2a;
+        --bg-tertiary: #3a3a3a;
+        --bg-accent: #2a2a2a;
+        
+        --text-primary: #ffffff;
+        --text-secondary: #e0e0e0;
+        --text-tertiary: #b0b0b0;
+        --text-muted: #888888;
+        
+        --border-primary: #404040;
+        --border-secondary: #505050;
+        
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      width: 380px;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 600px;
+      transition: all 0.3s ease;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    /* Logo and Header */
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-direction: row;
+      gap: 15px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Override h1 styles for brand title */
+    h1.brand-title {
+      background: var(--gradient-purple);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 32px;
+      margin: 0;
+      line-height: 1;
+      /* Ensure gradient text works in all browsers */
+      display: inline-block;
+      background-size: 100%;
+      background-repeat: repeat;
+      /* Fallback for browsers that don't support gradient text */
+      color: var(--primary-blue);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin: 0;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      text-align: center;
+      margin: 0 0 25px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Language Switcher */
+    .language-switcher {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--primary-blue);
+      color: white;
+      border-color: var(--primary-blue);
+    }
+
+    .lang-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-accent);
+    }
+
+    /* Auth Tabs */
+    .auth-tabs {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-header {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      padding: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      border-radius: 6px;
+      transition: color 0.3s ease;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+    }
+
+    .tab-btn.active {
+      color: var(--text-primary);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-header::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: calc(50% - 4px);
+      height: calc(100% - 8px);
+      background: var(--bg-primary);
+      border-radius: 6px;
+      transition: transform 0.3s ease;
+      z-index: 0;
+    }
+
+    .tab-header[data-active-tab="signup"]::after {
+      transform: translateX(100%);
+    }
+
+    /* Auth Forms */
+    .auth-form {
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-primary);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .auth-btn:hover {
+      background: var(--secondary-blue);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .auth-btn:active {
+      transform: translateY(0);
+    }
+
+    .form-footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .forgot-password {
+      color: var(--primary-blue);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s ease;
+    }
+
+    .forgot-password:hover {
+      color: var(--secondary-blue);
+      text-decoration: underline;
+    }
+
+    /* Demo Section */
+    .demo-section {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-primary);
+      text-align: center;
+    }
+
+    .demo-text {
+      margin: 0 0 15px 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .demo-btn {
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-primary);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .demo-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-accent);
+      color: var(--text-primary);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    /* AI Shimmer Effect */
+    .ai-shimmer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+      z-index: -1;
+    }
+
+    /* Status indicator styles */
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-indicator.active {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-indicator.error {
+      background: var(--error);
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    }
+
+    .status-indicator.warning {
+      background: var(--warning);
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+  </style>
 </head>
 <body>
   <div class="ai-shimmer"></div>
@@ -17,7 +405,7 @@
   <div class="container">
     <div class="logo-container">
       <img src="icons/pixelated_sample_32.png" alt="8pilot" class="logo">
-      <h1>8pilot</h1>
+      <h1 class="brand-title">8pilot</h1>
     </div>
     
     <p class="subtitle" data-i18n="subtitle">AI-powered assistant for building n8n workflows efficiently.</p>
@@ -70,11 +458,6 @@
           <button type="submit" class="auth-btn" data-i18n="signup_btn">Зарегистрироваться</button>
         </form>
       </div>
-    </div>
-    
-    <div class="status-container">
-      <div id="status-indicator" class="status-indicator"></div>
-      <span id="status-text" data-i18n="ready_status">Готов к авторизации</span>
     </div>
     
     <div class="demo-section">

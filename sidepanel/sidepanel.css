@@ -1,4 +1,4 @@
-/* 8pilot Brand Colors - New Color Scheme */
+/* 8pilot Brand Colors - Light Theme */
 :root {
   /* Primary Brand Colors */
   --primary-blue: #0ea5e9;
@@ -16,19 +16,17 @@
   --accent-purple: #8b5cf6;
   --accent-violet: #a855f7;
   
-  /* Background Colors */
+  /* Background Colors - Light */
   --bg-primary: #ffffff;
   --bg-secondary: #f0f9ff;
   --bg-tertiary: #e0f2fe;
   --bg-accent: #f8fafc;
   
-  /* Text Colors */
+  /* Text Colors - Light */
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-tertiary: #64748b;
-  --text-quaternary: #94a3b8;
-  --text-muted: #cbd5e0;
-  --text-inverse: #ffffff;
+  --text-muted: #94a3b8;
   
   /* Border Colors */
   --border-primary: #e2e8f0;
@@ -52,7 +50,7 @@
   --shadow-lg: 0 4px 12px rgba(14, 165, 233, 0.2);
 }
 
-/* Dark theme - Matching n8n exactly */
+/* Dark theme support */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-primary: #1e1e1e;
@@ -63,9 +61,7 @@
     --text-primary: #ffffff;
     --text-secondary: #e0e0e0;
     --text-tertiary: #b0b0b0;
-    --text-quaternary: #888888;
-    --text-muted: #666666;
-    --text-inverse: #1e1e1e;
+    --text-muted: #888888;
     
     --border-primary: #404040;
     --border-secondary: #505050;
@@ -1418,7 +1414,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px;
+  padding: 20px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -1428,12 +1424,13 @@ body {
 }
 
 .auth-container {
+  position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
   background: var(--bg-secondary);
   border-radius: 8px;
-  padding: 20px;
-  border: 1px solid var(--border-primary);
+  padding: 50px 20px 20px 20px;
+  border: 2px solid var(--border-primary);
   box-shadow: var(--shadow-md);
   max-height: 90vh;
   overflow-y: auto;
@@ -1442,21 +1439,54 @@ body {
 .auth-header {
   text-align: center;
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.auth-logo-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .auth-logo {
   width: 32px;
   height: 32px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
 }
 
 .auth-header h2 {
-  margin: 0 0 8px 0;
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+/* Brand title with gradient for auth header */
+.auth-brand-title {
+  background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 24px;
+  margin: 0;
+  line-height: 1;
+  /* Ensure gradient text works in all browsers */
+  display: inline-block;
+  background-size: 100%;
+  background-repeat: repeat;
+  /* Fallback for browsers that don't support gradient text */
+  color: var(--primary-blue);
+  /* Additional properties for better gradient support */
+  background-attachment: fixed;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .auth-subtitle {
@@ -1464,6 +1494,73 @@ body {
   font-size: 12px;
   color: var(--text-secondary);
   line-height: 1.3;
+}
+
+/* Language Switcher - Top Right */
+.language-switcher-top {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  z-index: 10;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Language Switcher - Old position (removed) */
+.language-switcher {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lang-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  min-width: 24px;
+  text-align: center;
+}
+
+.lang-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.lang-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.lang-btn:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 16px;
+  background: var(--border-primary);
+}
+
+.lang-btn.active {
+  background: var(--primary-blue);
+  color: white;
+  border-color: var(--primary-blue);
+}
+
+.lang-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-accent);
 }
 
 /* Auth Tabs */

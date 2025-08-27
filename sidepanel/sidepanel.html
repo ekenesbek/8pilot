@@ -4,42 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>8pilot</title>
-  <link rel="stylesheet" href="sidepanel.css">
+  <link rel="stylesheet" href="sidepanel.css?v=2.4">
 </head>
 <body>
   <!-- Authentication Overlay -->
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-container">
+      <!-- Language Switcher - Top Right -->
+      <div class="language-switcher-top">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+      </div>
+      
       <div class="auth-header">
-        <img src="../icons/pixelated_sample_32.png" alt="8pilot" class="auth-logo">
-        <h2>8pilot</h2>
-        <p class="auth-subtitle">AI-powered assistant for building n8n workflows</p>
+        <div class="auth-logo-container">
+          <img src="../icons/pixelated_sample_32.png" alt="8pilot" class="auth-logo">
+          <h2 class="auth-brand-title">8pilot</h2>
+        </div>
+        <p class="auth-subtitle" data-i18n="subtitle">AI-powered assistant for building n8n workflows</p>
       </div>
       
       <div class="auth-tabs">
         <div class="tab-header">
-          <button class="tab-btn active" data-tab="login">Вход</button>
-          <button class="tab-btn" data-tab="signup">Регистрация</button>
+          <button class="tab-btn active" data-tab="login" data-i18n="login">Login</button>
+          <button class="tab-btn" data-tab="signup" data-i18n="signup">Sign Up</button>
         </div>
         
         <!-- Login Form -->
         <div id="login-form" class="auth-form active">
           <form id="loginForm">
             <div class="form-group">
-              <label for="login-email">Email:</label>
+              <label for="login-email" data-i18n="email">Email:</label>
               <input type="email" id="login-email" name="email" required placeholder="your@email.com">
             </div>
             
             <div class="form-group">
-              <label for="login-password">Пароль:</label>
-              <input type="password" id="login-password" name="password" required placeholder="Введите пароль">
+              <label for="login-password" data-i18n="password">Password:</label>
+              <input type="password" id="login-password" name="password" required placeholder="Enter password" data-i18n-placeholder="enter_password">
             </div>
             
-            <button type="submit" class="auth-btn">Войти</button>
+            <button type="submit" class="auth-btn" data-i18n="login_btn">Login</button>
           </form>
           
           <div class="form-footer">
-            <a href="#" class="forgot-password">Забыли пароль?</a>
+            <a href="#" class="forgot-password" data-i18n="forgot_password">Forgot Password?</a>
           </div>
         </div>
         
@@ -47,34 +55,26 @@
         <div id="signup-form" class="auth-form">
           <form id="signupForm">
             <div class="form-group">
-              <label for="signup-email">Email:</label>
+              <label for="signup-email" data-i18n="email">Email:</label>
               <input type="email" id="signup-email" name="email" required placeholder="your@email.com">
             </div>
             
             <div class="form-group">
-              <label for="signup-password">Пароль:</label>
-              <input type="password" id="signup-password" name="password" required placeholder="Введите пароль (минимум 6 символов)">
+              <label for="signup-password" data-i18n="password">Password:</label>
+              <input type="password" id="signup-password" name="password" required placeholder="Enter password (minimum 6 characters)" data-i18n-placeholder="password_min_6">
             </div>
             
             <div class="form-group">
-              <label for="signup-confirm-password">Подтвердите пароль:</label>
-              <input type="password" id="signup-confirm-password" name="confirmPassword" required placeholder="Повторите пароль">
+              <label for="signup-confirm-password" data-i18n="confirm_password">Confirm Password:</label>
+              <input type="password" id="signup-confirm-password" name="confirmPassword" required placeholder="Repeat password" data-i18n-placeholder="repeat_password">
             </div>
             
-            <button type="submit" class="auth-btn">Зарегистрироваться</button>
+            <button type="submit" class="auth-btn" data-i18n="signup_btn">Sign Up</button>
           </form>
         </div>
       </div>
       
-      <div class="auth-status">
-        <div id="auth-status-indicator" class="status-indicator"></div>
-        <span id="auth-status-text">Готов к авторизации</span>
-      </div>
-      
-      <div class="demo-section">
-        <p class="demo-text">Хотите попробовать без регистрации?</p>
-        <button id="demo-mode" class="demo-btn">Демо режим</button>
-      </div>
+
     </div>
   </div>
 
@@ -322,6 +322,6 @@
     </div>
   </div>
 
-  <script src="sidepanel.js"></script>
+  <script src="sidepanel.js?v=1.4"></script>
 </body>
 </html>

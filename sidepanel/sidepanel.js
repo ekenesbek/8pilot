@@ -1,5 +1,82 @@
 // sidepanel/sidepanel.js - Full integration with chatbot logic + Theme Support + Authentication
 
+// Language support
+const translations = {
+  en: {
+    subtitle: "AI-powered assistant for building n8n workflows",
+    login: "Login",
+    signup: "Sign Up",
+    email: "Email:",
+    password: "Password:",
+    confirm_password: "Confirm Password:",
+    login_btn: "Login",
+    signup_btn: "Sign Up",
+    forgot_password: "Forgot Password?",
+    demo_text: "Want to try without registration?",
+    demo_btn: "Demo Mode",
+    enter_password: "Enter password",
+    password_min_6: "Enter password (minimum 6 characters)",
+    repeat_password: "Repeat password"
+  },
+  ru: {
+    subtitle: "AI-помощник для эффективного создания n8n рабочих процессов",
+    login: "Вход",
+    signup: "Регистрация",
+    email: "Email:",
+    password: "Пароль:",
+    confirm_password: "Подтвердите пароль:",
+    login_btn: "Войти",
+    signup_btn: "Зарегистрироваться",
+    forgot_password: "Забыли пароль?",
+    demo_text: "Хотите попробовать без регистрации?",
+    demo_btn: "Демо режим",
+    enter_password: "Введите пароль",
+    password_min_6: "Введите пароль (минимум 6 символов)",
+    repeat_password: "Повторите пароль"
+  }
+};
+
+let currentLang = 'en';
+
+// Language switching functionality
+function setLanguage(lang) {
+  console.log('Setting language to:', lang);
+  currentLang = lang;
+  
+  // Update active button
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+  });
+  
+  // Update all translatable elements
+  const translatableElements = document.querySelectorAll('[data-i18n]');
+  console.log('Found translatable elements:', translatableElements.length);
+  
+  translatableElements.forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    console.log('Updating element with key:', key, 'for language:', lang);
+    if (translations[lang] && translations[lang][key]) {
+      element.textContent = translations[lang][key];
+      console.log('Updated element:', key, 'to:', translations[lang][key]);
+    } else {
+      console.warn('Translation not found for key:', key, 'in language:', lang);
+    }
+  });
+  
+  // Update placeholders
+  const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+  console.log('Found placeholder elements:', placeholderElements.length);
+  
+  placeholderElements.forEach(element => {
+    const key = element.getAttribute('data-i18n-placeholder');
+    if (translations[lang] && translations[lang][key]) {
+      element.placeholder = translations[lang][key];
+    }
+  });
+  
+  console.log('Language switch completed. Current language:', currentLang);
+}
+
 // Authentication System
 class AuthManager {
   constructor() {
@@ -16,6 +93,19 @@ class AuthManager {
   }
 
   setupAuthForms() {
+    // Language switcher setup
+    const langBtns = document.querySelectorAll('.lang-btn');
+    console.log('AuthManager: Found language buttons:', langBtns.length);
+    
+    langBtns.forEach(btn => {
+      console.log('AuthManager: Adding click listener to button:', btn.getAttribute('data-lang'));
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        console.log('AuthManager: Language button clicked:', lang);
+        setLanguage(lang);
+      });
+    });
+
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');
     const authForms = document.querySelectorAll('.auth-form');
@@ -40,7 +130,9 @@ class AuthManager {
           }
         });
         
-        this.updateAuthStatus('ready', 'Готов к авторизации');
+        // Language-specific status message
+        const statusMessage = currentLang === 'ru' ? 'Готов к авторизации' : 'Ready for authentication';
+        this.updateAuthStatus('ready', statusMessage);
       });
     });
 
@@ -486,6 +578,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Setup event listeners
   setupEventListeners();
   
+  // Initialize language (set to English by default)
+  console.log('Initializing language...');
+  setLanguage('en');
+  
+  // Debug: Check if language buttons exist
+  setTimeout(() => {
+    const langBtns = document.querySelectorAll('.lang-btn');
+    console.log('Language buttons after initialization:', langBtns.length);
+    langBtns.forEach(btn => {
+      console.log('Button:', btn.getAttribute('data-lang'), 'Element:', btn);
+    });
+  }, 100);
+  
   // Get current tab and workflow info
   await getCurrentTabInfo();
   
@@ -689,6 +794,19 @@ function saveCurrentChat() {
 
 // Setup all event listeners
 function setupEventListeners() {
+  // Language switcher (both top and old positions)
+  const langBtns = document.querySelectorAll('.lang-btn');
+  console.log('Found language buttons:', langBtns.length);
+  
+  langBtns.forEach(btn => {
+    console.log('Adding click listener to button:', btn.getAttribute('data-lang'));
+    btn.addEventListener('click', () => {
+      const lang = btn.getAttribute('data-lang');
+      console.log('Language button clicked:', lang);
+      setLanguage(lang);
+    });
+  });
+
   // Header controls
   document.getElementById('refresh-btn').addEventListener('click', refreshSidePanel);
   document.getElementById('settings-btn').addEventListener('click', showSettings);
@@ -766,7 +884,7 @@ function updateStatus(type, status, text) {
     textEl.textContent = text;
   }
   
-  // Update API status specifically
+  // Update API status specifically - avoid recursive calls
   if (type === 'api') {
     const hasApiKey = settings.activeProvider === 'openai' 
       ? settings.openaiKey 
@@ -775,13 +893,19 @@ function updateStatus(type, status, text) {
     if (hasApiKey) {
       // Check if API key looks valid (basic validation)
       const isValidFormat = hasApiKey.length > 20 && hasApiKey.startsWith('sk-');
-      if (isValidFormat) {
-        updateStatus('api', 'active', `${settings.activeProvider} configured`);
-      } else {
-        updateStatus('api', 'warning', `${settings.activeProvider} key format invalid`);
+      if (isValidFormat && status !== 'active') {
+        // Only update if status is different to avoid recursion
+        indicator.className = 'status-indicator active';
+        textEl.textContent = `${settings.activeProvider} configured`;
+      } else if (!isValidFormat && status !== 'warning') {
+        // Only update if status is different to avoid recursion
+        indicator.className = 'status-indicator warning';
+        textEl.textContent = `${settings.activeProvider} key format invalid`;
       }
-    } else {
-      updateStatus('api', 'error', `${settings.activeProvider} API key required`);
+    } else if (status !== 'error') {
+      // Only update if status is different to avoid recursion
+      indicator.className = 'status-indicator error';
+      textEl.textContent = `${settings.activeProvider} API key required`;
     }
   }
 }
