@@ -173,6 +173,17 @@ button {
     background: rgba(255, 255, 255, 0.2);
 }
 
+#logout-btn {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+    flex: 1;
+}
+
+#logout-btn:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: translateY(-2px);
+}
+
 .settings-panel {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;

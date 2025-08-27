@@ -4,9 +4,92 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>8pilot</title>
-  <link rel="stylesheet" href="sidepanel.css">
+  <link rel="stylesheet" href="sidepanel.css?v=2.4">
 </head>
 <body>
+  <!-- Authentication Overlay -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-container">
+      <!-- Language Switcher - Top Right -->
+      <div class="language-switcher-top">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+      </div>
+      
+      <div class="auth-header">
+        <div class="auth-logo-container">
+          <img src="../icons/pixelated_sample_32.png" alt="8pilot" class="auth-logo">
+          <h2 class="auth-brand-title">8pilot</h2>
+        </div>
+        <p class="auth-subtitle" data-i18n="subtitle">AI-powered assistant for building n8n workflows</p>
+      </div>
+      
+      <div class="auth-tabs">
+        <div class="tab-header">
+          <button class="tab-btn active" data-tab="login" data-i18n="login">Login</button>
+          <button class="tab-btn" data-tab="signup" data-i18n="signup">Sign Up</button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form active">
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="login-email" data-i18n="email">Email:</label>
+              <input type="email" id="login-email" name="email" required placeholder="your@email.com">
+              <div class="error-message" id="login-email-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="login-password" data-i18n="password">Password:</label>
+              <input type="password" id="login-password" name="password" required placeholder="Enter password" data-i18n-placeholder="enter_password">
+              <div class="error-message" id="login-password-error"></div>
+            </div>
+            
+            <button type="submit" class="auth-btn" data-i18n="login_btn">Login</button>
+          </form>
+          
+          <div class="form-footer">
+            <a href="#" class="forgot-password" data-i18n="forgot_password">Forgot Password?</a>
+          </div>
+        </div>
+        
+        <!-- Signup Form -->
+        <div id="signup-form" class="auth-form">
+          <form id="signupForm">
+            <div class="form-group">
+              <label for="signup-email" data-i18n="email">Email:</label>
+              <input type="email" id="signup-email" name="email" required placeholder="your@email.com">
+              <div class="error-message" id="signup-email-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="password" data-i18n="password">Password:</label>
+              <input type="password" id="signup-password" name="password" required minlength="8" placeholder="Enter password (minimum 8 characters)" data-i18n-placeholder="password_min_8">
+              <div class="error-message" id="signup-password-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="signup-confirm-password" data-i18n="confirm_password">Confirm Password:</label>
+              <input type="password" id="signup-confirm-password" name="confirmPassword" required placeholder="Repeat password" data-i18n-placeholder="repeat_password">
+              <div class="error-message" id="signup-confirm-password-error"></div>
+            </div>
+            
+            <button type="submit" class="auth-btn" data-i18n="signup_btn">Sign Up</button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Demo Section -->
+      <div class="demo-section">
+        <p class="demo-text" data-i18n="demo_text">Want to try without registration?</p>
+        <button id="demo-mode" class="demo-btn" data-i18n="demo_btn">Demo Mode</button>
+      </div>
+      
+
+
+    </div>
+  </div>
+
   <div class="sidepanel-container">
     <!-- Header -->
     <div class="sidepanel-header">
@@ -30,7 +113,14 @@
         <button id="settings-btn" class="control-btn" title="Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09A1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0 1.51 1z"/>
+          </svg>
+        </button>
+        <button id="logout-btn" class="control-btn" title="Logout" style="display: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16,17 21,12 16,7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </button>
       </div>
@@ -196,6 +286,17 @@
           </div>
         </div>
 
+        <!-- Backend Configuration Section -->
+        <div class="settings-section">
+          <h4>Backend Configuration</h4>
+          <div class="form-group">
+            <label for="backend-url">Backend API URL</label>
+            <input type="text" id="backend-url" placeholder="http://localhost:8000">
+            <small>URL of your 8pilot backend server</small>
+          </div>
+          <button id="test-backend-btn" class="secondary-btn">Test Backend Connection</button>
+        </div>
+
         <!-- n8n Integration Section -->
         <div class="settings-section">
           <h4>n8n Integration</h4>
@@ -244,6 +345,6 @@
     </div>
   </div>
 
-  <script src="sidepanel.js"></script>
+  <script src="sidepanel.js?v=1.4"></script>
 </body>
 </html>

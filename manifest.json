@@ -4,16 +4,16 @@
   "description": "AI assistant for building n8n workflows",
   "manifest_version": 3,
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/pixelated_sample_32.png",
+    "48": "icons/pixelated_sample_32.png",
+    "128": "icons/pixelated_sample_32.png"
   },
   "action": {
-    "default_popup": "settings/settings.html",
+    "default_popup": "auth.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/pixelated_sample_32.png",
+      "48": "icons/pixelated_sample_32.png",
+      "128": "icons/pixelated_sample_32.png"
     }
   },
   "side_panel": {

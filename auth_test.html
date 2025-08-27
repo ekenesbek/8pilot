@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>8pilot - Тест авторизации</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin: 10px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #0ea5e9;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0284c7;
+    }
+    .result {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+  </style>
+</head>
+<body>
+  <h1>8pilot - Тест авторизации</h1>
+  
+  <div class="test-section">
+    <h2>Настройки Backend</h2>
+    <div class="form-group">
+      <label for="backend-url">Backend URL:</label>
+      <input type="text" id="backend-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+    </div>
+    <button onclick="testConnection()">Проверить подключение</button>
+    <div id="connection-result" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Регистрация пользователя</h2>
+    <div class="form-group">
+      <label for="reg-email">Email:</label>
+      <input type="email" id="reg-email" placeholder="test@example.com">
+    </div>
+    <div class="form-group">
+      <label for="reg-password">Пароль:</label>
+      <input type="password" id="reg-password" placeholder="password123">
+    </div>
+    <button onclick="registerUser()">Зарегистрироваться</button>
+    <div id="register-result" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Вход пользователя</h2>
+    <div class="form-group">
+      <label for="login-email">Email:</label>
+      <input type="email" id="login-email" placeholder="test@example.com">
+    </div>
+    <div class="form-group">
+      <label for="login-password">Пароль:</label>
+      <input type="password" id="login-password" placeholder="password123">
+    </div>
+    <button onclick="loginUser()">Войти</button>
+    <div id="login-result" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Проверка токена</h2>
+    <div class="form-group">
+      <label for="auth-token">JWT Token:</label>
+      <input type="text" id="auth-token" placeholder="Вставьте токен после входа" readonly>
+    </div>
+    <button onclick="checkToken()">Проверить токен</button>
+    <div id="token-result" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Управление токеном</h2>
+    <button onclick="clearToken()">Очистить токен</button>
+    <button onclick="copyToken()">Копировать токен</button>
+    <div id="manage-result" class="result"></div>
+  </div>
+
+  <script>
+    let currentToken = '';
+    
+    function showResult(elementId, message, type = 'info') {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = `result ${type}`;
+    }
+    
+    function getBackendUrl() {
+      return document.getElementById('backend-url').value.trim();
+    }
+    
+    async function testConnection() {
+      const url = getBackendUrl();
+      try {
+        const response = await fetch(`${url}/health`);
+        if (response.ok) {
+          showResult('connection-result', '✅ Подключение успешно!', 'success');
+        } else {
+          showResult('connection-result', `❌ Ошибка подключения: ${response.status}`, 'error');
+        }
+      } catch (error) {
+        showResult('connection-result', `❌ Ошибка подключения: ${error.message}`, 'error');
+      }
+    }
+    
+    async function registerUser() {
+      const url = getBackendUrl();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      
+      if (!email || !password) {
+        showResult('register-result', '❌ Заполните все поля', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${url}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showResult('register-result', `✅ Регистрация успешна!\nID: ${data.id}\nEmail: ${data.email}`, 'success');
+          // Автозаполнение формы входа
+          document.getElementById('login-email').value = email;
+          document.getElementById('login-password').value = password;
+        } else {
+          showResult('register-result', `❌ Ошибка регистрации: ${data.detail || 'Неизвестная ошибка'}`, 'error');
+        }
+      } catch (error) {
+        showResult('register-result', `❌ Ошибка: ${error.message}`, 'error');
+      }
+    }
+    
+    async function loginUser() {
+      const url = getBackendUrl();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      
+      if (!email || !password) {
+        showResult('login-result', '❌ Заполните все поля', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${url}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.access_token) {
+          currentToken = data.access_token;
+          document.getElementById('auth-token').value = currentToken;
+          showResult('login-result', `✅ Вход успешен!\nEmail: ${data.user.email}\nТокен получен`, 'success');
+        } else {
+          showResult('login-result', `❌ Ошибка входа: ${data.detail || 'Неверные данные'}`, 'error');
+        }
+      } catch (error) {
+        showResult('login-result', `❌ Ошибка: ${error.message}`, 'error');
+      }
+    }
+    
+    async function checkToken() {
+      if (!currentToken) {
+        showResult('token-result', '❌ Токен не найден. Сначала войдите в систему.', 'error');
+        return;
+      }
+      
+      const url = getBackendUrl();
+      
+      try {
+        const response = await fetch(`${url}/api/v1/auth/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showResult('token-result', `✅ Токен действителен!\nEmail: ${data.email}\nID: ${data.id}\nРоль: ${data.role}`, 'success');
+        } else {
+          showResult('token-result', `❌ Токен недействителен: ${data.detail || 'Неизвестная ошибка'}`, 'error');
+        }
+      } catch (error) {
+        showResult('token-result', `❌ Ошибка: ${error.message}`, 'error');
+      }
+    }
+    
+    function clearToken() {
+      currentToken = '';
+      document.getElementById('auth-token').value = '';
+      showResult('manage-result', '✅ Токен очищен', 'success');
+    }
+    
+    function copyToken() {
+      if (!currentToken) {
+        showResult('manage-result', '❌ Токен не найден', 'error');
+        return;
+      }
+      
+      navigator.clipboard.writeText(currentToken).then(() => {
+        showResult('manage-result', '✅ Токен скопирован в буфер обмена', 'success');
+      }).catch(() => {
+        showResult('manage-result', '❌ Не удалось скопировать токен', 'error');
+      });
+    }
+    
+    // Автозаполнение email при регистрации
+    document.getElementById('reg-email').addEventListener('input', function() {
+      document.getElementById('login-email').value = this.value;
+    });
+  </script>
+</body>
+</html>
