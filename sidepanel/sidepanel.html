@@ -36,11 +36,13 @@
             <div class="form-group">
               <label for="login-email" data-i18n="email">Email:</label>
               <input type="email" id="login-email" name="email" required placeholder="your@email.com">
+              <div class="error-message" id="login-email-error"></div>
             </div>
             
             <div class="form-group">
               <label for="login-password" data-i18n="password">Password:</label>
               <input type="password" id="login-password" name="password" required placeholder="Enter password" data-i18n-placeholder="enter_password">
+              <div class="error-message" id="login-password-error"></div>
             </div>
             
             <button type="submit" class="auth-btn" data-i18n="login_btn">Login</button>
@@ -57,16 +59,19 @@
             <div class="form-group">
               <label for="signup-email" data-i18n="email">Email:</label>
               <input type="email" id="signup-email" name="email" required placeholder="your@email.com">
+              <div class="error-message" id="signup-email-error"></div>
             </div>
             
             <div class="form-group">
-              <label for="signup-password" data-i18n="password">Password:</label>
-              <input type="password" id="signup-password" name="password" required placeholder="Enter password (minimum 6 characters)" data-i18n-placeholder="password_min_6">
+              <label for="password" data-i18n="password">Password:</label>
+              <input type="password" id="signup-password" name="password" required minlength="8" placeholder="Enter password (minimum 8 characters)" data-i18n-placeholder="password_min_8">
+              <div class="error-message" id="signup-password-error"></div>
             </div>
             
             <div class="form-group">
               <label for="signup-confirm-password" data-i18n="confirm_password">Confirm Password:</label>
               <input type="password" id="signup-confirm-password" name="confirmPassword" required placeholder="Repeat password" data-i18n-placeholder="repeat_password">
+              <div class="error-message" id="signup-confirm-password-error"></div>
             </div>
             
             <button type="submit" class="auth-btn" data-i18n="signup_btn">Sign Up</button>
@@ -74,6 +79,13 @@
         </div>
       </div>
       
+      <!-- Demo Section -->
+      <div class="demo-section">
+        <p class="demo-text" data-i18n="demo_text">Want to try without registration?</p>
+        <button id="demo-mode" class="demo-btn" data-i18n="demo_btn">Demo Mode</button>
+      </div>
+      
+
 
     </div>
   </div>
@@ -272,6 +284,17 @@
             <input type="password" id="anthropic-key" placeholder="sk-ant-...">
             <small>Your key is stored locally and never shared</small>
           </div>
+        </div>
+
+        <!-- Backend Configuration Section -->
+        <div class="settings-section">
+          <h4>Backend Configuration</h4>
+          <div class="form-group">
+            <label for="backend-url">Backend API URL</label>
+            <input type="text" id="backend-url" placeholder="http://localhost:8000">
+            <small>URL of your 8pilot backend server</small>
+          </div>
+          <button id="test-backend-btn" class="secondary-btn">Test Backend Connection</button>
         </div>
 
         <!-- n8n Integration Section -->

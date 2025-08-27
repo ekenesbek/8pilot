@@ -15,8 +15,21 @@ const translations = {
     demo_text: "Want to try without registration?",
     demo_btn: "Demo Mode",
     enter_password: "Enter password",
-    password_min_6: "Enter password (minimum 6 characters)",
-    repeat_password: "Repeat password"
+    password_min_8: "Enter password (minimum 8 characters)",
+    repeat_password: "Repeat password",
+    // Error messages
+    email_required: "Email is required",
+    password_required: "Password is required",
+    confirm_password_required: "Password confirmation is required",
+    password_min_length: "Password must be at least 8 characters long",
+    passwords_not_match: "Passwords do not match",
+    email_already_exists: "Email is already registered",
+    invalid_credentials: "Invalid email or password",
+    account_created: "Account created! Now you can log in.",
+    welcome_message: "Welcome!",
+    demo_mode_activated: "Going to demo mode...",
+    account_creation_error: "Error creating account",
+
   },
   ru: {
     subtitle: "AI-помощник для эффективного создания n8n рабочих процессов",
@@ -31,8 +44,21 @@ const translations = {
     demo_text: "Хотите попробовать без регистрации?",
     demo_btn: "Демо режим",
     enter_password: "Введите пароль",
-    password_min_6: "Введите пароль (минимум 6 символов)",
-    repeat_password: "Повторите пароль"
+    password_min_8: "Введите пароль (минимум 8 символов)",
+    repeat_password: "Повторите пароль",
+    // Error messages
+    email_required: "Email обязателен",
+    password_required: "Пароль обязателен",
+    confirm_password_required: "Подтверждение пароля обязательно",
+    password_min_length: "Пароль должен содержать минимум 8 символов",
+    passwords_not_match: "Пароли не совпадают",
+    email_already_exists: "Email уже зарегистрирован",
+    invalid_credentials: "Неверный email или пароль",
+    account_created: "Аккаунт создан! Теперь вы можете войти.",
+    welcome_message: "Добро пожаловать!",
+    demo_mode_activated: "Переходим в демо режим...",
+    account_creation_error: "Ошибка при создании аккаунта",
+
   }
 };
 
@@ -84,15 +110,20 @@ class AuthManager {
     this.isDemoMode = false;
     this.currentUser = null;
     this.authOverlay = document.getElementById('auth-overlay');
+    this.tokenRefreshTimer = null;
     this.init();
   }
 
   init() {
+    console.log('AuthManager: Initializing...');
     this.setupAuthForms();
     this.checkAuthStatus();
+    console.log('AuthManager: Initialization complete');
   }
 
   setupAuthForms() {
+    console.log('AuthManager: Setting up auth forms...');
+    
     // Language switcher setup
     const langBtns = document.querySelectorAll('.lang-btn');
     console.log('AuthManager: Found language buttons:', langBtns.length);
@@ -130,37 +161,89 @@ class AuthManager {
           }
         });
         
-        // Language-specific status message
-        const statusMessage = currentLang === 'ru' ? 'Готов к авторизации' : 'Ready for authentication';
-        this.updateAuthStatus('ready', statusMessage);
+        // Clear errors when switching tabs
+        if (targetTab === 'login') {
+          this.clearLoginErrors();
+        } else if (targetTab === 'signup') {
+          this.clearSignupErrors();
+        }
+        
+
       });
     });
 
     // Login form
     const loginForm = document.getElementById('loginForm');
-    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+    if (loginForm) {
+      console.log('AuthManager: Found login form, adding submit listener');
+      loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+      
+      // Clear errors on input
+      document.getElementById('login-email').addEventListener('input', () => {
+        this.clearFieldError('login-email-error');
+      });
+      document.getElementById('login-password').addEventListener('input', () => {
+        this.clearFieldError('login-password-error');
+      });
+    } else {
+      console.error('AuthManager: Login form not found!');
+    }
 
     // Signup form
     const signupForm = document.getElementById('signupForm');
-    signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+    if (signupForm) {
+      console.log('AuthManager: Found signup form, adding submit listener');
+      signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+      
+      // Clear errors on input
+      document.getElementById('signup-email').addEventListener('input', () => {
+        this.clearFieldError('signup-email-error');
+      });
+      document.getElementById('signup-password').addEventListener('input', () => {
+        this.clearFieldError('signup-password-error');
+      });
+      document.getElementById('signup-confirm-password').addEventListener('input', () => {
+        this.clearFieldError('signup-confirm-password-error');
+      });
+    } else {
+      console.error('AuthManager: Signup form not found!');
+    }
 
     // Demo mode
     const demoBtn = document.getElementById('demo-mode');
-    demoBtn.addEventListener('click', () => this.activateDemoMode());
+    if (demoBtn) {
+      console.log('AuthManager: Found demo button, adding click listener');
+      demoBtn.addEventListener('click', () => this.activateDemoMode());
+    } else {
+      console.error('AuthManager: Demo button not found!');
+    }
   }
 
   async handleLogin(e) {
     e.preventDefault();
     
+    // Clear previous errors
+    this.clearLoginErrors();
+    
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     
-    if (!email || !password) {
-      this.showAuthMessage('error', 'Пожалуйста, заполните все поля');
-      return;
+    // Validate fields
+    let hasErrors = false;
+    
+    if (!email) {
+      this.showFieldError('login-email-error', this.getTranslation('email_required'));
+      hasErrors = true;
     }
     
-    this.updateAuthStatus('loading', 'Выполняется вход...');
+    if (!password) {
+      this.showFieldError('login-password-error', this.getTranslation('password_required'));
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      return;
+    }
     
     try {
       const backendUrl = await this.getBackendUrl();
@@ -174,8 +257,7 @@ class AuthManager {
       
       if (data.access_token) {
         await this.saveAuthData(data);
-        this.updateAuthStatus('success', 'Вход выполнен успешно!');
-        this.showAuthMessage('success', 'Добро пожаловать!');
+        this.showAuthMessage('success', this.getTranslation('welcome_message'));
         
         setTimeout(() => this.hideAuthOverlay(), 1500);
       } else {
@@ -183,48 +265,75 @@ class AuthManager {
       }
     } catch (error) {
       console.error('Login error:', error);
-      this.updateAuthStatus('error', 'Ошибка входа');
-      this.showAuthMessage('error', error.message || 'Неверный email или пароль');
+      
+      // Show generic error message for login under password field
+      this.showFieldError('login-password-error', this.getTranslation('invalid_credentials'));
     }
   }
 
   async handleSignup(e) {
     e.preventDefault();
+    console.log('Signup form submitted');
+    
+    // Clear previous errors
+    this.clearSignupErrors();
     
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
     const confirmPassword = document.getElementById('signup-confirm-password').value;
     
-    if (!email || !password || !confirmPassword) {
-      this.showAuthMessage('error', 'Пожалуйста, заполните все поля');
+    console.log('Form data:', { email, passwordLength: password.length, confirmPasswordLength: confirmPassword.length });
+    
+    // Validate fields
+    let hasErrors = false;
+    
+    if (!email) {
+      this.showFieldError('signup-email-error', this.getTranslation('email_required'));
+      hasErrors = true;
+    }
+    
+    if (!password) {
+      this.showFieldError('signup-password-error', this.getTranslation('password_required'));
+      hasErrors = true;
+    } else if (password.length < 8) {
+      this.showFieldError('signup-password-error', this.getTranslation('password_min_length'));
+      hasErrors = true;
+    }
+    
+    if (!confirmPassword) {
+      this.showFieldError('signup-confirm-password-error', this.getTranslation('confirm_password_required'));
+      hasErrors = true;
+    } else if (password !== confirmPassword) {
+      this.showFieldError('signup-confirm-password-error', this.getTranslation('passwords_not_match'));
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
       return;
     }
     
-    if (password.length < 6) {
-      this.showAuthMessage('error', 'Пароль должен содержать минимум 6 символов');
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      this.showAuthMessage('error', 'Пароли не совпадают');
-      return;
-    }
-    
-    this.updateAuthStatus('loading', 'Выполняется регистрация...');
+    console.log('Validation passed, starting registration...');
     
     try {
       const backendUrl = await this.getBackendUrl();
+      console.log('Backend URL:', backendUrl);
+      
+      const requestBody = { email, password };
+      console.log('Request body:', requestBody);
+      
       const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(requestBody)
       });
       
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.id) {
-        this.updateAuthStatus('success', 'Регистрация успешна!');
-        this.showAuthMessage('success', 'Аккаунт создан! Теперь вы можете войти.');
+        console.log('Registration successful');
+        this.showAuthMessage('success', this.getTranslation('account_created'));
         
         // Switch to login tab
         setTimeout(() => {
@@ -237,16 +346,24 @@ class AuthManager {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      this.updateAuthStatus('error', 'Ошибка регистрации');
-      this.showAuthMessage('error', error.message || 'Ошибка при создании аккаунта');
+      
+      // Handle specific backend errors
+      if (error.message.includes('already registered')) {
+        this.showFieldError('signup-email-error', this.getTranslation('email_already_exists'));
+      } else {
+        this.showAuthMessage('error', this.getTranslation('account_creation_error'));
+      }
     }
   }
 
   async activateDemoMode() {
-    if (confirm('Демо режим предоставляет ограниченный доступ к функциям. Продолжить?')) {
+    const confirmMessage = currentLang === 'ru' 
+      ? 'Демо режим предоставляет ограниченный доступ к функциям. Продолжить?'
+      : 'Demo mode provides limited access to features. Continue?';
+      
+    if (confirm(confirmMessage)) {
       await this.saveDemoData();
-      this.updateAuthStatus('success', 'Демо режим активирован!');
-      this.showAuthMessage('success', 'Переходим в демо режим...');
+      this.showAuthMessage('success', this.getTranslation('demo_mode_activated'));
       
       setTimeout(() => this.hideAuthOverlay(), 1500);
     }
@@ -264,11 +381,18 @@ class AuthManager {
       }
       
       if (result.isAuthenticated && result.authToken) {
-        this.isAuthenticated = true;
-        this.currentUser = result.userInfo;
-        this.hideAuthOverlay();
-        this.showAuthenticatedMode();
-        return;
+        // Verify token with backend
+        const isValid = await this.verifyToken(result.authToken);
+        if (isValid) {
+          this.isAuthenticated = true;
+          this.currentUser = result.userInfo;
+          this.hideAuthOverlay();
+          this.showAuthenticatedMode();
+          return;
+        } else {
+          // Token is invalid, clear it
+          await this.clearAuthData();
+        }
       }
       
       // Not authenticated, show auth overlay
@@ -316,11 +440,121 @@ class AuthManager {
     }
   }
 
+  async verifyToken(token) {
+    try {
+      const backendUrl = await this.getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/v1/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.status === 401) {
+        // Token expired, try to refresh
+        return await this.refreshToken();
+      }
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Token verification error:', error);
+      return false;
+    }
+  }
+
+  async refreshToken() {
+    try {
+      const result = await this.getStorageData(['authToken']);
+      if (!result.authToken) return false;
+      
+      const backendUrl = await this.getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${result.authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        await this.setStorageData({
+          authToken: data.access_token
+        });
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return false;
+    }
+  }
+
+  async clearAuthData() {
+    try {
+      await this.setStorageData({
+        isAuthenticated: false,
+        isDemoMode: false,
+        authToken: null,
+        userInfo: null
+      });
+      
+      this.isAuthenticated = false;
+      this.isDemoMode = false;
+      this.currentUser = null;
+    } catch (error) {
+      console.error('Error clearing auth data:', error);
+    }
+  }
+
+  async getUserInfo() {
+    try {
+      const result = await this.getStorageData(['authToken']);
+      if (!result.authToken) return null;
+      
+      const backendUrl = await this.getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/v1/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${result.authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        // Update stored user info
+        await this.setStorageData({ userInfo: userData });
+        this.currentUser = userData;
+        return userData;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting user info:', error);
+      return null;
+    }
+  }
+
   async getBackendUrl() {
     try {
+      // First try to get from global settings
+      if (typeof settings !== 'undefined' && settings.backendUrl) {
+        return settings.backendUrl;
+      }
+      
+      // Then try to get from storage
       const result = await this.getStorageData(['backendUrl']);
-      return result.backendUrl || 'http://localhost:8000';
+      if (result.backendUrl) {
+        return result.backendUrl;
+      }
+      
+      // Fallback to default
+      return 'http://localhost:8000';
     } catch (error) {
+      console.error('Error getting backend URL:', error);
       return 'http://localhost:8000';
     }
   }
@@ -362,29 +596,70 @@ class AuthManager {
     this.authOverlay.classList.add('hidden');
   }
 
-  updateAuthStatus(type, text) {
-    const indicator = document.getElementById('auth-status-indicator');
-    const statusText = document.getElementById('auth-status-text');
-    
-    indicator.className = `status-indicator ${type}`;
-    statusText.textContent = text;
-  }
+
 
   showAuthMessage(type, text) {
+    console.log('Showing auth message:', type, text);
+    
     // Create and show message
     const messageDiv = document.createElement('div');
     messageDiv.className = `auth-message ${type}`;
     messageDiv.textContent = text;
     
     const authContainer = document.querySelector('.auth-container');
-    authContainer.appendChild(messageDiv);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (messageDiv.parentNode) {
-        messageDiv.remove();
-      }
-    }, 5000);
+    if (authContainer) {
+      authContainer.appendChild(messageDiv);
+      console.log('Auth message added to container');
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        if (messageDiv.parentNode) {
+          messageDiv.remove();
+          console.log('Auth message removed');
+        }
+      }, 5000);
+    } else {
+      console.error('Auth container not found');
+    }
+  }
+
+  showFieldError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) {
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+  }
+
+  clearFieldError(elementId) {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) {
+      errorElement.textContent = '';
+      errorElement.style.display = 'none';
+    }
+  }
+
+  clearSignupErrors() {
+    this.clearFieldError('signup-email-error');
+    this.clearFieldError('signup-password-error');
+    this.clearFieldError('signup-confirm-password-error');
+  }
+
+  clearLoginErrors() {
+    this.clearFieldError('login-email-error');
+    this.clearFieldError('login-password-error');
+  }
+
+  getTranslation(key) {
+    if (translations[currentLang] && translations[currentLang][key]) {
+      return translations[currentLang][key];
+    }
+    // Fallback to English if translation not found
+    if (translations['en'] && translations['en'][key]) {
+      return translations['en'][key];
+    }
+    // Final fallback
+    return key;
   }
 
   showDemoMode() {
@@ -414,21 +689,64 @@ class AuthManager {
       logoutBtn.style.display = 'block';
       logoutBtn.addEventListener('click', () => this.logout());
     }
+    
+    // Update user info display
+    this.updateUserInfoDisplay();
+    
+    // Start token refresh timer (every 25 minutes)
+    this.startTokenRefreshTimer();
+  }
+
+  updateUserInfoDisplay() {
+    if (this.currentUser) {
+      // Update header to show user info
+      const headerTitle = document.querySelector('.header-title .title-text');
+      if (headerTitle) {
+        const userInfo = document.createElement('div');
+        userInfo.className = 'user-info';
+        userInfo.innerHTML = `
+          <div class="user-email">${this.currentUser.email}</div>
+          <div class="user-created">Member since ${new Date(this.currentUser.created_at).toLocaleDateString()}</div>
+        `;
+        headerTitle.appendChild(userInfo);
+      }
+    }
+  }
+
+  startTokenRefreshTimer() {
+    // Clear existing timer
+    if (this.tokenRefreshTimer) {
+      clearInterval(this.tokenRefreshTimer);
+    }
+    
+    // Set new timer (25 minutes = 1500000 ms)
+    this.tokenRefreshTimer = setInterval(async () => {
+      try {
+        const result = await this.getStorageData(['authToken']);
+        if (result.authToken) {
+          await this.refreshToken();
+          console.log('Token refreshed automatically');
+        }
+      } catch (error) {
+        console.error('Auto token refresh error:', error);
+      }
+    }, 1500000); // 25 minutes
+  }
+
+  stopTokenRefreshTimer() {
+    if (this.tokenRefreshTimer) {
+      clearInterval(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
   }
 
   async logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
       try {
-        await this.setStorageData({
-          isAuthenticated: false,
-          isDemoMode: false,
-          authToken: null,
-          userInfo: null
-        });
+        // Stop token refresh timer
+        this.stopTokenRefreshTimer();
         
-        this.isAuthenticated = false;
-        this.isDemoMode = false;
-        this.currentUser = null;
+        await this.clearAuthData();
         
         // Reload the page to show auth overlay
         window.location.reload();
@@ -545,6 +863,7 @@ let settings = {
   openaiKey: '',
   anthropicKey: '',
   activeProvider: 'openai',
+  backendUrl: 'http://localhost:8000',
   n8nApiUrl: '',
   n8nApiKey: '',
   autoApplyWorkflows: false,
@@ -565,10 +884,15 @@ const STORAGE_KEYS = {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Side panel initializing...');
   
+  // Wait a bit for DOM to be fully ready
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
   // Initialize authentication manager first
+  console.log('Creating AuthManager...');
   const authManager = new AuthManager();
   
   // Initialize theme manager
+  console.log('Creating ThemeManager...');
   themeManager = new ThemeManager();
   
   // Load settings and chat storage
@@ -831,6 +1155,7 @@ function setupEventListeners() {
   // Settings functionality
   document.getElementById('close-settings-btn').addEventListener('click', hideSettings);
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+  document.getElementById('test-backend-btn').addEventListener('click', testBackendConnection);
   document.getElementById('test-connection-btn').addEventListener('click', testN8nConnection);
 
   // Provider toggle
@@ -2060,6 +2385,7 @@ function updateSettingsUI() {
   // Fill in values
   document.getElementById('openai-key').value = settings.openaiKey || '';
   document.getElementById('anthropic-key').value = settings.anthropicKey || '';
+  document.getElementById('backend-url').value = settings.backendUrl || 'http://localhost:8000';
   document.getElementById('n8n-url').value = settings.n8nApiUrl || '';
   document.getElementById('n8n-key').value = settings.n8nApiKey || '';
   document.getElementById('auto-apply-workflows').checked = settings.autoApplyWorkflows;
@@ -2080,6 +2406,7 @@ async function saveSettings() {
   // Get values from UI
   settings.openaiKey = document.getElementById('openai-key').value.trim();
   settings.anthropicKey = document.getElementById('anthropic-key').value.trim();
+  settings.backendUrl = document.getElementById('backend-url').value.trim();
   settings.n8nApiUrl = document.getElementById('n8n-url').value.trim();
   settings.n8nApiKey = document.getElementById('n8n-key').value.trim();
   settings.autoApplyWorkflows = document.getElementById('auto-apply-workflows').checked;
@@ -2097,6 +2424,27 @@ async function saveSettings() {
   } catch (error) {
     console.error('Failed to save settings:', error);
     showToast('Failed to save settings', 'error');
+  }
+}
+
+async function testBackendConnection() {
+  const url = document.getElementById('backend-url').value.trim();
+  
+  if (!url) {
+    showToast('Please enter backend URL', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${url}/health`);
+    
+    if (response.ok) {
+      showToast('Backend connection successful!', 'success');
+    } else {
+      throw new Error('Backend not responding');
+    }
+  } catch (error) {
+    showToast(`Backend connection failed: ${error.message}`, 'error');
   }
 }
 
