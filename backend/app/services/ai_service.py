@@ -8,6 +8,7 @@ import json
 import time
 from typing import List, Dict, Any, AsyncGenerator
 from app.models.chat import Message, StreamingChatResponse
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,28 +16,27 @@ class AIService:
     """Service for AI provider interactions"""
     
     def __init__(self):
-        # API keys are now passed with each request, not stored in settings
-        pass
+        # API keys are loaded from backend configuration
+        self.openai_api_key = settings.openai_api_key
+        self.anthropic_api_key = settings.anthropic_api_key
         
     async def get_response(
         self, 
         message: str, 
         provider: str = "openai",
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None,
-        openai_api_key: str = None,
-        anthropic_api_key: str = None
+        session_history: List[Message] = None
     ) -> str:
         """Get AI response from specified provider"""
         
         if provider == "openai":
-            if not openai_api_key:
-                raise ValueError("OpenAI API key is required")
-            return await self._call_openai(message, context, session_history, openai_api_key)
+            if not self.openai_api_key:
+                raise ValueError("OpenAI API key is not configured")
+            return await self._call_openai(message, context, session_history, self.openai_api_key)
         elif provider == "anthropic":
-            if not anthropic_api_key:
-                raise ValueError("Anthropic API key is required")
-            return await self._call_anthropic(message, context, session_history, anthropic_api_key)
+            if not self.anthropic_api_key:
+                raise ValueError("Anthropic API key is not configured")
+            return await self._call_anthropic(message, context, session_history, self.anthropic_api_key)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
@@ -45,21 +45,19 @@ class AIService:
         message: str, 
         provider: str = "openai",
         context: Dict[str, Any] = None,
-        session_history: List[Message] = None,
-        openai_api_key: str = None,
-        anthropic_api_key: str = None
+        session_history: List[Message] = None
     ) -> AsyncGenerator[StreamingChatResponse, None]:
         """Stream AI response from specified provider"""
         
         if provider == "openai":
-            if not openai_api_key:
-                raise ValueError("OpenAI API key is required")
-            async for chunk in self._stream_openai(message, context, session_history, openai_api_key):
+            if not self.openai_api_key:
+                raise ValueError("OpenAI API key is not configured")
+            async for chunk in self._stream_openai(message, context, session_history, self.openai_api_key):
                 yield chunk
         elif provider == "anthropic":
-            if not anthropic_api_key:
-                raise ValueError("Anthropic API key is required")
-            async for chunk in self._stream_anthropic(message, context, session_history, anthropic_api_key):
+            if not self.anthropic_api_key:
+                raise ValueError("Anthropic API key is not configured")
+            async for chunk in self._stream_anthropic(message, context, session_history, self.anthropic_api_key):
                 yield chunk
         else:
             raise ValueError(f"Unsupported provider: {provider}")

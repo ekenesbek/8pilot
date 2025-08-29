@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>8pilot</title>
   <link rel="stylesheet" href="settings.css">
+  <script src="../config.js"></script>
 </head>
 <body>
   <div class="ai-shimmer"></div>
@@ -33,17 +34,15 @@
       
       <div id="openai-section" class="api-section">
         <div class="model-badge active">GPT-4.1</div>
-        <div class="setting">
-          <label for="openai-key">OpenAI API Key:</label>
-          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
+        <div class="helper-text">
+          <small>API ключи настраиваются на стороне сервера</small>
         </div>
       </div>
       
       <div id="anthropic-section" class="api-section hidden">
         <div class="model-badge active">Claude 3.7</div>
-        <div class="setting">
-          <label for="anthropic-key">Anthropic API Key:</label>
-          <input type="password" id="anthropic-key" placeholder="sk-ant-..." autocomplete="off">
+        <div class="helper-text">
+          <small>API ключи настраиваются на стороне сервера</small>
         </div>
       </div>
       

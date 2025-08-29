@@ -258,6 +258,11 @@ body {
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
 }
 
+/* Hide API status indicator */
+#api-status {
+  display: none;
+}
+
 /* Workflow Info */
 .workflow-info {
   padding: 8px 16px;
@@ -430,9 +435,9 @@ body {
 }
 
 .chat-message.user .message-content {
-  background: var(--primary-indigo);
+  background: #0ea5e9;
   color: var(--text-inverse);
-  border-color: var(--primary-indigo);
+  border-color: #0ea5e9;
 }
 
 .message-content pre {
@@ -926,6 +931,29 @@ body {
 
 .provider-config.hidden {
   display: none;
+}
+
+.provider-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+}
+
+.model-badge {
+  display: inline-block;
+  background: var(--gradient-primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .form-group {

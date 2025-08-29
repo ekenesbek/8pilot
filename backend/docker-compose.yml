@@ -6,15 +6,14 @@ services:
     build: .
     ports:
       - "8000:8000"
+    # Используем env_file для загрузки .env файла
+    env_file:
+      - .env
+    # Дополнительные переменные окружения
     environment:
-      - DEBUG=true
-      - PORT=8000
-      - HOST=0.0.0.0
-      # API keys are now passed from frontend, not loaded from .env
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      # - N8N_DEFAULT_URL=${N8N_DEFAULT_URL}
-      # - N8N_DEFAULT_API_KEY=${N8N_DEFAULT_API_KEY}
+      - DEBUG=${DEBUG:-false}
+      - PORT=${PORT:-8000}
+      - HOST=${HOST:-0.0.0.0}
     volumes:
       - ./logs:/app/logs
       - .:/app

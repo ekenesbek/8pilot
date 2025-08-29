@@ -34,7 +34,9 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     redis_url: Optional[str] = "redis://localhost:6379"
     
-    # AI Providers - API keys will be passed from frontend
+    # AI Providers - API keys stored in backend config
+    openai_api_key: Optional[str] = None
+    anthropic_api_key: Optional[str] = None
     default_ai_provider: str = "openai"
     
     # n8n Integration - API keys will be passed from frontend
@@ -96,8 +98,12 @@ if os.getenv("PORT"):
 if os.getenv("HOST"):
     settings.host = os.getenv("HOST")
 
-# Note: API keys are no longer loaded from environment variables
-# They will be passed from the frontend with each request
+# AI API keys are loaded from environment variables
+if os.getenv("OPENAI_API_KEY"):
+    settings.openai_api_key = os.getenv("OPENAI_API_KEY")
+
+if os.getenv("ANTHROPIC_API_KEY"):
+    settings.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
 
 # Debug output
 print(f"Debug mode: {settings.debug}")
@@ -105,4 +111,5 @@ print(f"Current working directory: {os.getcwd()}")
 print(f"Backend directory: {BACKEND_DIR}")
 print(f"ENV file path: {ENV_FILE}")
 print(f"Alternative ENV file path: {BACKEND_DIR.parent / '.env'}")
-print("Note: API keys are now passed from frontend, not loaded from .env")
+print(f"OpenAI API key configured: {'Yes' if settings.openai_api_key else 'No'}")
+print(f"Anthropic API key configured: {'Yes' if settings.anthropic_api_key else 'No'}")

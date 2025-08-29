@@ -9,8 +9,6 @@ from datetime import datetime
 class UserSettings(BaseModel):
     """User application settings"""
     user_id: Optional[str] = None
-    openai_api_key: Optional[str] = None
-    anthropic_api_key: Optional[str] = None
     active_provider: Literal["openai", "anthropic"] = "openai"
     
     # n8n Integration settings
@@ -55,8 +53,6 @@ class N8nInstance(BaseModel):
 
 class SettingsUpdate(BaseModel):
     """Settings update request"""
-    openai_api_key: Optional[str] = None
-    anthropic_api_key: Optional[str] = None
     active_provider: Optional[Literal["openai", "anthropic"]] = None
     auto_apply_workflows: Optional[bool] = None
     save_chat_history: Optional[bool] = None

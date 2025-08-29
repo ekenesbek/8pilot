@@ -559,11 +559,11 @@ class AuthManager {
         return result.backendUrl;
       }
       
-      // Fallback to default
-      return 'http://localhost:8000';
+      // Fallback to config default
+      return window.getBackendUrl();
     } catch (error) {
       console.error('Error getting backend URL:', error);
-      return 'http://localhost:8000';
+      return window.getBackendUrl();
     }
   }
 
@@ -882,10 +882,8 @@ let currentWorkflowId = null;
 let allWorkflowChats = {};
 let chatMemory = [];
 let settings = {
-  openaiKey: '',
-  anthropicKey: '',
   activeProvider: 'openai',
-  backendUrl: 'http://localhost:8000',
+  backendUrl: '',
   n8nApiUrl: '',
   n8nApiKey: '',
   autoApplyWorkflows: false,
@@ -1026,8 +1024,7 @@ async function getCurrentTabInfo() {
 async function loadSettings() {
   try {
     const stored = await chrome.storage.sync.get([
-      'openaiKey', 'anthropicKey', 'activeProvider',
-      'n8nApiUrl', 'n8nApiKey', 'autoApplyWorkflows', 
+      'activeProvider', 'n8nApiUrl', 'n8nApiKey', 'autoApplyWorkflows', 
       'saveChatHistory', 'maxHistory', 'backendUrl'
     ]);
     
@@ -1035,7 +1032,7 @@ async function loadSettings() {
     
     // Set default backend URL if not configured
     if (!settings.backendUrl) {
-      settings.backendUrl = 'http://localhost:8000';
+      settings.backendUrl = window.getBackendUrl();
     }
     
     // Validate and update API status
@@ -1048,21 +1045,9 @@ async function loadSettings() {
 
 // Update API status based on current settings
 function updateApiStatus() {
-  const hasApiKey = settings.activeProvider === 'openai' 
-    ? settings.openaiKey 
-    : settings.anthropicKey;
-  
-  if (hasApiKey) {
-    // Basic validation of API key format
-    const isValidFormat = hasApiKey.length > 20 && hasApiKey.startsWith('sk-');
-    if (isValidFormat) {
-      updateStatus('api', 'active', `${settings.activeProvider} configured`);
-    } else {
-      updateStatus('api', 'warning', `${settings.activeProvider} key format invalid`);
-    }
-  } else {
-    updateStatus('api', 'error', `${settings.activeProvider} API key required`);
-  }
+  // API keys are now configured on the backend
+  // We assume they are available and properly configured
+  updateStatus('api', 'active', '');
 }
 
 // Load chat storage from localStorage
@@ -1249,26 +1234,10 @@ function updateStatus(type, status, text) {
   
   // Update API status specifically - avoid recursive calls
   if (type === 'api') {
-    const hasApiKey = settings.activeProvider === 'openai' 
-      ? settings.openaiKey 
-      : settings.anthropicKey;
-    
-    if (hasApiKey) {
-      // Check if API key looks valid (basic validation)
-      const isValidFormat = hasApiKey.length > 20 && hasApiKey.startsWith('sk-');
-      if (isValidFormat && status !== 'active') {
-        // Only update if status is different to avoid recursion
-        indicator.className = 'status-indicator active';
-        textEl.textContent = `${settings.activeProvider} configured`;
-      } else if (!isValidFormat && status !== 'warning') {
-        // Only update if status is different to avoid recursion
-        indicator.className = 'status-indicator warning';
-        textEl.textContent = `${settings.activeProvider} key format invalid`;
-      }
-    } else if (status !== 'error') {
+    // API keys are now configured on the backend
+    if (status !== 'active') {
       // Only update if status is different to avoid recursion
-      indicator.className = 'status-indicator error';
-      textEl.textContent = `${settings.activeProvider} API key required`;
+      indicator.className = 'status-indicator active';
     }
   }
 }
@@ -1339,16 +1308,8 @@ function switchTab(tabName) {
 
 // Add welcome message
 function addWelcomeMessage() {
-  const hasApiKey = settings.activeProvider === 'openai' 
-    ? settings.openaiKey 
-    : settings.anthropicKey;
-    
-  if (!hasApiKey) {
-    addMessage('assistant', 
-      `Welcome to 8pilot! Please configure your ${settings.activeProvider} API key in settings to get started.`, 
-      false
-    );
-  } else if (!currentWorkflowId || currentWorkflowId === 'unknown_workflow') {
+  // API keys are now managed on the backend
+  if (!currentWorkflowId || currentWorkflowId === 'unknown_workflow') {
     addMessage('assistant', 
       'Welcome! I can help you build n8n workflows. Navigate to an n8n workflow page to get started.', 
       false
@@ -1391,15 +1352,7 @@ async function sendMessage() {
   
   if (!message) return;
   
-  // Check API key for current provider
-  const apiKey = settings.activeProvider === 'openai' 
-    ? settings.openaiKey 
-    : settings.anthropicKey;
-    
-  if (!apiKey) {
-    addMessage('assistant', `Please configure your ${settings.activeProvider} API key in settings first.`);
-    return;
-  }
+  // API keys are now managed on the backend
   
   // Clear input
   input.value = '';
@@ -1464,13 +1417,11 @@ async function sendMessage() {
 async function callAI(message) {
   const provider = settings.activeProvider;
   
-  // Get API keys based on provider
-  const openaiApiKey = provider === 'openai' ? settings.openaiKey : null;
-  const anthropicApiKey = provider === 'anthropic' ? settings.anthropicKey : null;
+  // API keys are now managed on the backend
   
   // Use our backend API with streaming
   try {
-    const backendUrl = settings.backendUrl || 'http://localhost:8000';
+    const backendUrl = settings.backendUrl || window.getBackendUrl();
     const response = await fetch(`${backendUrl}/api/v1/chat/stream`, {
       method: 'POST',
       headers: {
@@ -1480,9 +1431,6 @@ async function callAI(message) {
         message: message,
         workflow_id: currentWorkflowId || 'default',
         provider: provider,
-        // Pass API keys with each request
-        openai_api_key: openaiApiKey,
-        anthropic_api_key: anthropicApiKey,
         // Pass n8n API credentials if available
         n8n_api_url: settings.n8nApiUrl,
         n8n_api_key: settings.n8nApiKey
@@ -1542,14 +1490,9 @@ async function callAI(message) {
   } catch (error) {
     console.error('Backend API error:', error);
     
-    // Fallback to direct API calls if backend is not available
-    console.log('Falling back to direct API calls...');
-    
-    if (provider === 'openai') {
-      return await callOpenAIDirect(message, settings.openaiKey);
-    } else {
-      return await callAnthropicDirect(message, settings.anthropicKey);
-    }
+    // Backend is not available and API keys are managed on backend
+    console.log('Backend API unavailable, cannot fallback to direct API calls');
+    throw new Error('Backend API is unavailable. Please check backend service.');
   }
 }
 
@@ -2421,9 +2364,7 @@ function updateSettingsUI() {
   document.getElementById('anthropic-config').classList.toggle('hidden', settings.activeProvider !== 'anthropic');
   
   // Fill in values
-  document.getElementById('openai-key').value = settings.openaiKey || '';
-  document.getElementById('anthropic-key').value = settings.anthropicKey || '';
-  document.getElementById('backend-url').value = settings.backendUrl || 'http://localhost:8000';
+  document.getElementById('backend-url').value = settings.backendUrl || window.getBackendUrl();
   document.getElementById('n8n-url').value = settings.n8nApiUrl || '';
   document.getElementById('n8n-key').value = settings.n8nApiKey || '';
   document.getElementById('auto-apply-workflows').checked = settings.autoApplyWorkflows;
@@ -2442,8 +2383,6 @@ function updateSettingsUI() {
 
 async function saveSettings() {
   // Get values from UI
-  settings.openaiKey = document.getElementById('openai-key').value.trim();
-  settings.anthropicKey = document.getElementById('anthropic-key').value.trim();
   settings.backendUrl = document.getElementById('backend-url').value.trim();
   settings.n8nApiUrl = document.getElementById('n8n-url').value.trim();
   settings.n8nApiKey = document.getElementById('n8n-key').value.trim();

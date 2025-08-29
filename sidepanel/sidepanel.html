@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>8pilot</title>
   <link rel="stylesheet" href="sidepanel.css?v=2.4">
+  <script src="../config.js"></script>
 </head>
 <body>
   <!-- Authentication Overlay -->
@@ -275,14 +276,14 @@
             <button class="provider-btn" data-provider="anthropic">Anthropic</button>
           </div>
           <div class="provider-config" id="openai-config">
-            <label for="openai-key">OpenAI API Key</label>
-            <input type="password" id="openai-key" placeholder="sk-...">
-            <small>Your key is stored locally and never shared</small>
+            <div class="provider-info">
+              <div class="model-badge">GPT-4o</div>
+            </div>
           </div>
           <div class="provider-config hidden" id="anthropic-config">
-            <label for="anthropic-key">Anthropic API Key</label>
-            <input type="password" id="anthropic-key" placeholder="sk-ant-...">
-            <small>Your key is stored locally and never shared</small>
+            <div class="provider-info">
+              <div class="model-badge">Claude 3.7 </div>
+            </div>
           </div>
         </div>
 

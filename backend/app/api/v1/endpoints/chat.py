@@ -41,14 +41,12 @@ async def send_message(
         # Add user message to session
         await chat_service.add_message(session.session_id, "user", request.message)
         
-        # Get AI response with API keys from request
+        # Get AI response using configured API keys
         ai_response = await ai_service.get_response(
             message=request.message,
             provider=request.provider,
             context=request.context,
-            session_history=session.messages,
-            openai_api_key=request.openai_api_key,
-            anthropic_api_key=request.anthropic_api_key
+            session_history=session.messages
         )
         
         # Add AI response to session
@@ -96,9 +94,7 @@ async def stream_message(
                     message=request.message,
                     provider=request.provider,
                     context=request.context,
-                    session_history=session.messages,
-                    openai_api_key=request.openai_api_key,
-                    anthropic_api_key=request.anthropic_api_key
+                    session_history=session.messages
                 ):
                     yield f"data: {chunk.json()}\n\n"
                 
