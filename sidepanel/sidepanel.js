@@ -1053,20 +1053,55 @@ function extractN8nBaseUrl(url) {
   
   try {
     const urlObj = new URL(url);
+    console.log('Extracting n8n base URL from:', url);
+    console.log('URL components:', {
+      hostname: urlObj.hostname,
+      pathname: urlObj.pathname,
+      port: urlObj.port,
+      protocol: urlObj.protocol
+    });
     
-    // If n8n is in hostname (e.g., kkengesbek.app.n8n.cloud)
+    let baseUrl = null;
+    
+    // Priority 1: n8n cloud instances (*.n8n.cloud)
+    if (urlObj.hostname.endsWith('.n8n.cloud')) {
+      baseUrl = `${urlObj.protocol}//${urlObj.hostname}`;
+      console.log('Detected n8n cloud instance:', baseUrl);
+      return baseUrl;
+    }
+    
+    // Priority 2: n8n in hostname (e.g., n8n.example.com, n8n-instance.com)
     if (urlObj.hostname.includes('n8n')) {
-      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+      baseUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+      console.log('Detected n8n in hostname:', baseUrl);
+      return baseUrl;
     }
     
-    // If n8n is in path (e.g., example.com/n8n/workflow/123)
+    // Priority 3: Standard n8n ports (5678)
+    if (urlObj.port === '5678' || urlObj.hostname === 'localhost') {
+      baseUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+      console.log('Detected n8n on standard port:', baseUrl);
+      return baseUrl;
+    }
+    
+    // Priority 4: n8n in path (e.g., example.com/n8n/workflow/123)
     if (urlObj.pathname.includes('/n8n')) {
-      const basePath = urlObj.pathname.split('/n8n')[0] + '/n8n';
-      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}${basePath}`;
+      const n8nIndex = urlObj.pathname.indexOf('/n8n');
+      const basePath = urlObj.pathname.substring(0, n8nIndex + 4); // +4 to include '/n8n'
+      baseUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}${basePath}`;
+      console.log('Detected n8n in path:', baseUrl);
+      return baseUrl;
     }
     
-    // Default: assume root of domain
-    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+    // Priority 5: If we detect workflow/execution patterns, assume root
+    if (urlObj.pathname.includes('workflow') || urlObj.pathname.includes('execution')) {
+      baseUrl = `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+      console.log('Detected workflow pattern, assuming root:', baseUrl);
+      return baseUrl;
+    }
+    
+    console.log('Could not extract n8n base URL from:', url);
+    return null;
   } catch (e) {
     console.error('Error extracting n8n base URL:', e);
     return null;
@@ -2608,17 +2643,37 @@ async function checkN8nConnectionStatus() {
   try {
     const stored = await chrome.storage.sync.get(['n8nApiUrl', 'n8nApiKey']);
     if (stored.n8nApiUrl && stored.n8nApiKey) {
-      // Test the connection
-      const isConnected = await testN8nConnection(stored.n8nApiUrl, stored.n8nApiKey);
-      n8nConnectionState.isConnected = isConnected;
+      console.log('Found stored n8n credentials, testing connection...');
       
-      if (isConnected) {
+      // Test the connection
+      const result = await testN8nConnection(stored.n8nApiUrl, stored.n8nApiKey);
+      n8nConnectionState.isConnected = result.success;
+      
+      if (result.success) {
         n8nConnectionState.currentStep = 'completed';
+        n8nConnectionState.detectedUrl = stored.n8nApiUrl;
+        
+        // Update global settings
+        settings.n8nApiUrl = stored.n8nApiUrl;
+        settings.n8nApiKey = stored.n8nApiKey;
+        
         console.log('N8N already connected:', stored.n8nApiUrl);
+        console.log('Connected user:', result.data?.email || 'Unknown');
+      } else {
+        console.log('Stored n8n credentials are invalid:', result.error);
+        
+        // Clear invalid credentials
+        await chrome.storage.sync.remove(['n8nApiUrl', 'n8nApiKey']);
+        n8nConnectionState.isConnected = false;
+        n8nConnectionState.currentStep = 'detect';
       }
+    } else {
+      console.log('No stored n8n credentials found');
+      n8nConnectionState.isConnected = false;
     }
   } catch (error) {
     console.error('Error checking n8n connection status:', error);
+    n8nConnectionState.isConnected = false;
   }
 }
 
@@ -2675,19 +2730,153 @@ function updateN8nUI() {
   }
 }
 
-// Test n8n connection
+// Test n8n connection with detailed error handling
 async function testN8nConnection(url, apiKey) {
+  if (!url || !apiKey) {
+    console.error('URL or API key is missing');
+    return { success: false, error: 'URL or API key is missing' };
+  }
+
   try {
-    const response = await fetch(`${url}/api/v1/me`, {
-      method: 'GET',
-      headers: {
-        'X-N8N-API-KEY': apiKey
+    // Clean URL (remove trailing slash)
+    const cleanUrl = url.replace(/\/$/, '');
+    
+    // Try different n8n API endpoints for health check
+    const possibleEndpoints = [
+      `${cleanUrl}/api/v1/workflows`,  // Most common endpoint
+      `${cleanUrl}/rest/workflows`,    // Alternative REST endpoint
+      `${cleanUrl}/api/v1/users/me`,   // User info endpoint
+      `${cleanUrl}/api/v1/executions`, // Executions endpoint
+      `${cleanUrl}/rest/executions`    // Alternative executions endpoint
+    ];
+    
+    let testUrl = possibleEndpoints[0]; // Start with workflows endpoint
+    
+    console.log('Testing n8n connection...');
+    console.log('API Key length:', apiKey.length);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    // Try each endpoint until one works
+    let lastError = null;
+    
+    for (let i = 0; i < possibleEndpoints.length; i++) {
+      testUrl = possibleEndpoints[i];
+      console.log(`Trying endpoint ${i + 1}/${possibleEndpoints.length}:`, testUrl);
+      
+      try {
+        const response = await fetch(testUrl, {
+          method: 'GET',
+          headers: {
+            'X-N8N-API-KEY': apiKey,
+            'Accept': 'application/json'
+          },
+          signal: controller.signal
+        });
+
+        console.log(`Response status for ${testUrl}:`, response.status);
+
+        if (response.ok) {
+          clearTimeout(timeoutId);
+          const responseData = await response.json();
+          console.log('n8n connection successful with endpoint:', testUrl);
+          console.log('Response data:', responseData);
+          
+          // Extract user info if available
+          let userData = {};
+          if (testUrl.includes('/users/me') && responseData) {
+            userData = {
+              email: responseData.email || 'Unknown',
+              firstName: responseData.firstName || '',
+              lastName: responseData.lastName || '',
+              id: responseData.id
+            };
+          } else {
+            // For other endpoints, just confirm it's working
+            userData = {
+              email: 'Connected',
+              firstName: '',
+              lastName: '',
+              id: 'api-connected'
+            };
+          }
+          
+          return { 
+            success: true, 
+            data: userData,
+            endpoint: testUrl
+          };
+        } else {
+          // Store the error but continue trying other endpoints
+          const errorText = await response.text();
+          lastError = {
+            status: response.status,
+            message: errorText,
+            endpoint: testUrl
+          };
+          console.log(`Endpoint ${testUrl} failed with status ${response.status}, trying next...`);
+        }
+        
+      } catch (endpointError) {
+        lastError = {
+          status: 0,
+          message: endpointError.message,
+          endpoint: testUrl
+        };
+        console.log(`Endpoint ${testUrl} failed with error:`, endpointError.message);
       }
-    });
-    return response.ok;
+    }
+    
+    // All endpoints failed
+    clearTimeout(timeoutId);
+    
+    if (lastError) {
+      let errorMessage;
+      switch (lastError.status) {
+        case 401:
+          errorMessage = 'Неверный API ключ. Проверьте корректность ключа.';
+          break;
+        case 403:
+          errorMessage = 'API ключ не имеет необходимых прав доступа.';
+          break;
+        case 404:
+          errorMessage = 'API endpoints не найдены. Возможно, n8n недоступен или URL неверный.';
+          break;
+        case 500:
+          errorMessage = 'Внутренняя ошибка сервера n8n.';
+          break;
+        case 0:
+          errorMessage = `Ошибка соединения: ${lastError.message}`;
+          break;
+        default:
+          errorMessage = `Ошибка подключения: HTTP ${lastError.status}`;
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage, 
+        status: lastError.status,
+        details: `Проверены endpoints: ${possibleEndpoints.join(', ')}`
+      };
+    }
+    
+    return { success: false, error: 'Все API endpoints недоступны' };
   } catch (error) {
     console.error('N8N connection test failed:', error);
-    return false;
+    
+    let errorMessage;
+    if (error.name === 'AbortError') {
+      errorMessage = 'Время ожидания соединения истекло. Проверьте URL и доступность сервера.';
+    } else if (error.message.includes('Failed to fetch')) {
+      errorMessage = 'Не удалось подключиться к серверу. Проверьте URL и доступность n8n.';
+    } else if (error.message.includes('CORS')) {
+      errorMessage = 'Ошибка CORS. Возможно, необходимо настроить разрешения на сервере n8n.';
+    } else {
+      errorMessage = `Ошибка соединения: ${error.message}`;
+    }
+    
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -2749,13 +2938,109 @@ function updateModalStep(step) {
 }
 
 // Open n8n API settings in new tab
-function openN8nApiSettings() {
-  if (n8nConnectionState.detectedUrl) {
-    const apiUrl = `${n8nConnectionState.detectedUrl}/settings/api`;
-    chrome.tabs.create({ url: apiUrl });
+async function openN8nApiSettings() {
+  try {
+    let targetUrl = n8nConnectionState.detectedUrl;
     
-    // Move to next step
-    updateModalStep('connect');
+    // If no detected URL, try to get current tab URL and extract n8n base
+    if (!targetUrl) {
+      console.log('No detected URL, trying to extract from current tab...');
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url) {
+        targetUrl = extractN8nBaseUrl(tab.url);
+        if (targetUrl) {
+          n8nConnectionState.detectedUrl = targetUrl;
+          console.log('Extracted n8n URL from current tab:', targetUrl);
+        }
+      }
+    }
+    
+    if (!targetUrl) {
+      console.error('No n8n URL available for API settings');
+      showModalMessage(
+        'Не удалось определить URL n8n инстанса. Пожалуйста, перейдите на страницу вашего n8n и попробуйте снова.', 
+        'error'
+      );
+      return false;
+    }
+    
+    // Ensure URL doesn't end with slash
+    const cleanUrl = targetUrl.replace(/\/$/, '');
+    const apiUrl = `${cleanUrl}/settings/api`;
+    
+    console.log('Opening n8n API settings:', apiUrl);
+    
+    // Create new tab with API settings
+    const newTab = await chrome.tabs.create({ url: apiUrl });
+    
+    if (newTab) {
+      console.log('Successfully opened API settings tab:', newTab.id);
+      
+      // Move to next step after a short delay
+      setTimeout(() => {
+        updateModalStep('connect');
+      }, 1000);
+      
+      // Show success message in chat only (brief)
+      addMessage('assistant', 
+        `✅ Открыта страница API настроек: ${apiUrl}`, 
+        'success'
+      );
+      
+      return true;
+    } else {
+      throw new Error('Failed to create new tab');
+    }
+    
+  } catch (error) {
+    console.error('Error opening n8n API settings:', error);
+    showModalMessage(
+      `Ошибка при открытии API настроек: ${error.message}`, 
+      'error'
+    );
+    return false;
+  }
+}
+
+// Show message in modal instead of chat
+function showModalMessage(message, type = 'info') {
+  // Create or update message area in modal
+  let messageArea = document.getElementById('modal-message-area');
+  if (!messageArea) {
+    // Create message area if it doesn't exist
+    const modalBody = document.querySelector('.n8n-modal-body');
+    if (modalBody) {
+      messageArea = document.createElement('div');
+      messageArea.id = 'modal-message-area';
+      messageArea.className = 'modal-message-area';
+      modalBody.appendChild(messageArea);
+    } else {
+      console.error('Modal body not found');
+      return;
+    }
+  }
+  
+  // Create message element
+  const messageEl = document.createElement('div');
+  messageEl.className = `modal-message ${type}`;
+  messageEl.innerHTML = `
+    <div class="modal-message-icon">
+      ${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}
+    </div>
+    <div class="modal-message-text">${message}</div>
+  `;
+  
+  // Replace existing message or add new one
+  messageArea.innerHTML = '';
+  messageArea.appendChild(messageEl);
+  
+  // Auto-hide success messages after 3 seconds
+  if (type === 'success') {
+    setTimeout(() => {
+      if (messageArea && messageArea.contains(messageEl)) {
+        messageEl.remove();
+      }
+    }, 3000);
   }
 }
 
@@ -2766,10 +3051,44 @@ async function handleN8nConnection() {
   const testButtonText = document.getElementById('test-connection-text');
   const loader = document.getElementById('test-connection-loader');
   
-  if (!apiKeyInput || !n8nConnectionState.detectedUrl) return;
+  if (!apiKeyInput) {
+    showModalMessage('Поле ввода API ключа не найдено', 'error');
+    return;
+  }
   
   const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) return;
+  if (!apiKey) {
+    showModalMessage('Пожалуйста, введите API ключ', 'warning');
+    return;
+  }
+  
+  // Validate API key format (basic check)
+  if (apiKey.length < 10) {
+    showModalMessage('API ключ кажется слишком коротким. Проверьте корректность ключа.', 'warning');
+    return;
+  }
+  
+  // Get URL to test
+  let targetUrl = n8nConnectionState.detectedUrl;
+  if (!targetUrl) {
+    // Try to extract from current tab
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url) {
+        targetUrl = extractN8nBaseUrl(tab.url);
+        if (targetUrl) {
+          n8nConnectionState.detectedUrl = targetUrl;
+        }
+      }
+    } catch (error) {
+      console.error('Error getting current tab:', error);
+    }
+  }
+  
+  if (!targetUrl) {
+    showModalMessage('Не удалось определить URL n8n инстанса. Убедитесь, что вы находитесь на странице n8n.', 'error');
+    return;
+  }
   
   // Show loading state
   testButton.disabled = true;
@@ -2777,38 +3096,68 @@ async function handleN8nConnection() {
   loader.classList.remove('hidden');
   
   try {
-    const isConnected = await testN8nConnection(n8nConnectionState.detectedUrl, apiKey);
+    showModalMessage(`Тестирую подключение к ${targetUrl}...`, 'info');
     
-    if (isConnected) {
+    const result = await testN8nConnection(targetUrl, apiKey);
+    
+    if (result.success) {
       // Save connection settings
-      await chrome.storage.sync.set({
-        n8nApiUrl: n8nConnectionState.detectedUrl,
+      const settingsToSave = {
+        n8nApiUrl: targetUrl,
         n8nApiKey: apiKey
-      });
+      };
+      
+      console.log('Saving n8n settings:', { ...settingsToSave, n8nApiKey: '[HIDDEN]' });
+      
+      await chrome.storage.sync.set(settingsToSave);
+      
+      // Update global settings object
+      settings.n8nApiUrl = targetUrl;
+      settings.n8nApiKey = apiKey;
       
       // Update state
       n8nConnectionState.isConnected = true;
       n8nConnectionState.currentStep = 'completed';
       
+      // Show success in modal
+      showModalMessage(
+        `Подключение к n8n успешно настроено!\n\n` +
+        `URL: ${targetUrl}\n` +
+        `Статус: ${result.data?.email || 'Connected'}\n` +
+        `Endpoint: ${result.endpoint || 'n8n API'}\n\n` +
+        `Модальное окно закроется автоматически...`, 
+        'success'
+      );
+      
       // Update UI
       updateModalStep('completed');
       updateN8nUI();
       
-      // Add success message to chat
-      addMessage('🎉 Подключение к n8n успешно настроено! Теперь я могу создавать и управлять вашими рабочими процессами.', 'assistant', 'success');
+      // Add success message to chat (brief)
+      addMessage('assistant', 
+        `🎉 n8n успешно подключен! URL: ${targetUrl}`, 
+        'success'
+      );
       
       // Close modal after delay
       setTimeout(() => {
         hideN8nSetupModal();
-      }, 2000);
+      }, 4000);
       
     } else {
-      // Show error
-      alert('Не удалось подключиться к n8n. Проверьте API ключ и попробуйте снова.');
+      // Show detailed error in modal
+      showModalMessage(
+        `Не удалось подключиться к n8n:\n\n${result.error}\n\n${result.details || ''}\n\nПроверьте API ключ и попробуйте снова.`, 
+        'error'
+      );
     }
+    
   } catch (error) {
-    console.error('Error testing n8n connection:', error);
-    alert('Ошибка при подключении к n8n. Попробуйте снова.');
+    console.error('Error in handleN8nConnection:', error);
+    showModalMessage(
+      `Неожиданная ошибка при подключении к n8n: ${error.message}`, 
+      'error'
+    );
   } finally {
     // Reset button state
     testButton.disabled = false;
@@ -2877,14 +3226,28 @@ function setupN8nEventListeners() {
       try {
         const text = await navigator.clipboard.readText();
         if (apiKeyInput) {
-          apiKeyInput.value = text;
+          const trimmedText = text.trim();
+          apiKeyInput.value = trimmedText;
+          
           // Enable test button if API key is present
           if (testConnectionBtn) {
-            testConnectionBtn.disabled = !text.trim();
+            testConnectionBtn.disabled = !trimmedText;
+          }
+          
+          // Show feedback
+          if (trimmedText) {
+            console.log('API key pasted from clipboard, length:', trimmedText.length);
+            showModalMessage('API ключ вставлен из буфера обмена', 'success');
+          } else {
+            showModalMessage('Буфер обмена пуст или не содержит текста', 'warning');
           }
         }
       } catch (error) {
         console.error('Failed to read clipboard:', error);
+        showModalMessage(
+          'Не удалось прочитать буфер обмена. Возможно, нужно разрешить доступ или вставить ключ вручную.', 
+          'error'
+        );
       }
     });
   }
@@ -3124,12 +3487,7 @@ async function saveN8nConnection(url, apiKey) {
   }
 }
 
-function openN8nApiSettings() {
-  if (detectedN8nUrl) {
-    const apiUrl = `${detectedN8nUrl}/settings/api`;
-    chrome.tabs.create({ url: apiUrl });
-  }
-}
+
 
 // n8n Connection Notification Management
 async function showN8nConnectionPrompt() {

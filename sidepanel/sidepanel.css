@@ -1740,6 +1740,60 @@ body {
   text-align: center;
 }
 
+/* Modal Messages */
+.modal-message-area {
+  margin: 16px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.modal-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.modal-message.info {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  color: #1565c0;
+}
+
+.modal-message.success {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+}
+
+.modal-message.warning {
+  background: #fff3e0;
+  border: 1px solid #ff9800;
+  color: #ef6c00;
+}
+
+.modal-message.error {
+  background: #ffebee;
+  border: 1px solid #f44336;
+  color: #c62828;
+}
+
+.modal-message-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.modal-message-text {
+  flex: 1;
+  white-space: pre-line;
+}
+
 /* Special Message Types */
 .message-success .message-content {
   background: linear-gradient(135deg, #10b981, #34d399);
