@@ -553,6 +553,16 @@ function processWorkflowJson(json) {
   
   document.getElementById('apply-workflow-btn').addEventListener('click', () => {
     console.log('Apply to Canvas button clicked!');
+    
+    // Check if n8n API is configured
+    if (!n8nApiUrl || !n8nApiKey) {
+      addMessage('assistant', 
+        '🔗 Для применения workflow к canvas необходимо подключение к n8n. ' +
+        'Пожалуйста, настройте подключение через расширение 8pilot.'
+      );
+      return;
+    }
+    
     injectToCanvas(json);
   });
   

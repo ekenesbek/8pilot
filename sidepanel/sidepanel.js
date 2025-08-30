@@ -260,7 +260,14 @@ class AuthManager {
         await this.saveAuthData(data);
         this.showAuthMessage('success', this.getTranslation('welcome_message'));
         
-        setTimeout(() => this.hideAuthOverlay(), 1500);
+        setTimeout(() => {
+          this.hideAuthOverlay();
+          
+          // After successful login, initialize n8n connection detection
+          setTimeout(() => {
+            initN8nConnection();
+          }, 500);
+        }, 1500);
       } else {
         throw new Error(data.detail || 'Ошибка входа');
       }
@@ -366,7 +373,14 @@ class AuthManager {
       await this.saveDemoData();
       this.showAuthMessage('success', this.getTranslation('demo_mode_activated'));
       
-      setTimeout(() => this.hideAuthOverlay(), 1500);
+      setTimeout(() => {
+        this.hideAuthOverlay();
+        
+        // After demo mode activation, initialize n8n connection detection
+        setTimeout(() => {
+          initN8nConnection();
+        }, 500);
+      }, 1500);
     }
   }
 
@@ -381,6 +395,11 @@ class AuthManager {
         this.isDemoMode = true;
         this.hideAuthOverlay();
         this.showDemoMode();
+        
+        // Initialize n8n connection detection for demo mode
+        setTimeout(() => {
+          initN8nConnection();
+        }, 500);
         return;
       }
       
@@ -394,6 +413,11 @@ class AuthManager {
           this.currentUser = result.userInfo;
           this.hideAuthOverlay();
           this.showAuthenticatedMode();
+          
+          // Initialize n8n connection detection for authenticated user
+          setTimeout(() => {
+            initN8nConnection();
+          }, 500);
           return;
         } else {
           console.log('Token is invalid, clearing auth data');
@@ -912,6 +936,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.authManager = new AuthManager();
   console.log('AuthManager created:', window.authManager);
   
+  // Setup N8N event listeners (but don't initialize detection yet)
+  setupN8nEventListeners();
+  
   // Initialize theme manager
   console.log('Creating ThemeManager...');
   themeManager = new ThemeManager();
@@ -941,6 +968,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Initialize UI
   initializeUI();
+  
+  // Initialize n8n setup
+  initializeN8nSetup();
+  
+  // Show connection prompt when appropriate
+  setTimeout(showN8nConnectionPrompt, 1000);
   
   console.log('Side panel initialized successfully');
   console.log('Final authManager state:', window.authManager);
@@ -987,12 +1020,57 @@ function getCurrentWorkflowId(url) {
 
 // Check if it's an n8n page
 function isN8nPage(url) {
-  return url && (
-    url.includes('n8n') || 
-    url.includes('workflow') || 
-    url.includes('execution') ||
-    url.includes('localhost')
-  );
+  if (!url) return false;
+  
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    const pathname = urlObj.pathname.toLowerCase();
+    
+    // Check for various n8n patterns
+    return (
+      // n8n in hostname (e.g., kkengesbek.app.n8n.cloud, n8n.example.com)
+      hostname.includes('n8n') ||
+      // n8n in path (e.g., example.com/n8n)
+      pathname.includes('/n8n') ||
+      // workflow in path (common n8n pattern)
+      pathname.includes('/workflow') ||
+      pathname.includes('/execution') ||
+      // Common n8n ports
+      (urlObj.port === '5678') ||
+      // localhost development
+      (hostname === 'localhost' && (urlObj.port === '5678' || pathname.includes('workflow')))
+    );
+  } catch (e) {
+    // Fallback to basic string matching
+    return url.includes('n8n') || url.includes('workflow') || url.includes('execution');
+  }
+}
+
+// Extract base n8n URL from current page URL
+function extractN8nBaseUrl(url) {
+  if (!url || !isN8nPage(url)) return null;
+  
+  try {
+    const urlObj = new URL(url);
+    
+    // If n8n is in hostname (e.g., kkengesbek.app.n8n.cloud)
+    if (urlObj.hostname.includes('n8n')) {
+      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+    }
+    
+    // If n8n is in path (e.g., example.com/n8n/workflow/123)
+    if (urlObj.pathname.includes('/n8n')) {
+      const basePath = urlObj.pathname.split('/n8n')[0] + '/n8n';
+      return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}${basePath}`;
+    }
+    
+    // Default: assume root of domain
+    return `${urlObj.protocol}//${urlObj.hostname}${urlObj.port ? ':' + urlObj.port : ''}`;
+  } catch (e) {
+    console.error('Error extracting n8n base URL:', e);
+    return null;
+  }
 }
 
 // Get current tab information
@@ -1352,14 +1430,31 @@ async function sendMessage() {
   
   if (!message) return;
   
-  // API keys are now managed on the backend
-  
   // Clear input
   input.value = '';
   input.style.height = '60px';
   
   // Add user message
   addMessage('user', message);
+  
+  // Check if user is requesting workflow creation but n8n is not connected
+  const isWorkflowRequest = /создай|создать|сделай|сделать|workflow|автоматизаци|процесс|integration|веб-хук|webhook|n8n/i.test(message);
+  
+  if (isWorkflowRequest && !n8nConnectionState.isConnected) {
+    // Show n8n setup prompt
+    setTimeout(() => {
+      addMessage('assistant', 
+        '🔧 Для создания рабочих процессов необходимо подключение к n8n. Хотите настроить подключение сейчас? Нажмите на кнопку "Настроить автоматически" в появившемся баннере выше.', 
+        'n8n-prompt'
+      );
+      
+      // Show banner if it was dismissed
+      n8nConnectionState.bannerDismissed = false;
+      localStorage.removeItem('n8n-banner-dismissed');
+      updateN8nUI();
+    }, 500);
+    return;
+  }
   
   // Remove typing indicator (replaced by streaming)
   hideTypingIndicator();
@@ -1751,14 +1846,15 @@ function finalizeStreamingMessage(messageDiv) {
 }
 
 // Add message to chat
-function addMessage(role, content, saveToHistory = true) {
-  addMessageToUI(role, content, saveToHistory);
+function addMessage(role, content, messageType = 'normal', saveToHistory = true) {
+  addMessageToUI(role, content, messageType, saveToHistory);
   
   if (saveToHistory && settings.saveChatHistory) {
     // Add to current chat
     chatMemory.push({
       role: role,
       content: content,
+      type: messageType,
       timestamp: Date.now()
     });
     
@@ -1774,11 +1870,16 @@ function addMessage(role, content, saveToHistory = true) {
 }
 
 // Add message to UI
-function addMessageToUI(role, content, saveToHistory = true) {
+function addMessageToUI(role, content, messageType = 'normal', saveToHistory = true) {
   const messagesContainer = document.getElementById('chat-messages');
   
   const messageDiv = document.createElement('div');
   messageDiv.className = `chat-message ${role}`;
+  
+  // Add message type class for special styling
+  if (messageType && messageType !== 'normal') {
+    messageDiv.classList.add(`message-${messageType}`);
+  }
   
   const avatar = document.createElement('div');
   avatar.className = `message-avatar ${role}`;
@@ -1913,8 +2014,21 @@ function showWorkflowActions(workflowJson) {
 
 // Apply workflow to n8n canvas
 async function applyWorkflow(workflowJson) {
-  if (!settings.n8nApiUrl || !settings.n8nApiKey) {
-    addMessage('assistant', 'Please configure your n8n API settings first.');
+  // Check if n8n is connected
+  if (!n8nConnectionState.isConnected || !settings.n8nApiUrl || !settings.n8nApiKey) {
+    // Show n8n setup message with link
+    addMessage('assistant', 
+      '🔗 Для применения workflow к canvas необходимо подключение к n8n. ' +
+      'Пожалуйста, настройте подключение, нажав на кнопку "Настроить автоматически" в баннере выше, ' +
+      'или перейдите в настройки для ручной настройки.', 
+      'warning'
+    );
+    
+    // Show banner if it was dismissed
+    n8nConnectionState.bannerDismissed = false;
+    localStorage.removeItem('n8n-banner-dismissed');
+    updateN8nUI();
+    
     return;
   }
 
@@ -1926,7 +2040,7 @@ async function applyWorkflow(workflowJson) {
   try {
     // Apply workflow via n8n API
     await applyToN8nCanvas(workflowJson);
-    addMessage('assistant', 'Workflow components applied successfully! The page will refresh shortly.');
+    addMessage('assistant', 'Workflow components applied successfully! The page will refresh shortly.', 'success');
     
     // Refresh the page after a delay
     setTimeout(() => {
@@ -1939,7 +2053,7 @@ async function applyWorkflow(workflowJson) {
     
   } catch (error) {
     console.error('Failed to apply workflow:', error);
-    addMessage('assistant', `Error applying workflow: ${error.message}`);
+    addMessage('assistant', `Error applying workflow: ${error.message}`, 'error');
   }
 }
 
@@ -2456,12 +2570,352 @@ async function refreshSidePanel() {
   showToast('Refreshed!', 'success');
 }
 
+// =============================================
+// N8N One-Click Connect Logic
+// =============================================
+
+// N8N connection state
+let n8nConnectionState = {
+  isConnected: false,
+  detectedUrl: null,
+  currentStep: 'detect', // detect, api-setup, connect, completed
+  isDetecting: false,
+  bannerDismissed: false
+};
+
+// Initialize N8N connection detection
+async function initN8nConnection() {
+  console.log('Initializing N8N connection detection...');
+  
+  // Check current n8n connection status
+  await checkN8nConnectionStatus();
+  
+  // Start detection process
+  await detectN8nInstance();
+  
+  // Check if banner was previously dismissed (only after connection status check)
+  const dismissed = localStorage.getItem('n8n-banner-dismissed');
+  if (dismissed === 'true' && !n8nConnectionState.isConnected) {
+    n8nConnectionState.bannerDismissed = true;
+  }
+  
+  // Update UI based on state
+  updateN8nUI();
+}
+
+// Check current n8n connection status from settings
+async function checkN8nConnectionStatus() {
+  try {
+    const stored = await chrome.storage.sync.get(['n8nApiUrl', 'n8nApiKey']);
+    if (stored.n8nApiUrl && stored.n8nApiKey) {
+      // Test the connection
+      const isConnected = await testN8nConnection(stored.n8nApiUrl, stored.n8nApiKey);
+      n8nConnectionState.isConnected = isConnected;
+      
+      if (isConnected) {
+        n8nConnectionState.currentStep = 'completed';
+        console.log('N8N already connected:', stored.n8nApiUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking n8n connection status:', error);
+  }
+}
+
+// Detect n8n instance from current tab
+async function detectN8nInstance() {
+  if (n8nConnectionState.isConnected) return;
+  
+  n8nConnectionState.isDetecting = true;
+  updateN8nUI();
+  
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url) {
+      const detectedUrl = extractN8nBaseUrl(tab.url);
+      if (detectedUrl) {
+        n8nConnectionState.detectedUrl = detectedUrl;
+        console.log('Detected n8n instance:', detectedUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Error detecting n8n instance:', error);
+  } finally {
+    n8nConnectionState.isDetecting = false;
+    updateN8nUI();
+  }
+}
+
+// Update N8N UI elements based on current state
+function updateN8nUI() {
+  const banner = document.getElementById('n8n-connection-banner');
+  const detectedBadge = document.getElementById('n8n-detected-badge');
+  const bannerDescription = document.getElementById('n8n-banner-description');
+  const setupAutoBtn = document.getElementById('n8n-setup-auto');
+  
+  if (!banner) return;
+  
+  // Show/hide banner
+  if (n8nConnectionState.isConnected || n8nConnectionState.bannerDismissed) {
+    banner.classList.add('hidden');
+    return;
+  }
+  
+  banner.classList.remove('hidden');
+  
+  // Update detected badge and description
+  if (n8nConnectionState.detectedUrl) {
+    detectedBadge.classList.remove('hidden');
+    bannerDescription.textContent = `Найден ваш n8n: ${n8nConnectionState.detectedUrl}. Настройте за один клик!`;
+    setupAutoBtn.textContent = 'Настроить автоматически';
+  } else {
+    detectedBadge.classList.add('hidden');
+    bannerDescription.textContent = 'Создавайте и управляйте рабочими процессами прямо из чата';
+    setupAutoBtn.textContent = 'Настроить n8n';
+  }
+}
+
+// Test n8n connection
+async function testN8nConnection(url, apiKey) {
+  try {
+    const response = await fetch(`${url}/api/v1/me`, {
+      method: 'GET',
+      headers: {
+        'X-N8N-API-KEY': apiKey
+      }
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('N8N connection test failed:', error);
+    return false;
+  }
+}
+
+// Show N8N setup modal
+function showN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    
+    // Initialize modal state
+    if (n8nConnectionState.detectedUrl) {
+      updateModalStep('detect');
+      document.getElementById('detected-url').textContent = n8nConnectionState.detectedUrl;
+    } else {
+      // Go directly to manual setup
+      updateModalStep('connect');
+    }
+  }
+}
+
+// Hide N8N setup modal
+function hideN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+// Update modal step
+function updateModalStep(step) {
+  n8nConnectionState.currentStep = step;
+  
+  // Update step indicators
+  const steps = ['detect', 'api', 'connect'];
+  steps.forEach((stepName, index) => {
+    const stepElement = document.getElementById(`step-${stepName}`);
+    const contentElement = document.getElementById(`step-${stepName}-content`);
+    
+    if (stepElement) {
+      stepElement.classList.remove('active', 'completed');
+      
+      if (stepName === step) {
+        stepElement.classList.add('active');
+      } else if (steps.indexOf(stepName) < steps.indexOf(step)) {
+        stepElement.classList.add('completed');
+      }
+    }
+    
+    if (contentElement) {
+      contentElement.classList.toggle('active', stepName === step);
+    }
+  });
+  
+  // Update success content visibility
+  const successContent = document.getElementById('step-success-content');
+  if (successContent) {
+    successContent.classList.toggle('active', step === 'completed');
+  }
+}
+
+// Open n8n API settings in new tab
+function openN8nApiSettings() {
+  if (n8nConnectionState.detectedUrl) {
+    const apiUrl = `${n8nConnectionState.detectedUrl}/settings/api`;
+    chrome.tabs.create({ url: apiUrl });
+    
+    // Move to next step
+    updateModalStep('connect');
+  }
+}
+
+// Handle API key input and connection test
+async function handleN8nConnection() {
+  const apiKeyInput = document.getElementById('api-key-input');
+  const testButton = document.getElementById('test-connection');
+  const testButtonText = document.getElementById('test-connection-text');
+  const loader = document.getElementById('test-connection-loader');
+  
+  if (!apiKeyInput || !n8nConnectionState.detectedUrl) return;
+  
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) return;
+  
+  // Show loading state
+  testButton.disabled = true;
+  testButtonText.textContent = 'Подключение...';
+  loader.classList.remove('hidden');
+  
+  try {
+    const isConnected = await testN8nConnection(n8nConnectionState.detectedUrl, apiKey);
+    
+    if (isConnected) {
+      // Save connection settings
+      await chrome.storage.sync.set({
+        n8nApiUrl: n8nConnectionState.detectedUrl,
+        n8nApiKey: apiKey
+      });
+      
+      // Update state
+      n8nConnectionState.isConnected = true;
+      n8nConnectionState.currentStep = 'completed';
+      
+      // Update UI
+      updateModalStep('completed');
+      updateN8nUI();
+      
+      // Add success message to chat
+      addMessage('🎉 Подключение к n8n успешно настроено! Теперь я могу создавать и управлять вашими рабочими процессами.', 'assistant', 'success');
+      
+      // Close modal after delay
+      setTimeout(() => {
+        hideN8nSetupModal();
+      }, 2000);
+      
+    } else {
+      // Show error
+      alert('Не удалось подключиться к n8n. Проверьте API ключ и попробуйте снова.');
+    }
+  } catch (error) {
+    console.error('Error testing n8n connection:', error);
+    alert('Ошибка при подключении к n8n. Попробуйте снова.');
+  } finally {
+    // Reset button state
+    testButton.disabled = false;
+    testButtonText.textContent = 'Подключить n8n';
+    loader.classList.add('hidden');
+  }
+}
+
+// Dismiss banner
+function dismissN8nBanner() {
+  n8nConnectionState.bannerDismissed = true;
+  localStorage.setItem('n8n-banner-dismissed', 'true');
+  updateN8nUI();
+}
+
+// Setup N8N event listeners
+function setupN8nEventListeners() {
+  // Banner events
+  const setupAutoBtn = document.getElementById('n8n-setup-auto');
+  const setupLaterBtn = document.getElementById('n8n-setup-later');
+  const bannerCloseBtn = document.getElementById('n8n-banner-close');
+  
+  if (setupAutoBtn) {
+    setupAutoBtn.addEventListener('click', showN8nSetupModal);
+  }
+  
+  if (setupLaterBtn) {
+    setupLaterBtn.addEventListener('click', dismissN8nBanner);
+  }
+  
+  if (bannerCloseBtn) {
+    bannerCloseBtn.addEventListener('click', dismissN8nBanner);
+  }
+  
+  // Modal events
+  const modalCloseBtn = document.getElementById('n8n-modal-close');
+  const continueSetupBtn = document.getElementById('continue-setup');
+  const openApiBtn = document.getElementById('open-api-settings');
+  const testConnectionBtn = document.getElementById('test-connection');
+  const manualSetupBtn = document.getElementById('manual-setup');
+  const pasteApiKeyBtn = document.getElementById('paste-api-key');
+  const apiKeyInput = document.getElementById('api-key-input');
+  
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', hideN8nSetupModal);
+  }
+  
+  if (continueSetupBtn) {
+    continueSetupBtn.addEventListener('click', () => updateModalStep('api'));
+  }
+  
+  if (openApiBtn) {
+    openApiBtn.addEventListener('click', openN8nApiSettings);
+  }
+  
+  if (testConnectionBtn) {
+    testConnectionBtn.addEventListener('click', handleN8nConnection);
+  }
+  
+  if (manualSetupBtn) {
+    manualSetupBtn.addEventListener('click', () => updateModalStep('connect'));
+  }
+  
+  if (pasteApiKeyBtn) {
+    pasteApiKeyBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (apiKeyInput) {
+          apiKeyInput.value = text;
+          // Enable test button if API key is present
+          if (testConnectionBtn) {
+            testConnectionBtn.disabled = !text.trim();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to read clipboard:', error);
+      }
+    });
+  }
+  
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener('input', (e) => {
+      if (testConnectionBtn) {
+        testConnectionBtn.disabled = !e.target.value.trim();
+      }
+    });
+  }
+  
+  // Close modal on backdrop click
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideN8nSetupModal();
+      }
+    });
+  }
+}
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Side panel received message:', request);
   
   if (request.action === 'tabUpdated') {
     getCurrentTabInfo();
+    // Re-detect n8n instance when tab changes
+    detectN8nInstance();
   }
   
   if (request.action === 'prefillMessage') {
@@ -2507,4 +2961,359 @@ function cleanIncomingWorkflowJson(workflowJson) {
   }
 
   return cleaned;
+}
+// =====================================
+// n8n Setup Modal Functions
+// =====================================
+
+let currentSetupStep = 1;
+let detectedN8nUrl = null;
+
+// n8n Setup Modal Management
+function showN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    // Reset to first step
+    setSetupStep(1);
+    updateSetupUI();
+  }
+}
+
+function hideN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+function setSetupStep(step) {
+  currentSetupStep = step;
+  
+  // Update step indicators
+  document.querySelectorAll('.setup-step').forEach((stepEl, index) => {
+    const stepNumber = index + 1;
+    stepEl.classList.remove('active', 'completed');
+    
+    if (stepNumber < currentSetupStep) {
+      stepEl.classList.add('completed');
+    } else if (stepNumber === currentSetupStep) {
+      stepEl.classList.add('active');
+    }
+  });
+  
+  // Update pages
+  document.querySelectorAll('.setup-page').forEach((page, index) => {
+    page.classList.remove('active');
+    if (index + 1 === currentSetupStep) {
+      page.classList.add('active');
+    }
+  });
+  
+  updateSetupButtons();
+}
+
+function updateSetupButtons() {
+  const continueBtn = document.getElementById('setup-continue-btn');
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  const connectBtn = document.getElementById('setup-connect-btn');
+  const manualBtn = document.getElementById('setup-manual-btn');
+  
+  // Hide all buttons first
+  [continueBtn, openApiBtn, connectBtn].forEach(btn => {
+    if (btn) btn.classList.add('hidden');
+  });
+  
+  if (manualBtn) {
+    manualBtn.style.display = currentSetupStep === 1 ? 'flex' : 'none';
+  }
+  
+  switch (currentSetupStep) {
+    case 1:
+      if (continueBtn) {
+        continueBtn.classList.remove('hidden');
+        continueBtn.textContent = 'Продолжить настройку';
+      }
+      break;
+    case 2:
+      if (openApiBtn) {
+        openApiBtn.classList.remove('hidden');
+      }
+      break;
+    case 3:
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+      }
+      break;
+  }
+}
+
+function updateSetupUI() {
+  // Update detected URL display
+  if (detectedN8nUrl) {
+    const urlElements = [
+      document.getElementById('detected-n8n-url'),
+      document.getElementById('prompt-n8n-url')
+    ];
+    
+    urlElements.forEach(el => {
+      if (el) {
+        if (el.id === 'prompt-n8n-url') {
+          el.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+        } else {
+          el.textContent = detectedN8nUrl;
+        }
+      }
+    });
+  }
+}
+
+async function checkN8nConnection() {
+  try {
+    const settings = await loadSettings();
+    const n8nApiUrl = settings.n8nApiUrl;
+    const n8nApiKey = settings.n8nApiKey;
+    
+    if (!n8nApiUrl || !n8nApiKey) {
+      return false;
+    }
+    
+    // Test connection through backend
+    const backendUrl = settings.backendUrl || 'http://localhost:8000';
+    const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: n8nApiUrl,
+        api_key: n8nApiKey
+      })
+    });
+    
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Error checking n8n connection:', error);
+    return false;
+  }
+}
+
+async function saveN8nConnection(url, apiKey) {
+  try {
+    const settings = await loadSettings();
+    settings.n8nApiUrl = url;
+    settings.n8nApiKey = apiKey;
+    
+    await chrome.storage.local.set(settings);
+    
+    // Update UI to reflect connection
+    updateApiStatus();
+    
+    // Hide all n8n notifications
+    hideN8nConnectionPrompt();
+    hideChatN8nNotification();
+    
+    showToast('n8n подключен успешно!', 'success');
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving n8n connection:', error);
+    showToast('Ошибка сохранения настроек', 'error');
+    return false;
+  }
+}
+
+function openN8nApiSettings() {
+  if (detectedN8nUrl) {
+    const apiUrl = `${detectedN8nUrl}/settings/api`;
+    chrome.tabs.create({ url: apiUrl });
+  }
+}
+
+// n8n Connection Notification Management
+async function showN8nConnectionPrompt() {
+  // Check if we already have a connection
+  const hasConnection = await checkN8nConnection();
+  if (hasConnection) {
+    return;
+  }
+  
+  // Check if n8n is detected
+  const storageData = await chrome.storage.local.get(['isN8nPage', 'detectedN8nUrl']);
+  const isN8nPage = storageData.isN8nPage;
+  const n8nUrl = storageData.detectedN8nUrl;
+  
+  if (isN8nPage && n8nUrl) {
+    detectedN8nUrl = n8nUrl;
+    
+    // Show notification in sidebar (if not in chat tab)
+    const prompt = document.getElementById('n8n-connection-prompt');
+    if (prompt) {
+      updateSetupUI();
+      prompt.classList.remove('hidden');
+    }
+    
+    // Show notification in chat
+    showChatN8nNotification();
+  }
+}
+
+function showChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification && detectedN8nUrl) {
+    // Update URL in chat notification
+    const chatUrlElement = document.getElementById('chat-prompt-n8n-url');
+    if (chatUrlElement) {
+      chatUrlElement.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+    }
+    
+    chatNotification.classList.remove('hidden');
+  }
+}
+
+function hideChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification) {
+    chatNotification.classList.add('hidden');
+  }
+}
+
+function hideN8nConnectionPrompt() {
+  const prompt = document.getElementById('n8n-connection-prompt');
+  if (prompt) {
+    prompt.classList.add('hidden');
+  }
+}
+
+// Initialize n8n setup event listeners
+function initializeN8nSetup() {
+  // Modal close button
+  const closeBtn = document.getElementById('n8n-setup-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', hideN8nSetupModal);
+  }
+  
+  // Click outside modal to close
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideN8nSetupModal();
+      }
+    });
+  }
+  
+  // Setup buttons
+  const continueBtn = document.getElementById('setup-continue-btn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      if (currentSetupStep < 3) {
+        setSetupStep(currentSetupStep + 1);
+      }
+    });
+  }
+  
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  if (openApiBtn) {
+    openApiBtn.addEventListener('click', () => {
+      openN8nApiSettings();
+      setSetupStep(3);
+    });
+  }
+  
+  const connectBtn = document.getElementById('setup-connect-btn');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async () => {
+      const apiKeyInput = document.getElementById('n8n-api-key-input');
+      const apiKey = apiKeyInput?.value.trim();
+      
+      if (!apiKey) {
+        showToast('Введите API ключ', 'error');
+        return;
+      }
+      
+      if (!detectedN8nUrl) {
+        showToast('URL n8n не обнаружен', 'error');
+        return;
+      }
+      
+      connectBtn.disabled = true;
+      connectBtn.textContent = 'Подключение...';
+      
+      try {
+        // Test connection first
+        const backendUrl = (await loadSettings()).backendUrl || 'http://localhost:8000';
+        const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: detectedN8nUrl,
+            api_key: apiKey
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          await saveN8nConnection(detectedN8nUrl, apiKey);
+          hideN8nSetupModal();
+          hideN8nConnectionPrompt();
+          showToast('n8n успешно подключен!', 'success');
+        } else {
+          showToast(`Ошибка подключения: ${result.details.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Connection test failed:', error);
+        showToast('Ошибка проверки подключения', 'error');
+      } finally {
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Подключить n8n';
+      }
+    });
+  }
+  
+  const manualBtn = document.getElementById('setup-manual-btn');
+  if (manualBtn) {
+    manualBtn.addEventListener('click', () => {
+      hideN8nSetupModal();
+      // Open settings for manual configuration
+      toggleSettings();
+    });
+  }
+  
+  // Connection prompt buttons
+  const autoBtn = document.getElementById('setup-auto-btn');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const laterBtn = document.getElementById('setup-later-btn');
+  if (laterBtn) {
+    laterBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+    });
+  }
+  
+  // Chat notification buttons
+  const chatAutoBtn = document.getElementById('chat-setup-auto-btn');
+  if (chatAutoBtn) {
+    chatAutoBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const chatLaterBtn = document.getElementById('chat-setup-later-btn');
+  if (chatLaterBtn) {
+    chatLaterBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+    });
+  }
 }
