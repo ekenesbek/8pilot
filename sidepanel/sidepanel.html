@@ -328,16 +328,16 @@
 
         <!-- n8n Integration Section -->
         <div class="settings-section">
-          <h4>n8n Integration</h4>
-          <div class="form-group">
-            <label for="n8n-url">n8n Instance URL</label>
-            <input type="text" id="n8n-url" placeholder="https://your-n8n-instance.com">
+          <h4>Integrations</h4>
+          
+          <!-- N8N Integration Card -->
+          <div id="sidepanel-n8n-integration-card" class="n8n-integration-card">
+            <!-- Will be populated by JavaScript -->
           </div>
-          <div class="form-group">
-            <label for="n8n-key">n8n API Key</label>
-            <input type="password" id="n8n-key" placeholder="n8n_api_...">
-          </div>
-          <button id="test-connection-btn" class="secondary-btn">Test Connection</button>
+          
+          <!-- Hidden fields for backward compatibility -->
+          <input type="hidden" id="n8n-url" />
+          <input type="hidden" id="n8n-key" />
         </div>
 
         <!-- Chat Settings -->

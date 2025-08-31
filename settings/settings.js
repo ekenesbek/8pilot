@@ -1,4 +1,13 @@
-// Updated settings/settings.js with Side Panel integration
+// Updated settings/settings.js with Side Panel integration and N8N
+
+// N8N connection state for settings page
+let n8nConnectionState = {
+  isConnected: false,
+  detectedUrl: null,
+  currentStep: 'detect',
+  isDetecting: false,
+  bannerDismissed: false
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const statusIndicator = document.getElementById('status-indicator');
@@ -14,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const anthropicSection = document.getElementById('anthropic-section');
   const n8nApiUrlInput = document.getElementById('n8n-api-url');
   const n8nApiKeyInput = document.getElementById('n8n-api-key');
+  
+  // Initialize n8n integration
+  initN8nIntegration();
   
   // Check if extension context is valid
   function checkExtensionContext() {
@@ -560,3 +572,26 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Initialization error:', error);
     handleExtensionError();
   }
+});
+
+// ========= N8N INTEGRATION FUNCTIONS =========
+
+// Global functions for modal interaction (need to be in global scope)
+window.handleConnectN8n = function() {
+  showN8nSetupModal();
+  
+  if (n8nConnectionState.isConnected) {
+    updateModalStep('completed');
+  } else if (n8nConnectionState.detectedUrl) {
+    updateModalStep('api-setup');
+  } else {
+    updateModalStep('detect');
+  }
+};
+
+window.hideN8nSetupModal = function() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+};

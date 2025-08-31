@@ -46,20 +46,16 @@
         </div>
       </div>
       
-      <h2>n8n Integration</h2>
-      <div class="api-section">
-        <div class="setting">
-          <label for="n8n-api-url">n8n API URL:</label>
-          <input type="text" id="n8n-api-url" placeholder="https://your-n8n-instance.com" autocomplete="off">
-        </div>
-        <div class="setting">
-          <label for="n8n-api-key">n8n API Key:</label>
-          <input type="password" id="n8n-api-key" placeholder="n8n_api_..." autocomplete="off">
-        </div>
-        <div class="helper-text">
-          <small>Required to apply workflow components directly to your canvas</small>
-        </div>
+      <h2>Integrations</h2>
+      
+      <!-- N8N Integration Card -->
+      <div id="n8n-integration-card" class="n8n-integration-card">
+        <!-- Will be populated by JavaScript -->
       </div>
+      
+      <!-- Hidden fields for backward compatibility with settings.js -->
+      <input type="hidden" id="n8n-api-url" />
+      <input type="hidden" id="n8n-api-key" />
       
       <h2>Backend Configuration</h2>
       <div class="api-section">
@@ -79,6 +75,65 @@
       <p>v1.0.0 • Powered by AI</p>
     </div>
   </div>
+
+  <!-- N8N Setup Modal -->
+  <div id="n8n-setup-modal" class="n8n-modal hidden">
+    <div class="n8n-modal-overlay" onclick="hideN8nSetupModal()"></div>
+    <div class="n8n-modal-content">
+      <!-- Modal Header -->
+      <div class="n8n-modal-header">
+        <div class="n8n-modal-title">
+          <div class="n8n-modal-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div>
+            <h3>Подключение n8n</h3>
+            <p>Быстрая настройка за 3 шага</p>
+          </div>
+        </div>
+        <button class="n8n-modal-close" onclick="hideN8nSetupModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="n8n-modal-body">
+        <!-- Progress Steps -->
+        <div class="n8n-setup-steps">
+          <div class="step-item" id="step-detect">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Обнаружение n8n</div>
+            </div>
+          </div>
+          <div class="step-item" id="step-api">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Создание API ключа</div>
+            </div>
+          </div>
+          <div class="step-item" id="step-connect">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Подключение</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Content -->
+        <div id="step-content">
+          <!-- Dynamic content will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="settings.js"></script>
+  <script src="n8n-integration.js"></script>
 </body>
 </html>

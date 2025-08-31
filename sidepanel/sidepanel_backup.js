@@ -3311,6 +3311,384 @@ function cleanIncomingWorkflowJson(workflowJson) {
 
 
 
+function hideN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+function setSetupStep(step) {
+  currentSetupStep = step;
+  
+  // Update step indicators
+  document.querySelectorAll('.setup-step').forEach((stepEl, index) => {
+    const stepNumber = index + 1;
+    stepEl.classList.remove('active', 'completed');
+    
+    if (stepNumber < currentSetupStep) {
+      stepEl.classList.add('completed');
+    } else if (stepNumber === currentSetupStep) {
+      stepEl.classList.add('active');
+    }
+  });
+  
+  // Update pages
+  document.querySelectorAll('.setup-page').forEach((page, index) => {
+    page.classList.remove('active');
+    if (index + 1 === currentSetupStep) {
+      page.classList.add('active');
+    }
+  });
+  
+  updateSetupButtons();
+}
+
+function updateSetupButtons() {
+  const continueBtn = document.getElementById('setup-continue-btn');
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  const connectBtn = document.getElementById('setup-connect-btn');
+  const manualBtn = document.getElementById('setup-manual-btn');
+  
+  // Hide all buttons first
+  [continueBtn, openApiBtn, connectBtn].forEach(btn => {
+    if (btn) btn.classList.add('hidden');
+  });
+  
+  if (manualBtn) {
+    manualBtn.style.display = currentSetupStep === 1 ? 'flex' : 'none';
+  }
+  
+  switch (currentSetupStep) {
+    case 1:
+      if (continueBtn) {
+        continueBtn.classList.remove('hidden');
+        continueBtn.textContent = 'Продолжить настройку';
+      }
+      break;
+    case 2:
+      if (openApiBtn) {
+        openApiBtn.classList.remove('hidden');
+      }
+      break;
+    case 3:
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+      }
+      break;
+  }
+}
+
+function updateSetupUI() {
+  // Update detected URL display
+  if (detectedN8nUrl) {
+    const urlElements = [
+      document.getElementById('detected-n8n-url'),
+      document.getElementById('prompt-n8n-url')
+    ];
+    
+    urlElements.forEach(el => {
+      if (el) {
+        if (el.id === 'prompt-n8n-url') {
+          el.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+        } else {
+          el.textContent = detectedN8nUrl;
+        }
+      }
+    });
+  }
+}
+
+async function checkN8nConnection() {
+  try {
+    const settings = await loadSettings();
+    const n8nApiUrl = settings.n8nApiUrl;
+    const n8nApiKey = settings.n8nApiKey;
+    
+    if (!n8nApiUrl || !n8nApiKey) {
+      return false;
+    }
+    
+    // Test connection through backend
+    const backendUrl = settings.backendUrl || 'http://localhost:8000';
+    const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: n8nApiUrl,
+        api_key: n8nApiKey
+      })
+    });
+    
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Error checking n8n connection:', error);
+    return false;
+  }
+}
+
+async function saveN8nConnection(url, apiKey) {
+  try {
+    const settings = await loadSettings();
+    settings.n8nApiUrl = url;
+    settings.n8nApiKey = apiKey;
+    
+    await chrome.storage.local.set(settings);
+    
+    // Update UI to reflect connection
+    updateApiStatus();
+    
+    // Hide all n8n notifications
+    hideN8nConnectionPrompt();
+    hideChatN8nNotification();
+    
+    showToast('n8n подключен успешно!', 'success');
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving n8n connection:', error);
+    showToast('Ошибка сохранения настроек', 'error');
+    return false;
+  }
+}
+
+
+
+// n8n Connection Notification Management
+async function showN8nConnectionPrompt() {
+  // Check if we already have a connection
+  const hasConnection = await checkN8nConnection();
+  if (hasConnection) {
+    return;
+  }
+  
+  // Check if n8n is detected
+  const storageData = await chrome.storage.local.get(['isN8nPage', 'detectedN8nUrl']);
+  const isN8nPage = storageData.isN8nPage;
+  const n8nUrl = storageData.detectedN8nUrl;
+  
+  if (isN8nPage && n8nUrl) {
+    detectedN8nUrl = n8nUrl;
+    
+    // Show notification in sidebar (if not in chat tab)
+    const prompt = document.getElementById('n8n-connection-prompt');
+    if (prompt) {
+      updateSetupUI();
+      prompt.classList.remove('hidden');
+    }
+    
+    // Show notification in chat
+    showChatN8nNotification();
+  }
+}
+
+function showChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification && detectedN8nUrl) {
+    // Update URL in chat notification
+    const chatUrlElement = document.getElementById('chat-prompt-n8n-url');
+    if (chatUrlElement) {
+      chatUrlElement.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+    }
+    
+    chatNotification.classList.remove('hidden');
+  }
+}
+
+function hideChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification) {
+    chatNotification.classList.add('hidden');
+  }
+}
+
+function hideN8nConnectionPrompt() {
+  const prompt = document.getElementById('n8n-connection-prompt');
+  if (prompt) {
+    prompt.classList.add('hidden');
+  }
+}
+
+// Initialize n8n setup event listeners
+function initializeN8nSetup() {
+  // Modal close button
+  const closeBtn = document.getElementById('n8n-setup-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', hideN8nSetupModal);
+  }
+  
+  // Click outside modal to close
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideN8nSetupModal();
+      }
+    });
+  }
+  
+  // Setup buttons
+  const continueBtn = document.getElementById('setup-continue-btn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      if (currentSetupStep < 3) {
+        setSetupStep(currentSetupStep + 1);
+      }
+    });
+  }
+  
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  if (openApiBtn) {
+    openApiBtn.addEventListener('click', () => {
+      openN8nApiSettings();
+      setSetupStep(3);
+    });
+  }
+  
+  const connectBtn = document.getElementById('setup-connect-btn');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async () => {
+      const apiKeyInput = document.getElementById('n8n-api-key-input');
+      const apiKey = apiKeyInput?.value.trim();
+      
+      if (!apiKey) {
+        showToast('Введите API ключ', 'error');
+        return;
+      }
+      
+      if (!detectedN8nUrl) {
+        showToast('URL n8n не обнаружен', 'error');
+        return;
+      }
+      
+      connectBtn.disabled = true;
+      connectBtn.textContent = 'Подключение...';
+      
+      try {
+        // Test connection first
+        const backendUrl = (await loadSettings()).backendUrl || 'http://localhost:8000';
+        const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: detectedN8nUrl,
+            api_key: apiKey
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          await saveN8nConnection(detectedN8nUrl, apiKey);
+          hideN8nSetupModal();
+          hideN8nConnectionPrompt();
+          showToast('n8n успешно подключен!', 'success');
+        } else {
+          showToast(`Ошибка подключения: ${result.details.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Connection test failed:', error);
+        showToast('Ошибка проверки подключения', 'error');
+      } finally {
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Подключить n8n';
+      }
+    });
+  }
+  
+  const manualBtn = document.getElementById('setup-manual-btn');
+  if (manualBtn) {
+    manualBtn.addEventListener('click', () => {
+      hideN8nSetupModal();
+      // Open settings for manual configuration
+      toggleSettings();
+    });
+  }
+  
+  // Connection prompt buttons
+  const autoBtn = document.getElementById('setup-auto-btn');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const laterBtn = document.getElementById('setup-later-btn');
+  if (laterBtn) {
+    laterBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+    });
+  }
+  
+  // Chat notification buttons
+  const chatAutoBtn = document.getElementById('chat-setup-auto-btn');
+  if (chatAutoBtn) {
+    chatAutoBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const chatLaterBtn = document.getElementById('chat-setup-later-btn');
+  if (chatLaterBtn) {
+    chatLaterBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+    });
+  }
+  
+  // Listen to storage changes for syncing with settings page
+  if (chrome && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync') {
+        if (changes.n8nApiUrl || changes.n8nApiKey) {
+          console.log('n8n storage changed in sidepanel, updating status...', changes);
+          
+          // Update state based on storage changes
+          if (changes.n8nApiUrl && changes.n8nApiUrl.newValue) {
+            n8nConnectionState.detectedUrl = changes.n8nApiUrl.newValue;
+            n8nConnectionState.isConnected = true;
+            n8nConnectionState.currentStep = 'completed';
+            
+            // Update global settings
+            settings.n8nApiUrl = changes.n8nApiUrl.newValue;
+            if (changes.n8nApiKey && changes.n8nApiKey.newValue) {
+              settings.n8nApiKey = changes.n8nApiKey.newValue;
+            }
+          } else if (changes.n8nApiUrl && !changes.n8nApiUrl.newValue) {
+            // n8n was disconnected
+            n8nConnectionState.detectedUrl = null;
+            n8nConnectionState.isConnected = false;
+            n8nConnectionState.currentStep = 'detect';
+            
+            // Clear global settings
+            settings.n8nApiUrl = null;
+            settings.n8nApiKey = null;
+          }
+          
+          // Update UI immediately
+          updateN8nUI();
+          updateSidepanelN8nCard();
+          
+          // Then double-check with actual connection test
+          setTimeout(() => {
+            checkN8nConnectionStatus().then(() => {
+              updateN8nUI();
+              updateSidepanelN8nCard();
+            });
+          }, 500);
+        }
+      }
+    });
+  }
+}
+
 // Update n8n integration card in sidepanel settings
 function updateSidepanelN8nCard() {
   const cardContainer = document.getElementById('sidepanel-n8n-integration-card');
