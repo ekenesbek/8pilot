@@ -9,7 +9,6 @@
     "128": "icons/pixelated_sample_32.png"
   },
   "action": {
-    "default_popup": "auth.html",
     "default_icon": {
       "16": "icons/pixelated_sample_32.png",
       "48": "icons/pixelated_sample_32.png",
@@ -31,18 +30,9 @@
   "background": {
     "service_worker": "extension.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["page.js"]
-    }
-  ],
   "web_accessible_resources": [
     {
       "resources": [
-        "chatbot/chatbot.js",
-        "chatbot/chatbot.css",
-        "chatbot/chatbot.html",
         "sidepanel/sidepanel.js",
         "sidepanel/sidepanel.css",
         "icons/chat-icon-48.png"

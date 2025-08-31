@@ -1,8 +1,8 @@
-// Updated extension.js with Side Panel support
+// Updated extension.js with Side Panel support only
 
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('n8n Co Pilot Extension installed');
+  console.log('8pilot Extension installed');
 });
 
 // Handle side panel opening
@@ -10,7 +10,7 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error('Side panel setup error:', error));
 
-// Message handling between popup/settings, content script, and side panel
+// Message handling between settings and side panel
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Message received in background:', request);
 
@@ -25,11 +25,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  // Pass through settings updates to both content script and side panel
+  // Pass through settings updates to side panel
   if (request.action === 'settingsUpdated') {
-    console.log('Settings updated, broadcasting to all scripts');
+    console.log('Settings updated, broadcasting to side panel');
     
-    // Send to content scripts
+    // Send to side panel
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, request).catch(err => {
@@ -101,33 +101,27 @@ async function handleN8nApiRequest(request, sendResponse) {
     }
     
     const response = await fetch(url, fetchOptions);
-    const data = await response.json();
+    const responseData = await response.text();
+    
+    // Try to parse as JSON, fallback to text
+    let parsedData;
+    try {
+      parsedData = JSON.parse(responseData);
+    } catch {
+      parsedData = responseData;
+    }
     
     sendResponse({
-      success: response.ok,
-      status: response.status,
-      data: data
+      status: 'success',
+      data: parsedData,
+      statusCode: response.status,
+      headers: Object.fromEntries(response.headers.entries())
     });
-    
   } catch (error) {
-    console.error('n8n API request failed:', error);
+    console.error('Error handling n8n API request:', error);
     sendResponse({
-      success: false,
+      status: 'error',
       error: error.message
     });
   }
 }
-
-// Handle tab updates to refresh side panel if needed
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url) {
-    // Send URL change notification to side panel
-    chrome.runtime.sendMessage({
-      action: 'tabUpdated',
-      tabId: tabId,
-      url: tab.url
-    }).catch(() => {
-      // Side panel might not be open, ignore error
-    });
-  }
-});

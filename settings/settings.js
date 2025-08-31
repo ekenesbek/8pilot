@@ -152,8 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       if (!result.isAuthenticated || !result.authToken) {
-        // User is not authenticated, redirect to auth page
-        window.location.href = '../auth.html';
+        // User is not authenticated, show demo mode
+        showDemoMode();
         return;
       }
       
@@ -382,8 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
         userInfo: null,
         isAuthenticated: false
       }, () => {
-        // Redirect to auth page
-        window.location.href = '../auth.html';
+        // Show demo mode instead of redirecting
+        showDemoMode();
       });
     }
   });

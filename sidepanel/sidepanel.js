@@ -990,6 +990,30 @@ window.addEventListener('themeChanged', (event) => {
   updateThemeElements();
 });
 
+// Listen for tab updates to automatically refresh workflow info
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    // Check if this is the active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+      if (activeTabs[0] && activeTabs[0].id === tabId) {
+        console.log('Active tab URL changed, updating workflow info:', tab.url);
+        // Update workflow info when URL changes
+        setTimeout(() => {
+          getCurrentTabInfo();
+        }, 500); // Small delay to ensure page is fully loaded
+      }
+    });
+  }
+});
+
+// Listen for tab activation to refresh workflow info
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  console.log('Tab activated, refreshing workflow info');
+  setTimeout(() => {
+    getCurrentTabInfo();
+  }, 500);
+});
+
 // Update elements that depend on theme
 function updateThemeElements() {
   // Update syntax highlighting if needed
@@ -1214,6 +1238,10 @@ function loadWorkflowChat(workflowId) {
   if (allWorkflowChats[workflowId]) {
     chatMemory = allWorkflowChats[workflowId].messages || [];
     console.log(`Loaded ${chatMemory.length} messages for workflow:`, workflowId);
+    
+    // Show notification about loaded chat
+    const workflowName = allWorkflowChats[workflowId].workflowName || workflowId;
+    showToast(`Loaded chat for: ${workflowName}`, 'info');
   } else {
     chatMemory = [];
     allWorkflowChats[workflowId] = {
@@ -1223,6 +1251,10 @@ function loadWorkflowChat(workflowId) {
       createdAt: Date.now()
     };
     console.log('Created new chat for workflow:', workflowId);
+    
+    // Show notification about new chat
+    const workflowName = workflowId === 'new_workflow' ? 'New Workflow' : `Workflow ${workflowId}`;
+    showToast(`Started new chat for: ${workflowName}`, 'success');
   }
   
   refreshChatUI();
@@ -1239,6 +1271,12 @@ function saveCurrentChat() {
   };
   
   saveChatStorage();
+  
+  // Update workflows list if it's currently visible
+  const workflowsTab = document.getElementById('workflows-tab');
+  if (workflowsTab && !workflowsTab.classList.contains('hidden')) {
+    renderWorkflowsList();
+  }
 }
 
 // Setup all event listeners
@@ -1260,6 +1298,20 @@ function setupEventListeners() {
   // Header controls
   document.getElementById('refresh-btn').addEventListener('click', refreshSidePanel);
   document.getElementById('settings-btn').addEventListener('click', showSettings);
+  
+  // Workflow controls
+  document.getElementById('workflow-refresh-btn').addEventListener('click', async () => {
+    console.log('Workflow refresh button clicked');
+    await getCurrentTabInfo();
+    await loadWorkflowStats();
+    showToast('Workflow info refreshed!', 'success');
+  });
+  
+  // Workflows tab refresh button
+  document.getElementById('refresh-workflows-btn').addEventListener('click', () => {
+    renderWorkflowsList();
+    showToast('Workflows list refreshed!', 'success');
+  });
 
   // Navigation tabs
   document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -1361,6 +1413,7 @@ function updateStatus(type, status, text) {
 function updateWorkflowInfo() {
   const nameEl = document.getElementById('workflow-name');
   const idEl = document.getElementById('workflow-id');
+  const statusEl = document.getElementById('workflow-status');
   
   if (currentWorkflowId) {
     const workflowName = allWorkflowChats[currentWorkflowId]?.workflowName || 
@@ -1368,9 +1421,31 @@ function updateWorkflowInfo() {
     
     nameEl.textContent = workflowName;
     idEl.textContent = currentWorkflowId;
+    
+    // Update workflow status
+    if (currentWorkflowId === 'new_workflow') {
+      statusEl.textContent = 'New';
+      statusEl.style.background = 'var(--success)';
+      statusEl.style.color = 'white';
+      statusEl.style.borderColor = 'var(--success)';
+    } else if (currentWorkflowId === 'unknown_workflow') {
+      statusEl.textContent = 'Unknown';
+      statusEl.style.background = 'var(--warning)';
+      statusEl.style.color = 'white';
+      statusEl.style.borderColor = 'var(--warning)';
+    } else {
+      statusEl.textContent = 'Active';
+      statusEl.style.background = 'var(--primary-blue)';
+      statusEl.style.color = 'white';
+      statusEl.style.borderColor = 'var(--primary-blue)';
+    }
   } else {
     nameEl.textContent = 'No workflow detected';
     idEl.textContent = '-';
+    statusEl.textContent = '-';
+    statusEl.style.background = 'var(--bg-tertiary)';
+    statusEl.style.color = 'var(--text-quaternary)';
+    statusEl.style.borderColor = 'var(--border-secondary)';
   }
 }
 
@@ -1416,8 +1491,15 @@ function switchTab(tabName) {
   // Load content if needed
   if (tabName === 'history') {
     loadHistoryList();
+  } else if (tabName === 'workflows') {
+    renderWorkflowsList();
   } else if (tabName === 'templates') {
     renderTemplates();
+  }
+  
+  // Update workflow info when switching to chat tab
+  if (tabName === 'chat') {
+    updateWorkflowInfo();
   }
 }
 
@@ -1436,6 +1518,84 @@ function addWelcomeMessage() {
       false
     );
   }
+}
+
+// Render workflows list
+function renderWorkflowsList() {
+  const workflowsList = document.getElementById('workflows-list');
+  if (!workflowsList) return;
+  
+  workflowsList.innerHTML = '';
+  
+  const workflowIds = Object.keys(allWorkflowChats);
+  
+  if (workflowIds.length === 0) {
+    workflowsList.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-tertiary);">
+        <p>No workflow chats yet</p>
+        <p style="font-size: 12px; margin-top: 8px;">Navigate to an n8n workflow to start chatting</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort workflows by last activity (most recent first)
+  const sortedWorkflows = workflowIds
+    .map(id => ({ id, ...allWorkflowChats[id] }))
+    .sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
+  
+  sortedWorkflows.forEach(workflow => {
+    const workflowItem = document.createElement('div');
+    workflowItem.className = `workflow-item ${workflow.id === currentWorkflowId ? 'active' : ''}`;
+    
+    const workflowName = workflow.workflowName || 
+      (workflow.id === 'new_workflow' ? 'New Workflow' : `Workflow ${workflow.id}`);
+    
+    const messageCount = workflow.messages ? workflow.messages.length : 0;
+    const lastActivity = workflow.lastActivity ? new Date(workflow.lastActivity).toLocaleDateString() : 'Unknown';
+    
+    workflowItem.innerHTML = `
+      <div class="workflow-item-info">
+        <div class="workflow-item-name">${workflowName}</div>
+        <div class="workflow-item-id">${workflow.id} • ${messageCount} messages • ${lastActivity}</div>
+      </div>
+      <div class="workflow-item-actions">
+        <button class="workflow-item-btn load" data-workflow-id="${workflow.id}">Load</button>
+        <button class="workflow-item-btn delete" data-workflow-id="${workflow.id}">Delete</button>
+      </div>
+    `;
+    
+    // Add event listeners
+    const loadBtn = workflowItem.querySelector('.workflow-item-btn.load');
+    const deleteBtn = workflowItem.querySelector('.workflow-item-btn.delete');
+    
+    loadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      loadWorkflowChat(workflow.id);
+      switchTab('chat');
+      showToast(`Loaded chat for: ${workflowName}`, 'success');
+    });
+    
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Delete chat for workflow "${workflowName}"? This action cannot be undone.`)) {
+        delete allWorkflowChats[workflow.id];
+        saveChatStorage();
+        renderWorkflowsList();
+        showToast(`Deleted chat for: ${workflowName}`, 'success');
+        
+        // If this was the current workflow, clear it
+        if (workflow.id === currentWorkflowId) {
+          currentWorkflowId = null;
+          chatMemory = [];
+          refreshChatUI();
+          updateWorkflowInfo();
+        }
+      }
+    });
+    
+    workflowsList.appendChild(workflowItem);
+  });
 }
 
 // Refresh chat UI with current workflow's messages

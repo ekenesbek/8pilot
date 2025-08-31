@@ -143,17 +143,26 @@
     <div class="workflow-info">
       <div class="workflow-header">
         <h3>Current Workflow</h3>
-        <button id="workflow-menu-btn" class="menu-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="1"/>
-            <circle cx="12" cy="5" r="1"/>
-            <circle cx="12" cy="19" r="1"/>
-          </svg>
-        </button>
+        <div class="workflow-controls">
+          <button id="workflow-refresh-btn" class="refresh-workflow-btn" title="Refresh workflow info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 4v6h6"/>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+          </button>
+          <button id="workflow-menu-btn" class="menu-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"/>
+              <circle cx="12" cy="5" r="1"/>
+              <circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="workflow-details">
         <div class="workflow-name" id="workflow-name">No workflow detected</div>
         <div class="workflow-id" id="workflow-id">-</div>
+        <div class="workflow-status" id="workflow-status">-</div>
       </div>
     </div>
 
@@ -171,6 +180,15 @@
           <polyline points="12,6 12,12 16,14"/>
         </svg>
         History
+      </button>
+      <button class="nav-tab" data-tab="workflows">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2z"/>
+          <path d="M21 11h-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2z"/>
+          <path d="M9 21H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2z"/>
+          <path d="M21 21h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2z"/>
+        </svg>
+        Workflows
       </button>
       <button class="nav-tab" data-tab="templates">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -271,6 +289,17 @@
         </div>
         <div class="history-list" id="history-list">
           <!-- History items will be added dynamically -->
+        </div>
+      </div>
+
+      <!-- Workflows Tab -->
+      <div class="tab-content" id="workflows-tab">
+        <div class="workflows-header">
+          <h4>Workflow Chats</h4>
+          <button id="refresh-workflows-btn" class="secondary-btn">Refresh</button>
+        </div>
+        <div class="workflows-list" id="workflows-list">
+          <!-- Workflow items will be added dynamically -->
         </div>
       </div>
 
