@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>8pilot</title>
   <link rel="stylesheet" href="sidepanel.css?v=2.4">
+  <script src="../config.js"></script>
 </head>
 <body>
   <!-- Authentication Overlay -->
@@ -112,8 +113,8 @@
         </button>
         <button id="settings-btn" class="control-btn" title="Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.08a2 2 0 0 1 1 1.73v.51a2 2 0 0 1-1 1.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.73v-.51a2 2 0 0 1 1-1.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
             <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09A1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0 1.51 1z"/>
           </svg>
         </button>
         <button id="logout-btn" class="control-btn" title="Logout" style="display: none;">
@@ -192,6 +193,43 @@
     <div class="content-area">
       <!-- Chat Tab -->
       <div class="tab-content active" id="chat-tab">
+        <!-- N8N Connection Banner -->
+        <div id="n8n-connection-banner" class="n8n-banner hidden">
+          <div class="n8n-banner-content">
+            <div class="n8n-banner-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="n8n-banner-info">
+              <div class="n8n-banner-header">
+                <h3 class="n8n-banner-title">Подключите n8n для полной функциональности</h3>
+                <div id="n8n-detected-badge" class="n8n-detected-badge hidden">Обнаружен n8n</div>
+              </div>
+              <p class="n8n-banner-description" id="n8n-banner-description">
+                Создавайте и управляйте рабочими процессами прямо из чата
+              </p>
+              <div class="n8n-banner-actions">
+                <button id="n8n-setup-auto" class="n8n-setup-btn primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Настроить автоматически
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button id="n8n-setup-later" class="n8n-setup-btn secondary">Позже</button>
+              </div>
+            </div>
+            <button id="n8n-banner-close" class="n8n-banner-close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <div class="chat-messages" id="chat-messages">
           <!-- Messages will be added dynamically -->
         </div>
@@ -275,40 +313,31 @@
             <button class="provider-btn" data-provider="anthropic">Anthropic</button>
           </div>
           <div class="provider-config" id="openai-config">
-            <label for="openai-key">OpenAI API Key</label>
-            <input type="password" id="openai-key" placeholder="sk-...">
-            <small>Your key is stored locally and never shared</small>
+            <div class="provider-info">
+              <div class="model-badge">GPT-4o</div>
+            </div>
           </div>
           <div class="provider-config hidden" id="anthropic-config">
-            <label for="anthropic-key">Anthropic API Key</label>
-            <input type="password" id="anthropic-key" placeholder="sk-ant-...">
-            <small>Your key is stored locally and never shared</small>
+            <div class="provider-info">
+              <div class="model-badge">Claude 3.7 </div>
+            </div>
           </div>
         </div>
 
-        <!-- Backend Configuration Section -->
-        <div class="settings-section">
-          <h4>Backend Configuration</h4>
-          <div class="form-group">
-            <label for="backend-url">Backend API URL</label>
-            <input type="text" id="backend-url" placeholder="http://localhost:8000">
-            <small>URL of your 8pilot backend server</small>
-          </div>
-          <button id="test-backend-btn" class="secondary-btn">Test Backend Connection</button>
-        </div>
+
 
         <!-- n8n Integration Section -->
         <div class="settings-section">
-          <h4>n8n Integration</h4>
-          <div class="form-group">
-            <label for="n8n-url">n8n Instance URL</label>
-            <input type="text" id="n8n-url" placeholder="https://your-n8n-instance.com">
+          <h4>Integrations</h4>
+          
+          <!-- N8N Integration Card -->
+          <div id="sidepanel-n8n-integration-card" class="n8n-integration-card">
+            <!-- Will be populated by JavaScript -->
           </div>
-          <div class="form-group">
-            <label for="n8n-key">n8n API Key</label>
-            <input type="password" id="n8n-key" placeholder="n8n_api_...">
-          </div>
-          <button id="test-connection-btn" class="secondary-btn">Test Connection</button>
+          
+          <!-- Hidden fields for backward compatibility -->
+          <input type="hidden" id="n8n-url" />
+          <input type="hidden" id="n8n-key" />
         </div>
 
         <!-- Chat Settings -->
@@ -340,6 +369,234 @@
         <div class="settings-actions">
           <button id="save-settings-btn" class="primary-btn">Save Settings</button>
           <button id="reset-settings-btn" class="danger-btn">Reset to Defaults</button>
+          <button id="logout-settings-btn" class="danger-btn">Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- N8N Setup Modal -->
+  <div id="n8n-setup-modal" class="n8n-modal hidden">
+    <div class="n8n-modal-content">
+      <!-- Modal Header -->
+      <div class="n8n-modal-header">
+        <div class="n8n-modal-title-section">
+          <div class="n8n-modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="n8n-modal-title">Настройка n8n</h3>
+            <p class="n8n-modal-subtitle">Быстрая настройка за 3 шага</p>
+          </div>
+        </div>
+        <button id="n8n-modal-close" class="n8n-modal-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="n8n-modal-body">
+        <!-- Progress Steps -->
+        <div class="n8n-setup-steps">
+          <div class="step-item" id="step-detect">
+            <div class="step-number">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>1</span>
+            </div>
+            <div class="step-content">
+              <span class="step-title">Обнаружение n8n</span>
+            </div>
+          </div>
+          <div class="step-item" id="step-api">
+            <div class="step-number">
+              <span>2</span>
+            </div>
+            <div class="step-content">
+              <span class="step-title">Создание API ключа</span>
+            </div>
+          </div>
+          <div class="step-item" id="step-connect">
+            <div class="step-number">
+              <span>3</span>
+            </div>
+            <div class="step-content">
+              <span class="step-title">Подключение</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="n8n-step-content">
+          <!-- Step 1: Detection -->
+          <div id="step-detect-content" class="step-content-panel active">
+            <div class="step-success-card">
+              <div class="success-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="success-content">
+                <h4>n8n обнаружен!</h4>
+                <p>Найден ваш экземпляр: <span id="detected-url">-</span></p>
+                <button id="continue-setup" class="n8n-btn primary">Продолжить настройку</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: API Setup -->
+          <div id="step-api-content" class="step-content-panel">
+            <div class="step-info-card">
+              <h4>Создание API ключа</h4>
+              <p>Следуйте инструкциям для создания API ключа:</p>
+              <ol class="instructions-list">
+                <li>Нажмите "Create an API Key"</li>
+                <li>Введите название: "8pilot Integration"</li>
+                <li>Выберите срок действия</li>
+                <li>Нажмите "Save"</li>
+                <li>Скопируйте полученный ключ</li>
+              </ol>
+              <button id="open-api-settings" class="n8n-btn primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Открыть настройки API
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 3: Connection -->
+          <div id="step-connect-content" class="step-content-panel">
+            <div class="step-form-card">
+              <h4>API Ключ</h4>
+              <div class="form-group">
+                <div class="input-with-action">
+                  <input type="password" id="api-key-input" placeholder="Вставьте ваш API ключ здесь" class="n8n-input">
+                  <button id="paste-api-key" class="paste-btn" title="Вставить из буфера">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M16 4a2 2 0 00-2-2h-4a2 2 0 00-2 2M16 4a2 2 0 012 2v2H6V6a2 2 0 012-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button id="test-connection" class="n8n-btn primary" disabled>
+                <span id="test-connection-text">Подключить n8n</span>
+                <svg id="test-connection-loader" class="hidden spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12a9 9 0 11-6.219-8.56" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step Success -->
+          <div id="step-success-content" class="step-content-panel">
+            <div class="step-success-card final">
+              <div class="success-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="success-content">
+                <h4>🎉 Все готово!</h4>
+                <p>n8n успешно подключен и готов для создания рабочих процессов</p>
+                
+                <div class="connection-info">
+                  <div class="info-row">
+                    <span>Статус:</span>
+                    <span class="status-active">Активно</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Инстанс:</span>
+                    <span id="connected-instance-url">loading...</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Подключено:</span>
+                    <span>Сегодня</span>
+                  </div>
+                </div>
+                
+                <div class="success-actions">
+                  <button id="close-success-modal" class="n8n-btn primary">Закрыть</button>
+                  <button id="disconnect-n8n" class="n8n-btn ghost danger">Отключить n8n</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Setup Option -->
+        <div class="n8n-modal-footer">
+          <button id="manual-setup" class="n8n-btn ghost">Настроить вручную</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- N8N Connected Status Modal -->
+  <div id="n8n-connected-modal" class="n8n-modal hidden">
+    <div class="n8n-modal-content">
+      <!-- Modal Header -->
+      <div class="n8n-modal-header">
+        <div class="n8n-modal-title-section">
+          <div class="n8n-modal-icon connected">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 20h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8.5 16.429a5 5 0 0 1 7 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 12.859a10 10 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 8.82a15 15 0 0 1 20 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="n8n-modal-title">n8n подключен</h3>
+            <p class="n8n-modal-subtitle">Готов для создания workflow</p>
+          </div>
+        </div>
+        <button id="n8n-connected-modal-close" class="n8n-modal-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="n8n-modal-body">
+        <!-- Success Status -->
+        <div class="n8n-connected-status">
+          <div class="success-icon-large">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          
+          <div class="success-content-large">
+            <h4>🎉 Все готово!</h4>
+            <p>n8n успешно подключен и готов для создания рабочих процессов</p>
+          </div>
+          
+          <div class="connection-details">
+            <div class="detail-row">
+              <span class="detail-label">Статус:</span>
+              <span class="detail-value status-active">Активно</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Инстанс:</span>
+              <span class="detail-value" id="connected-modal-instance-url">loading...</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Подключено:</span>
+              <span class="detail-value" id="connected-modal-date">Сегодня</span>
+            </div>
+          </div>
+          
+          <div class="connected-modal-actions">
+            <button id="connected-modal-close-btn" class="n8n-btn primary large">Закрыть</button>
+            <button id="connected-modal-disconnect-btn" class="n8n-btn-text danger">Отключить n8n</button>
+          </div>
         </div>
       </div>
     </div>

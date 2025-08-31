@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Get backend URL from storage
       safeStorageGet(['backendUrl'], (result) => {
-        const backendUrl = result.backendUrl || 'http://localhost:8000';
+        const backendUrl = result.backendUrl || window.getBackendUrl();
         
         // Make login request
         fetch(`${backendUrl}/api/v1/auth/login`, {
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Get backend URL from storage
       safeStorageGet(['backendUrl'], (result) => {
-        const backendUrl = result.backendUrl || 'http://localhost:8000';
+        const backendUrl = result.backendUrl || window.getBackendUrl();
         
         // Make registration request
         fetch(`${backendUrl}/api/v1/auth/register`, {

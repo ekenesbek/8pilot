@@ -26,6 +26,13 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy application code
 COPY . .
+RUN echo "=== Checking what files are available ==="
+COPY . /tmp/debug
+RUN ls -la /tmp/debug/ | grep env
+RUN echo "=== End debug ==="
+
+# Потом ваша строка:
+COPY .env .env
 
 # Create logs directory
 RUN mkdir -p logs

@@ -1,4 +1,13 @@
-// Updated settings/settings.js with Side Panel integration
+// Updated settings/settings.js with Side Panel integration and N8N
+
+// N8N connection state for settings page
+let n8nConnectionState = {
+  isConnected: false,
+  detectedUrl: null,
+  currentStep: 'detect',
+  isDetecting: false,
+  bannerDismissed: false
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const statusIndicator = document.getElementById('status-indicator');
@@ -12,10 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleOptions = document.querySelectorAll('.toggle-option');
   const openaiSection = document.getElementById('openai-section');
   const anthropicSection = document.getElementById('anthropic-section');
-  const openaiKeyInput = document.getElementById('openai-key');
-  const anthropicKeyInput = document.getElementById('anthropic-key');
   const n8nApiUrlInput = document.getElementById('n8n-api-url');
   const n8nApiKeyInput = document.getElementById('n8n-api-key');
+  
+  // Initialize n8n integration
+  initN8nIntegration();
   
   // Check if extension context is valid
   function checkExtensionContext() {
@@ -206,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load demo settings
   function loadDemoSettings() {
     // Set default demo values
-    document.getElementById('backend-url').value = 'http://localhost:8000';
+    document.getElementById('backend-url').value = window.getBackendUrl();
     
     // Show demo message in settings
     const demoMessage = document.createElement('div');
@@ -281,21 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load saved settings with error handling
   function loadSettings() {
     safeStorageGet([
-      'openaiKey', 
-      'anthropicKey', 
       'activeProvider',
       'n8nApiUrl',
       'n8nApiKey',
       'backendUrl'
     ], (result) => {
-      if (result.openaiKey) {
-        openaiKeyInput.value = result.openaiKey;
-      }
-      
-      if (result.anthropicKey) {
-        anthropicKeyInput.value = result.anthropicKey;
-      }
-      
       if (result.n8nApiUrl) {
         n8nApiUrlInput.value = result.n8nApiUrl;
       }
@@ -306,6 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (result.backendUrl) {
         document.getElementById('backend-url').value = result.backendUrl;
+      } else {
+        // Use default from config
+        document.getElementById('backend-url').value = window.getBackendUrl();
       }
       
       // Set active provider
@@ -440,8 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    const openaiKey = openaiKeyInput.value.trim();
-    const anthropicKey = anthropicKeyInput.value.trim();
     const activeProvider = toggleContainer.getAttribute('data-selected');
     const n8nApiUrl = n8nApiUrlInput.value.trim();
     const n8nApiKey = n8nApiKeyInput.value.trim();
@@ -460,8 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Save settings with error handling
     safeStorageSet({ 
-      openaiKey, 
-      anthropicKey, 
       activeProvider,
       n8nApiUrl,
       n8nApiKey,
@@ -480,8 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
       safeSendMessage({ 
         action: 'settingsUpdated',
         settings: {
-          openaiKey,
-          anthropicKey,
           activeProvider,
           n8nApiUrl,
           n8nApiKey,
@@ -575,3 +572,26 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Initialization error:', error);
     handleExtensionError();
   }
+});
+
+// ========= N8N INTEGRATION FUNCTIONS =========
+
+// Global functions for modal interaction (need to be in global scope)
+window.handleConnectN8n = function() {
+  showN8nSetupModal();
+  
+  if (n8nConnectionState.isConnected) {
+    updateModalStep('completed');
+  } else if (n8nConnectionState.detectedUrl) {
+    updateModalStep('api-setup');
+  } else {
+    updateModalStep('detect');
+  }
+};
+
+window.hideN8nSetupModal = function() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+};

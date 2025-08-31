@@ -939,9 +939,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Setup N8N event listeners (but don't initialize detection yet)
   setupN8nEventListeners();
   
-  // Initialize n8n card display (will show default state)
-  updateSidepanelN8nCard();
-  
   // Initialize theme manager
   console.log('Creating ThemeManager...');
   themeManager = new ThemeManager();
@@ -2683,15 +2680,11 @@ async function detectN8nInstance() {
 
 // Update N8N UI elements based on current state
 function updateN8nUI() {
-  // Always update the sidepanel settings card first
-  updateSidepanelN8nCard();
-  
   const banner = document.getElementById('n8n-connection-banner');
   const detectedBadge = document.getElementById('n8n-detected-badge');
   const bannerDescription = document.getElementById('n8n-banner-description');
   const setupAutoBtn = document.getElementById('n8n-setup-auto');
   
-  // If banner doesn't exist, only update the card
   if (!banner) return;
   
   // Show/hide banner
@@ -2712,6 +2705,9 @@ function updateN8nUI() {
     bannerDescription.textContent = 'Создавайте и управляйте рабочими процессами прямо из чата';
     setupAutoBtn.textContent = 'Настроить n8n';
   }
+  
+  // Also update the sidepanel settings card
+  updateSidepanelN8nCard();
 }
 
 // Test n8n connection with detailed error handling
@@ -2921,16 +2917,6 @@ function updateModalStep(step) {
   const successContent = document.getElementById('step-success-content');
   if (successContent) {
     successContent.classList.toggle('active', step === 'completed');
-    
-    // Update connection details when showing success
-    if (step === 'completed') {
-      const instanceUrlElement = document.getElementById('connected-instance-url');
-      if (instanceUrlElement && n8nConnectionState.detectedUrl) {
-        const shortUrl = n8nConnectionState.detectedUrl.replace('https://', '').substring(0, 25);
-        instanceUrlElement.textContent = shortUrl + (shortUrl.length === 25 ? '...' : '');
-        instanceUrlElement.title = n8nConnectionState.detectedUrl;
-      }
-    }
   }
 }
 
@@ -3114,7 +3100,6 @@ async function handleN8nConnection() {
       
       // Update state
       n8nConnectionState.isConnected = true;
-      n8nConnectionState.detectedUrl = targetUrl;
       n8nConnectionState.currentStep = 'completed';
       
       // Show success in modal
@@ -3267,113 +3252,6 @@ function setupN8nEventListeners() {
       }
     });
   }
-  
-  // Success modal buttons
-  const closeSuccessBtn = document.getElementById('close-success-modal');
-  const disconnectBtn = document.getElementById('disconnect-n8n');
-  
-  if (closeSuccessBtn) {
-    closeSuccessBtn.addEventListener('click', hideN8nSetupModal);
-  }
-  
-  if (disconnectBtn) {
-    disconnectBtn.addEventListener('click', async () => {
-      try {
-        disconnectBtn.disabled = true;
-        disconnectBtn.textContent = 'Отключение...';
-        
-        // Clear local storage
-        await chrome.storage.sync.remove(['n8nApiUrl', 'n8nApiKey']);
-        
-        // Clear global settings
-        settings.n8nApiUrl = null;
-        settings.n8nApiKey = null;
-        
-        // Update state
-        n8nConnectionState.isConnected = false;
-        n8nConnectionState.detectedUrl = null;
-        n8nConnectionState.currentStep = 'detect';
-        
-        // Update UI
-        updateN8nUI();
-        updateSidepanelN8nCard();
-        
-        // Close modal
-        hideN8nSetupModal();
-        
-        // Show success message
-        addMessage('assistant', '🔌 n8n отключен', 'info');
-        
-      } catch (error) {
-        console.error('Error disconnecting n8n:', error);
-        showModalMessage('Ошибка при отключении n8n', 'error');
-      } finally {
-        disconnectBtn.disabled = false;
-        disconnectBtn.textContent = 'Отключить n8n';
-      }
-    });
-  }
-  
-  // Connected modal events
-  const connectedModalCloseBtn = document.getElementById('n8n-connected-modal-close');
-  const connectedModalCloseBtnMain = document.getElementById('connected-modal-close-btn');
-  const connectedModalDisconnectBtn = document.getElementById('connected-modal-disconnect-btn');
-  
-  if (connectedModalCloseBtn) {
-    connectedModalCloseBtn.addEventListener('click', hideN8nConnectedModal);
-  }
-  
-  if (connectedModalCloseBtnMain) {
-    connectedModalCloseBtnMain.addEventListener('click', hideN8nConnectedModal);
-  }
-  
-  if (connectedModalDisconnectBtn) {
-    connectedModalDisconnectBtn.addEventListener('click', async () => {
-      try {
-        connectedModalDisconnectBtn.disabled = true;
-        connectedModalDisconnectBtn.textContent = 'Отключение...';
-        
-        // Clear local storage
-        await chrome.storage.sync.remove(['n8nApiUrl', 'n8nApiKey']);
-        
-        // Clear global settings
-        settings.n8nApiUrl = null;
-        settings.n8nApiKey = null;
-        
-        // Update state
-        n8nConnectionState.isConnected = false;
-        n8nConnectionState.detectedUrl = null;
-        n8nConnectionState.currentStep = 'detect';
-        
-        // Update UI
-        updateN8nUI();
-        updateSidepanelN8nCard();
-        
-        // Close modal
-        hideN8nConnectedModal();
-        
-        // Show success message
-        addMessage('assistant', '🔌 n8n отключен', 'info');
-        
-      } catch (error) {
-        console.error('Error disconnecting n8n:', error);
-        // Could show error in modal, but for now just log
-      } finally {
-        connectedModalDisconnectBtn.disabled = false;
-        connectedModalDisconnectBtn.textContent = 'Отключить n8n';
-      }
-    });
-  }
-  
-  // Close connected modal on backdrop click
-  const connectedModal = document.getElementById('n8n-connected-modal');
-  if (connectedModal) {
-    connectedModal.addEventListener('click', (e) => {
-      if (e.target === connectedModal) {
-        hideN8nConnectedModal();
-      }
-    });
-  }
 }
 
 // Listen for messages from background script
@@ -3433,22 +3311,388 @@ function cleanIncomingWorkflowJson(workflowJson) {
 
 
 
-// Update n8n integration card in sidepanel settings
-function updateSidepanelN8nCard() {
-  const cardContainer = document.getElementById('sidepanel-n8n-integration-card');
-  console.log('updateSidepanelN8nCard - cardContainer found:', !!cardContainer);
+function hideN8nSetupModal() {
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+function setSetupStep(step) {
+  currentSetupStep = step;
   
-  if (!cardContainer) {
-    console.error('Card container not found! Element sidepanel-n8n-integration-card does not exist');
+  // Update step indicators
+  document.querySelectorAll('.setup-step').forEach((stepEl, index) => {
+    const stepNumber = index + 1;
+    stepEl.classList.remove('active', 'completed');
+    
+    if (stepNumber < currentSetupStep) {
+      stepEl.classList.add('completed');
+    } else if (stepNumber === currentSetupStep) {
+      stepEl.classList.add('active');
+    }
+  });
+  
+  // Update pages
+  document.querySelectorAll('.setup-page').forEach((page, index) => {
+    page.classList.remove('active');
+    if (index + 1 === currentSetupStep) {
+      page.classList.add('active');
+    }
+  });
+  
+  updateSetupButtons();
+}
+
+function updateSetupButtons() {
+  const continueBtn = document.getElementById('setup-continue-btn');
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  const connectBtn = document.getElementById('setup-connect-btn');
+  const manualBtn = document.getElementById('setup-manual-btn');
+  
+  // Hide all buttons first
+  [continueBtn, openApiBtn, connectBtn].forEach(btn => {
+    if (btn) btn.classList.add('hidden');
+  });
+  
+  if (manualBtn) {
+    manualBtn.style.display = currentSetupStep === 1 ? 'flex' : 'none';
+  }
+  
+  switch (currentSetupStep) {
+    case 1:
+      if (continueBtn) {
+        continueBtn.classList.remove('hidden');
+        continueBtn.textContent = 'Продолжить настройку';
+      }
+      break;
+    case 2:
+      if (openApiBtn) {
+        openApiBtn.classList.remove('hidden');
+      }
+      break;
+    case 3:
+      if (connectBtn) {
+        connectBtn.classList.remove('hidden');
+      }
+      break;
+  }
+}
+
+function updateSetupUI() {
+  // Update detected URL display
+  if (detectedN8nUrl) {
+    const urlElements = [
+      document.getElementById('detected-n8n-url'),
+      document.getElementById('prompt-n8n-url')
+    ];
+    
+    urlElements.forEach(el => {
+      if (el) {
+        if (el.id === 'prompt-n8n-url') {
+          el.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+        } else {
+          el.textContent = detectedN8nUrl;
+        }
+      }
+    });
+  }
+}
+
+async function checkN8nConnection() {
+  try {
+    const settings = await loadSettings();
+    const n8nApiUrl = settings.n8nApiUrl;
+    const n8nApiKey = settings.n8nApiKey;
+    
+    if (!n8nApiUrl || !n8nApiKey) {
+      return false;
+    }
+    
+    // Test connection through backend
+    const backendUrl = settings.backendUrl || 'http://localhost:8000';
+    const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: n8nApiUrl,
+        api_key: n8nApiKey
+      })
+    });
+    
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Error checking n8n connection:', error);
+    return false;
+  }
+}
+
+async function saveN8nConnection(url, apiKey) {
+  try {
+    const settings = await loadSettings();
+    settings.n8nApiUrl = url;
+    settings.n8nApiKey = apiKey;
+    
+    await chrome.storage.local.set(settings);
+    
+    // Update UI to reflect connection
+    updateApiStatus();
+    
+    // Hide all n8n notifications
+    hideN8nConnectionPrompt();
+    hideChatN8nNotification();
+    
+    showToast('n8n подключен успешно!', 'success');
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving n8n connection:', error);
+    showToast('Ошибка сохранения настроек', 'error');
+    return false;
+  }
+}
+
+
+
+// n8n Connection Notification Management
+async function showN8nConnectionPrompt() {
+  // Check if we already have a connection
+  const hasConnection = await checkN8nConnection();
+  if (hasConnection) {
     return;
   }
   
-  console.log('updateSidepanelN8nCard - current state:', {
-    isConnected: n8nConnectionState.isConnected,
-    detectedUrl: n8nConnectionState.detectedUrl,
-    isDetecting: n8nConnectionState.isDetecting,
-    currentStep: n8nConnectionState.currentStep
-  });
+  // Check if n8n is detected
+  const storageData = await chrome.storage.local.get(['isN8nPage', 'detectedN8nUrl']);
+  const isN8nPage = storageData.isN8nPage;
+  const n8nUrl = storageData.detectedN8nUrl;
+  
+  if (isN8nPage && n8nUrl) {
+    detectedN8nUrl = n8nUrl;
+    
+    // Show notification in sidebar (if not in chat tab)
+    const prompt = document.getElementById('n8n-connection-prompt');
+    if (prompt) {
+      updateSetupUI();
+      prompt.classList.remove('hidden');
+    }
+    
+    // Show notification in chat
+    showChatN8nNotification();
+  }
+}
+
+function showChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification && detectedN8nUrl) {
+    // Update URL in chat notification
+    const chatUrlElement = document.getElementById('chat-prompt-n8n-url');
+    if (chatUrlElement) {
+      chatUrlElement.textContent = `Найден ваш n8n: ${detectedN8nUrl}. Настройте за один клик!`;
+    }
+    
+    chatNotification.classList.remove('hidden');
+  }
+}
+
+function hideChatN8nNotification() {
+  const chatNotification = document.getElementById('chat-n8n-notification');
+  if (chatNotification) {
+    chatNotification.classList.add('hidden');
+  }
+}
+
+function hideN8nConnectionPrompt() {
+  const prompt = document.getElementById('n8n-connection-prompt');
+  if (prompt) {
+    prompt.classList.add('hidden');
+  }
+}
+
+// Initialize n8n setup event listeners
+function initializeN8nSetup() {
+  // Modal close button
+  const closeBtn = document.getElementById('n8n-setup-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', hideN8nSetupModal);
+  }
+  
+  // Click outside modal to close
+  const modal = document.getElementById('n8n-setup-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideN8nSetupModal();
+      }
+    });
+  }
+  
+  // Setup buttons
+  const continueBtn = document.getElementById('setup-continue-btn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      if (currentSetupStep < 3) {
+        setSetupStep(currentSetupStep + 1);
+      }
+    });
+  }
+  
+  const openApiBtn = document.getElementById('setup-open-api-btn');
+  if (openApiBtn) {
+    openApiBtn.addEventListener('click', () => {
+      openN8nApiSettings();
+      setSetupStep(3);
+    });
+  }
+  
+  const connectBtn = document.getElementById('setup-connect-btn');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async () => {
+      const apiKeyInput = document.getElementById('n8n-api-key-input');
+      const apiKey = apiKeyInput?.value.trim();
+      
+      if (!apiKey) {
+        showToast('Введите API ключ', 'error');
+        return;
+      }
+      
+      if (!detectedN8nUrl) {
+        showToast('URL n8n не обнаружен', 'error');
+        return;
+      }
+      
+      connectBtn.disabled = true;
+      connectBtn.textContent = 'Подключение...';
+      
+      try {
+        // Test connection first
+        const backendUrl = (await loadSettings()).backendUrl || 'http://localhost:8000';
+        const response = await fetch(`${backendUrl}/api/v1/n8n/test-connection`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: detectedN8nUrl,
+            api_key: apiKey
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          await saveN8nConnection(detectedN8nUrl, apiKey);
+          hideN8nSetupModal();
+          hideN8nConnectionPrompt();
+          showToast('n8n успешно подключен!', 'success');
+        } else {
+          showToast(`Ошибка подключения: ${result.details.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Connection test failed:', error);
+        showToast('Ошибка проверки подключения', 'error');
+      } finally {
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Подключить n8n';
+      }
+    });
+  }
+  
+  const manualBtn = document.getElementById('setup-manual-btn');
+  if (manualBtn) {
+    manualBtn.addEventListener('click', () => {
+      hideN8nSetupModal();
+      // Open settings for manual configuration
+      toggleSettings();
+    });
+  }
+  
+  // Connection prompt buttons
+  const autoBtn = document.getElementById('setup-auto-btn');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const laterBtn = document.getElementById('setup-later-btn');
+  if (laterBtn) {
+    laterBtn.addEventListener('click', () => {
+      hideN8nConnectionPrompt();
+    });
+  }
+  
+  // Chat notification buttons
+  const chatAutoBtn = document.getElementById('chat-setup-auto-btn');
+  if (chatAutoBtn) {
+    chatAutoBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+      hideN8nConnectionPrompt();
+      showN8nSetupModal();
+    });
+  }
+  
+  const chatLaterBtn = document.getElementById('chat-setup-later-btn');
+  if (chatLaterBtn) {
+    chatLaterBtn.addEventListener('click', () => {
+      hideChatN8nNotification();
+    });
+  }
+  
+  // Listen to storage changes for syncing with settings page
+  if (chrome && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync') {
+        if (changes.n8nApiUrl || changes.n8nApiKey) {
+          console.log('n8n storage changed in sidepanel, updating status...', changes);
+          
+          // Update state based on storage changes
+          if (changes.n8nApiUrl && changes.n8nApiUrl.newValue) {
+            n8nConnectionState.detectedUrl = changes.n8nApiUrl.newValue;
+            n8nConnectionState.isConnected = true;
+            n8nConnectionState.currentStep = 'completed';
+            
+            // Update global settings
+            settings.n8nApiUrl = changes.n8nApiUrl.newValue;
+            if (changes.n8nApiKey && changes.n8nApiKey.newValue) {
+              settings.n8nApiKey = changes.n8nApiKey.newValue;
+            }
+          } else if (changes.n8nApiUrl && !changes.n8nApiUrl.newValue) {
+            // n8n was disconnected
+            n8nConnectionState.detectedUrl = null;
+            n8nConnectionState.isConnected = false;
+            n8nConnectionState.currentStep = 'detect';
+            
+            // Clear global settings
+            settings.n8nApiUrl = null;
+            settings.n8nApiKey = null;
+          }
+          
+          // Update UI immediately
+          updateN8nUI();
+          updateSidepanelN8nCard();
+          
+          // Then double-check with actual connection test
+          setTimeout(() => {
+            checkN8nConnectionStatus().then(() => {
+              updateN8nUI();
+              updateSidepanelN8nCard();
+            });
+          }, 500);
+        }
+      }
+    });
+  }
+}
+
+// Update n8n integration card in sidepanel settings
+function updateSidepanelN8nCard() {
+  const cardContainer = document.getElementById('sidepanel-n8n-integration-card');
+  if (!cardContainer) return;
   
   let cardClass, iconClass, statusText, description, buttonText, buttonClass;
   
@@ -3478,8 +3722,11 @@ function updateSidepanelN8nCard() {
   
   const iconSvg = iconClass === 'connected' 
     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-         <path d="M12 20h.01"/>
-         <path d="M8.5 16.429a5 5 0 0 1 7 0M5 12.859a10 10 0 0 1 14 0M2 8.82a15 15 0 0 1 20 0"/>
+         <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+         <path d="M5 3v4"/>
+         <path d="M19 17v4"/>
+         <path d="M3 5h4"/>
+         <path d="M17 19h4"/>
        </svg>`
     : iconClass === 'detecting'
     ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin">
@@ -3514,14 +3761,6 @@ function updateSidepanelN8nCard() {
     </div>
   `;
   
-  console.log('updateSidepanelN8nCard - HTML set, final state:', {
-    cardClass,
-    statusText,
-    description,
-    buttonText,
-    htmlLength: cardContainer.innerHTML.length
-  });
-  
   // Update hidden fields for backward compatibility with existing save function
   const urlInput = document.getElementById('n8n-url');
   const keyInput = document.getElementById('n8n-key');
@@ -3535,49 +3774,6 @@ function updateSidepanelN8nCard() {
   // Add event listener for the connect button
   const connectBtn = document.getElementById('sidepanel-n8n-connect-btn');
   if (connectBtn) {
-    // Remove any existing listeners by cloning the element
-    const newConnectBtn = connectBtn.cloneNode(true);
-    connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
-    
-    // Add the appropriate listener based on state
-    if (n8nConnectionState.isConnected && buttonText === 'Подробнее') {
-      newConnectBtn.addEventListener('click', showN8nConnectedModal);
-    } else {
-      newConnectBtn.addEventListener('click', showN8nSetupModal);
-    }
-  }
-}
-
-// Show N8N connected status modal
-function showN8nConnectedModal() {
-  const modal = document.getElementById('n8n-connected-modal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    
-    // Update instance URL
-    const instanceUrlElement = document.getElementById('connected-modal-instance-url');
-    if (instanceUrlElement && n8nConnectionState.detectedUrl) {
-      const shortUrl = n8nConnectionState.detectedUrl.replace('https://', '').substring(0, 25);
-      instanceUrlElement.textContent = shortUrl + (shortUrl.length === 25 ? '...' : '');
-      instanceUrlElement.title = n8nConnectionState.detectedUrl;
-    }
-    
-    // Update connection date (for now just "Сегодня")
-    const dateElement = document.getElementById('connected-modal-date');
-    if (dateElement) {
-      const today = new Date().toLocaleDateString('ru-RU', { 
-        day: 'numeric', 
-        month: 'long' 
-      });
-      dateElement.textContent = `Сегодня (${today})`;
-    }
-  }
-}
-
-// Hide N8N connected status modal
-function hideN8nConnectedModal() {
-  const modal = document.getElementById('n8n-connected-modal');
-  if (modal) {
-    modal.classList.add('hidden');
+    connectBtn.addEventListener('click', showN8nSetupModal);
   }
 }
