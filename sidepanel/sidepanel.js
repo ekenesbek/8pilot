@@ -561,7 +561,7 @@ async function sendMessage() {
     // Call AI API based on provider
     let response;
     if (settings.activeProvider === 'openai') {
-      response = await callOpenAI(message);
+      
     } else {
       response = await callAnthropic(message);
     }
@@ -893,7 +893,7 @@ async function applyToN8nCanvas(workflowJson) {
     
     if (currentWorkflowId === 'new_workflow') {
       // Create a new workflow and navigate to it
-      workflowId = await createNewWorkflow();
+      workflowId = await createNewWorkflow(cleanIncomingJson);
       
       // We need to wait a bit for the navigation to complete
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -962,7 +962,7 @@ async function applyToN8nCanvas(workflowJson) {
 
 // Create new workflow
 // Create new workflow and navigate to it
-async function createNewWorkflow() {
+async function createNewWorkflow(cleanIncomingJson) {
   try {
     const response = await fetch(`${settings.n8nApiUrl}/api/v1/workflows`, {
       method: 'POST',
@@ -972,10 +972,9 @@ async function createNewWorkflow() {
       },
       body: JSON.stringify({
         name: 'New Workflow',
-        nodes: [],
-        connections: {},
-        settings: {},
-        staticData: {}
+        nodes: cleanIncomingJson.nodes,
+        connections: cleanIncomingJson.connections,
+        settings: {executionOrder: "v1"}
       })
     });
 
@@ -986,8 +985,8 @@ async function createNewWorkflow() {
     const newWorkflow = await response.json();
     
     // Navigate to the new workflow page
-    if (newWorkflow.data && newWorkflow.data.id) {
-      const workflowId = newWorkflow.data.id;
+    if (newWorkflow && newWorkflow.id) {
+      const workflowId = newWorkflow.id;
       
       // Get the base URL from the current n8n API URL
       const baseUrl = new URL(settings.n8nApiUrl).origin;
@@ -1160,16 +1159,16 @@ function cleanIncomingWorkflowJson(workflowJson) {
   }
 
   // Clean connections
-  if (workflowJson.connections && typeof workflowJson.connections === 'object') {
-    Object.keys(workflowJson.connections).forEach(sourceNodeId => {
-      if (workflowJson.connections[sourceNodeId] && Array.isArray(workflowJson.connections[sourceNodeId])) {
-        cleaned.connections[sourceNodeId] = workflowJson.connections[sourceNodeId].filter(conn => 
-          conn && typeof conn === 'object' && conn.node && conn.type
-        );
-      }
-    });
-  }
-
+  // if (workflowJson.connections && typeof workflowJson.connections === 'object') {
+  //   Object.keys(workflowJson.connections).forEach(sourceNodeId => {
+  //     if (workflowJson.connections[sourceNodeId] && Array.isArray(workflowJson.connections[sourceNodeId])) {
+  //       cleaned.connections[sourceNodeId] = workflowJson.connections[sourceNodeId].filter(conn => 
+  //         conn && typeof conn === 'object' && conn.node && conn.type
+  //       );
+  //     }
+  //   });
+  // }
+  cleaned.connections = workflowJson.connections;
   return cleaned;
 }
 
