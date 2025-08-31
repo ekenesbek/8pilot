@@ -502,8 +502,28 @@
                 </svg>
               </div>
               <div class="success-content">
-                <h4>Успешно подключено!</h4>
-                <p>Теперь вы можете создавать рабочие процессы через чат.</p>
+                <h4>🎉 Все готово!</h4>
+                <p>n8n успешно подключен и готов для создания рабочих процессов</p>
+                
+                <div class="connection-info">
+                  <div class="info-row">
+                    <span>Статус:</span>
+                    <span class="status-active">Активно</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Инстанс:</span>
+                    <span id="connected-instance-url">loading...</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Подключено:</span>
+                    <span>Сегодня</span>
+                  </div>
+                </div>
+                
+                <div class="success-actions">
+                  <button id="close-success-modal" class="n8n-btn primary">Закрыть</button>
+                  <button id="disconnect-n8n" class="n8n-btn ghost danger">Отключить n8n</button>
+                </div>
               </div>
             </div>
           </div>
@@ -512,6 +532,71 @@
         <!-- Manual Setup Option -->
         <div class="n8n-modal-footer">
           <button id="manual-setup" class="n8n-btn ghost">Настроить вручную</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- N8N Connected Status Modal -->
+  <div id="n8n-connected-modal" class="n8n-modal hidden">
+    <div class="n8n-modal-content">
+      <!-- Modal Header -->
+      <div class="n8n-modal-header">
+        <div class="n8n-modal-title-section">
+          <div class="n8n-modal-icon connected">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 20h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8.5 16.429a5 5 0 0 1 7 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 12.859a10 10 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 8.82a15 15 0 0 1 20 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="n8n-modal-title">n8n подключен</h3>
+            <p class="n8n-modal-subtitle">Готов для создания workflow</p>
+          </div>
+        </div>
+        <button id="n8n-connected-modal-close" class="n8n-modal-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="n8n-modal-body">
+        <!-- Success Status -->
+        <div class="n8n-connected-status">
+          <div class="success-icon-large">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          
+          <div class="success-content-large">
+            <h4>🎉 Все готово!</h4>
+            <p>n8n успешно подключен и готов для создания рабочих процессов</p>
+          </div>
+          
+          <div class="connection-details">
+            <div class="detail-row">
+              <span class="detail-label">Статус:</span>
+              <span class="detail-value status-active">Активно</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Инстанс:</span>
+              <span class="detail-value" id="connected-modal-instance-url">loading...</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Подключено:</span>
+              <span class="detail-value" id="connected-modal-date">Сегодня</span>
+            </div>
+          </div>
+          
+          <div class="connected-modal-actions">
+            <button id="connected-modal-close-btn" class="n8n-btn primary large">Закрыть</button>
+            <button id="connected-modal-disconnect-btn" class="n8n-btn-text danger">Отключить n8n</button>
+          </div>
         </div>
       </div>
     </div>
