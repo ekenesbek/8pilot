@@ -81,6 +81,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionDescription = document.getElementById('sectionDescription');
     const deactivateBtn = document.getElementById('deactivateBtn');
 
+    // Check if extension is already activated on page load
+    function checkActivationStatus() {
+        // Check if status display is already active (meaning extension is activated)
+        if (statusDisplay && statusDisplay.classList.contains('active')) {
+            console.log('Extension is already activated');
+            // Show deactivate button
+            if (deactivateBtn) {
+                deactivateBtn.classList.add('active');
+            }
+        } else {
+            // If status display is not active, check if it should be (for demo purposes)
+            // This simulates the "n8nChat is activated" state
+            console.log('Checking if extension should be activated...');
+            // For demo, let's show the activated state
+            if (statusDisplay && activateSection) {
+                activateSection.classList.add('activated');
+                statusDisplay.classList.add('active');
+                sectionDescription.style.display = 'none';
+                activateBtn.style.display = 'none';
+                deactivateBtn.classList.add('active');
+            }
+        }
+    }
+
+    // Check activation status on page load
+    checkActivationStatus();
+
     if (activateBtn) {
         activateBtn.addEventListener('click', function(e) {
             e.preventDefault();

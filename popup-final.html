@@ -185,14 +185,9 @@
         }
 
         .deactivate-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
             background: #27272a;
-            border: 2px solid #4fd1c7;
-            border-radius: 50%;
+            border: 2px solid #000000;
+            border-radius: 8px;
             color: #e4e4e7;
             cursor: pointer;
             display: none;
@@ -201,7 +196,9 @@
             font-size: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
-            z-index: 1000;
+            padding: 8px 16px;
+            margin: 15px auto 10px;
+            width: fit-content;
         }
 
         .deactivate-btn.active {
@@ -211,7 +208,8 @@
         .deactivate-btn:hover {
             background: #4fd1c7;
             color: #0a0a0a;
-            transform: scale(1.1);
+            border-color: #4fd1c7;
+            transform: translateY(-1px);
         }
 
         .auto-note {
@@ -750,11 +748,12 @@
                 <button class="activate-btn" id="activateBtn">
                     Activate on Current Page
                 </button>
+                
+                <!-- Deactivate Button -->
+                <button class="deactivate-btn" id="deactivateBtn">Deactivate</button>
+                
                 <div class="auto-note">n8nChat activates automatically for n8n hosted workflows <a href="https://n8n.io/?ps_partner_key=NWJjYmYyYmI3ODg3&ps_xid=mIyHZrXzAHSklW&gsxid=mIyHZrXzAHSklW&gspk=NWJjYmYyYmI3ODg3" target="_blank" class="hosted-link">n8n hosted ↗</a></div>
             </div>
-            
-            <!-- Deactivate Button -->
-            <button class="deactivate-btn" id="deactivateBtn">OFF</button>
         </div>
 
         <!-- Settings Title -->
