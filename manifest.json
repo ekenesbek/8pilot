@@ -1,6 +1,6 @@
 {
   "name": "8pilot",
-  "version": "1.0",
+  "version": "1.3",
   "description": "AI assistant for building n8n workflows",
   "manifest_version": 3,
   "icons": {
@@ -13,16 +13,16 @@
       "16": "icons/pixelated_sample_32.png",
       "48": "icons/pixelated_sample_32.png",
       "128": "icons/pixelated_sample_32.png"
-    }
+    },
+    "default_popup": "popup-final.html"
   },
-  "side_panel": {
-    "default_path": "sidepanel/sidepanel.html"
-  },
+
+
   "permissions": [
     "storage",
     "activeTab",
     "scripting",
-    "sidePanel"
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -30,6 +30,13 @@
   "background": {
     "service_worker": "extension.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
   "web_accessible_resources": [
     {
       "resources": [

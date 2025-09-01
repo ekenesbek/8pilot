@@ -1,0 +1,140 @@
+{
+  "name": "8pilot-sidepanel-modular",
+  "version": "2.0.0",
+  "description": "Modular version of 8pilot sidepanel with improved architecture",
+  "main": "modules/main.js",
+  "scripts": {
+    "build": "echo 'No build process needed for modular version'",
+    "dev": "echo 'Open sidepanel-modular.html in browser'",
+    "test": "echo 'Tests not implemented yet'",
+    "lint": "echo 'Linting not configured yet'",
+    "clean": "rm -rf node_modules package-lock.json",
+    "start": "echo 'Open sidepanel-modular.html in browser'"
+  },
+  "keywords": [
+    "8pilot",
+    "sidepanel",
+    "n8n",
+    "workflow",
+    "automation",
+    "chrome-extension",
+    "modular",
+    "architecture"
+  ],
+  "author": "8pilot Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/8pilot/8pilot-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/8pilot/8pilot-extension/issues"
+  },
+  "homepage": "https://github.com/8pilot/8pilot-extension#readme",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "moduleStructure": {
+    "description": "Modular architecture with separate concerns",
+    "modules": [
+      {
+        "name": "auth.js",
+        "purpose": "Authentication and user management",
+        "dependencies": []
+      },
+      {
+        "name": "theme.js",
+        "purpose": "Theme management (light/dark/auto)",
+        "dependencies": []
+      },
+      {
+        "name": "chat.js",
+        "purpose": "Chat management and AI interaction",
+        "dependencies": ["auth.js", "n8n.js"]
+      },
+      {
+        "name": "n8n.js",
+        "purpose": "N8N integration and connection management",
+        "dependencies": ["auth.js"]
+      },
+      {
+        "name": "settings.js",
+        "purpose": "Application settings management",
+        "dependencies": ["auth.js", "theme.js"]
+      },
+      {
+        "name": "workflow.js",
+        "purpose": "Workflow and page management",
+        "dependencies": ["chat.js"]
+      },
+      {
+        "name": "templates.js",
+        "purpose": "Workflow templates management",
+        "dependencies": ["chat.js"]
+      },
+      {
+        "name": "main.js",
+        "purpose": "Main application logic and module coordination",
+        "dependencies": ["auth.js", "theme.js", "chat.js", "n8n.js", "settings.js", "workflow.js", "templates.js"]
+      }
+    ]
+  },
+  "features": {
+    "authentication": {
+      "login": true,
+      "signup": true,
+      "demo_mode": true,
+      "multi_language": true
+    },
+    "chat": {
+      "ai_integration": true,
+      "streaming": true,
+      "workflow_creation": true,
+      "history": true
+    },
+    "n8n_integration": {
+      "auto_detection": true,
+      "api_setup": true,
+      "workflow_application": true,
+      "connection_management": true
+    },
+    "themes": {
+      "light": true,
+      "dark": true,
+      "auto": true,
+      "system_detection": true
+    },
+    "templates": {
+      "prebuilt": true,
+      "categorization": true,
+      "import_export": true,
+      "custom_creation": true
+    }
+  },
+  "compatibility": {
+    "chrome": ">=88.0.0",
+    "firefox": ">=85.0.0",
+    "edge": ">=88.0.0",
+    "safari": ">=14.0.0"
+  },
+  "performance": {
+    "lazy_loading": true,
+    "module_caching": true,
+    "event_delegation": true,
+    "memory_management": true
+  },
+  "security": {
+    "xss_protection": true,
+    "csrf_protection": true,
+    "secure_storage": true,
+    "api_validation": true
+  }
+}
