@@ -141,3 +141,14 @@ def refresh_token(
         data={"sub": current_user.email, "user_id": current_user.id}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+def logout_user(
+    current_user = Depends(get_current_active_user)
+):
+    """Logout user and invalidate token"""
+    # Since we're using stateless JWT tokens, we can't truly invalidate them
+    # on the server side without maintaining a blacklist. For now, we'll
+    # return success and rely on the client to clear the token.
+    # In a production system, you might want to implement a token blacklist.
+    return {"message": "Successfully logged out"}

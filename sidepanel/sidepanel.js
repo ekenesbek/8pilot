@@ -387,7 +387,7 @@ class AuthManager {
   async checkAuthStatus() {
     console.log('checkAuthStatus called');
     try {
-      const result = await this.getStorageData(['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode']);
+      const result = await this.getStorageData(['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode', 'userLoggedOut']);
       console.log('Storage data result:', result);
       
       if (result.isDemoMode) {
@@ -400,6 +400,13 @@ class AuthManager {
         setTimeout(() => {
           initN8nConnection();
         }, 500);
+        return;
+      }
+      
+      // Check if user explicitly logged out
+      if (result.userLoggedOut) {
+        console.log('User previously logged out, showing auth overlay');
+        this.showAuthOverlay();
         return;
       }
       
@@ -442,7 +449,8 @@ class AuthManager {
         authToken: data.access_token,
         userInfo: data.user,
         isAuthenticated: true,
-        isDemoMode: false
+        isDemoMode: false,
+        userLoggedOut: false  // Clear logout flag on successful login
       });
       
       this.isAuthenticated = true;
@@ -568,12 +576,15 @@ class AuthManager {
         isAuthenticated: false,
         isDemoMode: false,
         authToken: null,
-        userInfo: null
+        userInfo: null,
+        demoModeActivated: null
       });
       
       this.isAuthenticated = false;
       this.isDemoMode = false;
       this.currentUser = null;
+      
+      console.log('Auth data cleared successfully');
     } catch (error) {
       console.error('Error clearing auth data:', error);
     }
@@ -827,15 +838,66 @@ class AuthManager {
   async logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
       try {
-        // Stop token refresh timer
+        // Stop token refresh timer first
         this.stopTokenRefreshTimer();
         
+        // Get current token for logout request
+        const result = await this.getStorageData(['authToken']);
+        
+        // Call backend logout endpoint if we have a token
+        if (result.authToken) {
+          try {
+            const backendUrl = await this.getBackendUrl();
+            await fetch(`${backendUrl}/api/v1/auth/logout`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${result.authToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            console.log('Server logout successful');
+          } catch (error) {
+            console.log('Server logout failed, but continuing with client logout:', error);
+          }
+        }
+        
+        // Clear all authentication data
         await this.clearAuthData();
         
-        // Reload the page to show auth overlay
-        window.location.reload();
+        // Set explicit logout flag to prevent auto re-login
+        await this.setStorageData({
+          userLoggedOut: true
+        });
+        
+        // Also clear any cached data except the logout flag
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+          // Don't use sync.clear() as it would remove the logout flag
+          const keysToRemove = ['isAuthenticated', 'authToken', 'userInfo', 'isDemoMode', 'demoModeActivated'];
+          for (const key of keysToRemove) {
+            await chrome.storage.sync.remove(key);
+          }
+        } else {
+          // Clear localStorage fallback but keep logout flag
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('8pilot_') && key !== '8pilot_userLoggedOut') {
+              localStorage.removeItem(key);
+            }
+          });
+        }
+        
+        // Reset internal state
+        this.isAuthenticated = false;
+        this.isDemoMode = false;
+        this.currentUser = null;
+        
+        // Show auth overlay immediately instead of reloading
+        this.showAuthOverlay();
+        
+        console.log('Logout completed successfully');
       } catch (error) {
         console.error('Logout error:', error);
+        // Force reload as fallback
+        window.location.reload();
       }
     }
   }
