@@ -15,7 +15,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0a0a0a;
             color: #e4e4e7;
-            width: 400px;
+            width: 500px;
             min-height: 500px;
             max-height: 600px;
             overflow-y: auto;
@@ -146,6 +146,72 @@
         .activate-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
+        }
+
+        /* Activated State */
+        .activate-section.activated {
+            background: #111111;
+        }
+
+        .status-display {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-display.active {
+            display: flex;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            background: #4fd1c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0a0a0a;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .status-text {
+            color: #4fd1c7;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .deactivate-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #27272a;
+            border: 2px solid #4fd1c7;
+            border-radius: 50%;
+            color: #e4e4e7;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .deactivate-btn.active {
+            display: flex;
+        }
+
+        .deactivate-btn:hover {
+            background: #4fd1c7;
+            color: #0a0a0a;
+            transform: scale(1.1);
         }
 
         .auto-note {
@@ -673,8 +739,12 @@
             <div class="subtitle">Activate & Configure</div>
             
             <!-- Activate Section moved here -->
-            <div class="activate-section">
-                <div class="section-description">
+            <div class="activate-section" id="activateSection">
+                <div class="status-display" id="statusDisplay">
+                    <div class="status-icon">✓</div>
+                    <div class="status-text">n8nChat is activated</div>
+                </div>
+                <div class="section-description" id="sectionDescription">
                     Self-hosting? Navigate to your workflow, then activate the extension by pressing the button below:
                 </div>
                 <button class="activate-btn" id="activateBtn">
@@ -682,6 +752,9 @@
                 </button>
                 <div class="auto-note">n8nChat activates automatically for n8n hosted workflows <a href="https://n8n.io/?ps_partner_key=NWJjYmYyYmI3ODg3&ps_xid=mIyHZrXzAHSklW&gsxid=mIyHZrXzAHSklW&gspk=NWJjYmYyYmI3ODg3" target="_blank" class="hosted-link">n8n hosted ↗</a></div>
             </div>
+            
+            <!-- Deactivate Button -->
+            <button class="deactivate-btn" id="deactivateBtn">OFF</button>
         </div>
 
         <!-- Settings Title -->
@@ -771,7 +844,7 @@
                     
                     <div class="form-group full-width">
                         <label class="form-label">OpenAI API Key</label>
-                        <input type="password" class="form-input" id="apiKey" placeholder="Enter your OpenAI API key" value="sk-proj-abcdefghijklmnopqrstuvwxyz">
+                        <input type="password" class="form-input" id="apiKey" placeholder="Enter your OpenAI API key">
                         <div class="help-links">
                             <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get OpenAI API Key ↗</a>
                             <div class="help-text">You must have valid <a href="https://platform.openai.com/settings/organization/billing/payment-methods" target="_blank" class="help-link">billing information ↗</a> setup with OpenAI</div>
@@ -826,6 +899,6 @@
         </div>
     </div>
 
-    <script src="popup.js"></script>
+    <script src="popup-final.js"></script>
 </body>
 </html>

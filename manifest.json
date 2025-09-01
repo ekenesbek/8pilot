@@ -1,6 +1,6 @@
 {
   "name": "8pilot",
-  "version": "1.3",
+  "version": "1.7",
   "description": "AI assistant for building n8n workflows",
   "manifest_version": 3,
   "icons": {
@@ -42,7 +42,8 @@
       "resources": [
         "sidepanel/sidepanel.js",
         "sidepanel/sidepanel.css",
-        "icons/chat-icon-48.png"
+        "icons/chat-icon-48.png",
+        "popup-final.js"
       ],
       "matches": ["<all_urls>"]
     }
