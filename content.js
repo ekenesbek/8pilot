@@ -93,35 +93,107 @@ function extractConnections() {
   return connections;
 }
 
-// Initialize content script
-if (isN8nPage()) {
-  console.log('n8n workflow page detected');
+// Listen for activation messages
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Content script received message:', request);
   
-  // Add visual indicator that extension is active
-  const indicator = document.createElement('div');
-  indicator.id = '8pilot-indicator';
-  indicator.style.cssText = `
+  if (request.action === 'activateExtension') {
+    showActivationIcon();
+    sendResponse({ status: 'activated' });
+  } else if (request.action === 'deactivateExtension') {
+    hideActivationIcon();
+    sendResponse({ status: 'deactivated' });
+  }
+  
+  return true;
+});
+
+// Function to show activation icon
+function showActivationIcon() {
+  // Remove existing indicator if any
+  hideActivationIcon();
+  
+  console.log('Showing 8pilot activation icon');
+  
+  // Create icon element
+  const icon = document.createElement('div');
+  icon.id = '8pilot-activation-icon';
+  
+  // Get icon URL
+  const iconUrl = chrome.runtime.getURL('icons/icon128.png');
+  console.log('Icon URL:', iconUrl);
+  
+  icon.style.cssText = `
     position: fixed;
-    top: 10px;
-    right: 10px;
-    width: 20px;
-    height: 20px;
-    background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+    bottom: 20px;
+    right: 20px;
+    width: 64px;
+    height: 64px;
+    background-image: url('${iconUrl}');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     border-radius: 50%;
     z-index: 10000;
-    box-shadow: 0 0 10px rgba(79, 209, 199, 0.5);
+    box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
     animation: pulse 2s infinite;
+    border: 2px solid rgba(79, 209, 199, 0.3);
   `;
+  
+  // Add fallback if image fails to load
+  const img = new Image();
+  img.onload = function() {
+    console.log('Icon loaded successfully');
+  };
+  img.onerror = function() {
+    console.error('Failed to load icon, using fallback');
+    // Fallback to gradient background
+    icon.style.backgroundImage = 'none';
+    icon.style.background = 'linear-gradient(135deg, #4fd1c7, #06b6d4)';
+    icon.innerHTML = '<div style="color: white; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; height: 100%;">8P</div>';
+  };
+  img.src = iconUrl;
+  
+  // Add hover effect
+  icon.addEventListener('mouseenter', function() {
+    this.style.transform = 'scale(1.1)';
+    this.style.boxShadow = '0 6px 25px rgba(79, 209, 199, 0.6)';
+  });
+  
+  icon.addEventListener('mouseleave', function() {
+    this.style.transform = 'scale(1)';
+    this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
+  });
+  
+  // Add click handler to open side panel
+  icon.addEventListener('click', function() {
+    chrome.runtime.sendMessage({ action: 'openSidePanel' });
+  });
   
   // Add pulse animation
   const style = document.createElement('style');
   style.textContent = `
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 0.8; }
       100% { transform: scale(1); opacity: 1; }
     }
   `;
   document.head.appendChild(style);
-  document.body.appendChild(indicator);
+  document.body.appendChild(icon);
+}
+
+// Function to hide activation icon
+function hideActivationIcon() {
+  const existingIcon = document.getElementById('8pilot-activation-icon');
+  if (existingIcon) {
+    existingIcon.remove();
+  }
+}
+
+// Initialize content script
+if (isN8nPage()) {
+  console.log('n8n workflow page detected');
 }

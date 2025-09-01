@@ -82,26 +82,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const deactivateBtn = document.getElementById('deactivateBtn');
 
     // Check if extension is already activated on page load
-    function checkActivationStatus() {
-        // Check if status display is already active (meaning extension is activated)
-        if (statusDisplay && statusDisplay.classList.contains('active')) {
-            console.log('Extension is already activated');
-            // Show deactivate button
-            if (deactivateBtn) {
-                deactivateBtn.classList.add('active');
+    async function checkActivationStatus() {
+        try {
+            // Get current tab
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && isN8nPage(tab.url)) {
+                // Check if extension is activated for this tab
+                const result = await chrome.storage.local.get([`activated_${tab.id}`]);
+                if (result[`activated_${tab.id}`]) {
+                    console.log('Extension is already activated for this n8n page');
+                    // Show activated state
+                    activateSection.classList.add('activated');
+                    statusDisplay.classList.add('active');
+                    sectionDescription.style.display = 'none';
+                    activateBtn.style.display = 'none';
+                    deactivateBtn.classList.add('active');
+                }
             }
-        } else {
-            // If status display is not active, check if it should be (for demo purposes)
-            // This simulates the "n8nChat is activated" state
-            console.log('Checking if extension should be activated...');
-            // For demo, let's show the activated state
-            if (statusDisplay && activateSection) {
-                activateSection.classList.add('activated');
-                statusDisplay.classList.add('active');
-                sectionDescription.style.display = 'none';
-                activateBtn.style.display = 'none';
-                deactivateBtn.classList.add('active');
-            }
+        } catch (error) {
+            console.error('Error checking activation status:', error);
         }
     }
 
@@ -113,32 +112,84 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             console.log('Activate button clicked');
             
-            // Show activated state
-            activateSection.classList.add('activated');
-            statusDisplay.classList.add('active');
-            sectionDescription.style.display = 'none';
-            activateBtn.style.display = 'none';
-            deactivateBtn.classList.add('active');
-            
-            // Send message to background script
-            if (chrome && chrome.runtime) {
-                chrome.runtime.sendMessage({
-                    action: 'activateAndOpenSidePanel',
-                    data: {
-                        url: window.location.href
+            // Check if current page is n8n before activation
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    const tab = tabs[0];
+                    const isN8n = isN8nPage(tab.url);
+                    
+                    if (isN8n) {
+                        // Send message to background script first
+                        if (chrome && chrome.runtime) {
+                            chrome.runtime.sendMessage({
+                                action: 'activateAndOpenSidePanel',
+                                data: {
+                                    url: tab.url
+                                }
+                            }, async (response) => {
+                                console.log('Activation response:', response);
+                                if (response && response.status === 'activated') {
+                                    // Save activation state
+                                    await chrome.storage.local.set({ [`activated_${tab.id}`]: true });
+                                    
+                                    // Only show activated state if activation was successful
+                                    activateSection.classList.add('activated');
+                                    statusDisplay.classList.add('active');
+                                    sectionDescription.style.display = 'none';
+                                    activateBtn.style.display = 'none';
+                                    deactivateBtn.classList.add('active');
+                                } else {
+                                    // Show error if activation failed
+                                    alert('Activation failed: ' + (response?.message || 'Unknown error'));
+                                }
+                            });
+                        }
+                    } else {
+                        // Show error message - do not activate
+                        alert('Please navigate to an n8n workflow page first');
                     }
-                }, (response) => {
-                    console.log('Activation response:', response);
-                });
-            }
+                }
+            });
         });
+    }
+
+    // Function to check if URL is n8n page (copied from sidepanel logic)
+    function isN8nPage(url) {
+        if (!url) return false;
+        
+        try {
+            const urlObj = new URL(url);
+            const hostname = urlObj.hostname.toLowerCase();
+            const pathname = urlObj.pathname.toLowerCase();
+            
+            // Check for various n8n patterns
+            return (
+                // n8n in hostname (e.g., kkengesbek.app.n8n.cloud, n8n.example.com)
+                hostname.includes('n8n') ||
+                // n8n in path (e.g., example.com/n8n)
+                pathname.includes('/n8n') ||
+                // workflow in path (common n8n pattern)
+                pathname.includes('/workflow') ||
+                pathname.includes('/execution') ||
+                // Common n8n ports
+                (urlObj.port === '5678') ||
+                // localhost development
+                (hostname === 'localhost' && (urlObj.port === '5678' || pathname.includes('workflow')))
+            );
+        } catch (e) {
+            // Fallback to basic string matching
+            return url.includes('n8n') || url.includes('workflow') || url.includes('execution');
+        }
     }
 
     // Deactivate button
     if (deactivateBtn) {
-        deactivateBtn.addEventListener('click', function(e) {
+        deactivateBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             console.log('Deactivate button clicked');
+            
+            // Get current tab
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
             // Hide activated state
             activateSection.classList.remove('activated');
@@ -146,6 +197,11 @@ document.addEventListener('DOMContentLoaded', function() {
             sectionDescription.style.display = 'block';
             activateBtn.style.display = 'block';
             deactivateBtn.classList.remove('active');
+            
+            // Remove activation state from storage
+            if (tab) {
+                await chrome.storage.local.remove([`activated_${tab.id}`]);
+            }
             
             // Send message to background script
             if (chrome && chrome.runtime) {
