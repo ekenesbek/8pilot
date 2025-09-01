@@ -75,6 +75,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // Handle openChat request from menu
+  if (request.action === 'openChat') {
+    console.log('Open chat request received from menu');
+    // For now, just open the side panel or show a message
+    sendResponse({ status: 'chat opened', message: 'Chat functionality will be implemented' });
+    return true;
+  }
+
+  // Handle openHistory request from menu
+  if (request.action === 'openHistory') {
+    console.log('Open history request received from menu');
+    // For now, just show a message
+    sendResponse({ status: 'history opened', message: 'History functionality will be implemented' });
+    return true;
+  }
+
   // Handle extension activation from popup
   if (request.action === 'activateExtension') {
     console.log('Extension activation request received');

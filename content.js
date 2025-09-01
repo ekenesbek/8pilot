@@ -167,9 +167,10 @@ function showActivationIcon() {
     this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
   });
   
-  // Add click handler to open side panel
-  icon.addEventListener('click', function() {
-    chrome.runtime.sendMessage({ action: 'openSidePanel' });
+  // Add click handler to toggle menu
+  icon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleMenu();
   });
   
   // Add pulse animation
@@ -190,6 +191,201 @@ function hideActivationIcon() {
   const existingIcon = document.getElementById('8pilot-activation-icon');
   if (existingIcon) {
     existingIcon.remove();
+  }
+  // Also hide menu if it exists
+  hideMenu();
+}
+
+// Function to toggle menu visibility
+function toggleMenu() {
+  const historyIcon = document.getElementById('8pilot-history-icon');
+  const chatIcon = document.getElementById('8pilot-chat-icon');
+  
+  if (historyIcon && chatIcon) {
+    // Menu is visible, hide it
+    hideMenu();
+  } else {
+    // Menu is not visible, create and show it
+    createMenu();
+    showMenu();
+  }
+}
+
+// Function to create menu
+function createMenu() {
+  // Remove existing menu if any
+  hideMenu();
+  
+  // Create history icon (clock icon)
+  const historyIcon = document.createElement('div');
+  historyIcon.id = '8pilot-history-icon';
+  historyIcon.setAttribute('data-action', 'history');
+  historyIcon.className = 'floating-icon';
+  historyIcon.style.cssText = `
+    position: fixed;
+    right: 30px;
+    bottom: 160px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    z-index: 10001;
+    background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  // Add clock SVG icon for history
+  historyIcon.innerHTML = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
+      <path d="M12 6v6l4 2" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
+  
+  // Create chat icon (message icon)
+  const chatIcon = document.createElement('div');
+  chatIcon.id = '8pilot-chat-icon';
+  chatIcon.setAttribute('data-action', 'chat');
+  chatIcon.className = 'floating-icon';
+  chatIcon.style.cssText = `
+    position: fixed;
+    right: 30px;
+    bottom: 100px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    z-index: 10001;
+    background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  // Add message SVG icon for chat
+  chatIcon.innerHTML = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 9h8M8 13h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
+  
+  // Add hover effects
+  historyIcon.addEventListener('mouseenter', function() {
+    this.style.transform = 'translateY(-5px) scale(1.1)';
+  });
+  
+  historyIcon.addEventListener('mouseleave', function() {
+    this.style.transform = 'translateY(0) scale(1)';
+  });
+  
+  chatIcon.addEventListener('mouseenter', function() {
+    this.style.transform = 'translateY(-5px) scale(1.1)';
+  });
+  
+  chatIcon.addEventListener('mouseleave', function() {
+    this.style.transform = 'translateY(0) scale(1)';
+  });
+  
+  // Add click handlers
+  historyIcon.addEventListener('click', function() {
+    handleMenuAction('history');
+    hideMenu();
+  });
+  
+  chatIcon.addEventListener('click', function() {
+    handleMenuAction('chat');
+    hideMenu();
+  });
+  
+  // Add to document
+  document.body.appendChild(historyIcon);
+  document.body.appendChild(chatIcon);
+  
+  // Add click outside handler to close menu
+  document.addEventListener('click', function(e) {
+    const icon = document.getElementById('8pilot-activation-icon');
+    const historyIcon = document.getElementById('8pilot-history-icon');
+    const chatIcon = document.getElementById('8pilot-chat-icon');
+    
+    if (historyIcon && chatIcon) {
+      if (!icon.contains(e.target) && 
+          !historyIcon.contains(e.target) && 
+          !chatIcon.contains(e.target)) {
+        hideMenu();
+      }
+    }
+  });
+}
+
+// Function to show menu with animation
+function showMenu() {
+  const historyIcon = document.getElementById('8pilot-history-icon');
+  const chatIcon = document.getElementById('8pilot-chat-icon');
+  
+  if (historyIcon && chatIcon) {
+    // Show history icon first
+    setTimeout(() => {
+      historyIcon.style.opacity = '1';
+      historyIcon.style.transform = 'translateY(0) scale(1)';
+    }, 100);
+    
+    // Show chat icon second
+    setTimeout(() => {
+      chatIcon.style.opacity = '1';
+      chatIcon.style.transform = 'translateY(0) scale(1)';
+    }, 200);
+  }
+}
+
+// Function to hide menu with animation
+function hideMenu() {
+  const historyIcon = document.getElementById('8pilot-history-icon');
+  const chatIcon = document.getElementById('8pilot-chat-icon');
+  
+  if (historyIcon && chatIcon) {
+    // Hide with animation
+    historyIcon.style.opacity = '0';
+    historyIcon.style.transform = 'translateY(20px) scale(0.8)';
+    
+    chatIcon.style.opacity = '0';
+    chatIcon.style.transform = 'translateY(20px) scale(0.8)';
+    
+    // Remove from DOM after animation
+    setTimeout(() => {
+      if (historyIcon.parentNode) {
+        historyIcon.parentNode.removeChild(historyIcon);
+      }
+      if (chatIcon.parentNode) {
+        chatIcon.parentNode.removeChild(chatIcon);
+      }
+    }, 300);
+  }
+}
+
+// Function to handle menu actions
+function handleMenuAction(action) {
+  console.log('Menu action:', action);
+  
+  switch (action) {
+    case 'chat':
+      // Open chat functionality
+      chrome.runtime.sendMessage({ action: 'openChat' });
+      break;
+    case 'history':
+      // Open history functionality
+      chrome.runtime.sendMessage({ action: 'openHistory' });
+      break;
+    default:
+      console.log('Unknown menu action:', action);
   }
 }
 

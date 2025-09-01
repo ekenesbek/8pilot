@@ -44,6 +44,9 @@
         "sidepanel/sidepanel.css",
         "icons/chat-icon-48.png",
         "icons/icon128.png",
+        "icons/icon48.png",
+        "icons/icon16.png",
+        "icons/pixelated_sample_32.png",
         "popup-final.js"
       ],
       "matches": ["<all_urls>"]
