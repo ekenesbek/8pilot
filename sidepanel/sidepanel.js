@@ -420,9 +420,10 @@ class AuthManager {
           }, 500);
           return;
         } else {
-          console.log('Token is invalid, clearing auth data');
-          // Token is invalid, clear it
-          await this.clearAuthData();
+          console.log('Token verification failed');
+          // Don't immediately clear auth data, could be a network issue
+          // Only clear if we're sure the token is expired
+          console.log('Showing auth overlay due to token verification failure');
         }
       }
       
@@ -485,12 +486,37 @@ class AuthManager {
       
       if (response.status === 401) {
         // Token expired, try to refresh
-        return await this.refreshToken();
+        console.log('Token expired, attempting to refresh...');
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          console.log('Token successfully refreshed');
+          return true;
+        } else {
+          console.log('Failed to refresh token');
+          // Clear auth data only if refresh definitely failed
+          await this.clearAuthData();
+          return false;
+        }
       }
       
-      return response.ok;
+      if (response.ok) {
+        // Update user info from response
+        try {
+          const userData = await response.json();
+          await this.setStorageData({ userInfo: userData });
+          this.currentUser = userData;
+        } catch (e) {
+          console.error('Error updating user info:', e);
+        }
+        return true;
+      }
+      
+      // For other HTTP errors, don't clear auth data
+      console.log('Token verification failed with status:', response.status);
+      return false;
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.error('Token verification error (network/other):', error);
+      // For network errors, don't clear auth data - might be temporary
       return false;
     }
   }
@@ -498,9 +524,14 @@ class AuthManager {
   async refreshToken() {
     try {
       const result = await this.getStorageData(['authToken']);
-      if (!result.authToken) return false;
+      if (!result.authToken) {
+        console.log('No token found for refresh');
+        return false;
+      }
       
       const backendUrl = await this.getBackendUrl();
+      console.log('Attempting to refresh token...');
+      
       const response = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: {
@@ -511,13 +542,20 @@ class AuthManager {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Token refresh successful');
         await this.setStorageData({
           authToken: data.access_token
         });
         return true;
+      } else {
+        console.log('Token refresh failed:', response.status, response.statusText);
+        // If refresh fails with 401, the refresh token is also expired
+        if (response.status === 401) {
+          console.log('Refresh token expired, clearing auth data');
+          await this.clearAuthData();
+        }
+        return false;
       }
-      
-      return false;
     } catch (error) {
       console.error('Token refresh error:', error);
       return false;
@@ -765,7 +803,7 @@ class AuthManager {
       clearInterval(this.tokenRefreshTimer);
     }
     
-    // Set new timer (25 minutes = 1500000 ms)
+    // Set new timer (30 days = 2592000000 ms)
     this.tokenRefreshTimer = setInterval(async () => {
       try {
         const result = await this.getStorageData(['authToken']);
@@ -776,7 +814,7 @@ class AuthManager {
       } catch (error) {
         console.error('Auto token refresh error:', error);
       }
-    }, 1500000); // 25 minutes
+    }, 2592000000); // 30 days
   }
 
   stopTokenRefreshTimer() {
