@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.core.logging import setup_logging
+from app.database import init_db
 
 # Setup logging
 setup_logging()
@@ -24,6 +25,28 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting n8n-copilot backend...")
+    
+    # Initialize database
+    try:
+        import time
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                init_db()
+                logger.info("Database initialized successfully")
+                break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+                    logger.info("Waiting 5 seconds before retry...")
+                    time.sleep(5)
+                else:
+                    logger.error(f"Failed to initialize database after {max_retries} attempts: {e}")
+                    logger.warning("Continuing without database - some features may not work")
+    except Exception as e:
+        logger.error(f"Unexpected error during database initialization: {e}")
+        logger.warning("Continuing without database - some features may not work")
+        
     yield
     # Shutdown
     logger.info("Shutting down n8n-copilot backend...")

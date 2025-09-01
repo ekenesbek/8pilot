@@ -10,6 +10,7 @@ services:
       - DEBUG=true
       - PORT=8000
       - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://n8n_user:n8n_password@postgres:5432/n8n_copilot
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - N8N_DEFAULT_URL=${N8N_DEFAULT_URL}
@@ -19,6 +20,7 @@ services:
       - .:/app
     depends_on:
       - redis
+      - postgres
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

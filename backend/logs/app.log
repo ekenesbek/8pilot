@@ -309,3 +309,360 @@ httpx.ReadTimeout
 2025-08-24 23:49:06,373 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
 2025-08-24 23:50:58,488 - app.services.chat_service - INFO - Created new chat session 87f0cdf5-935a-41e5-acd7-911e74b05da2 for workflow jx972NPjVf7jm3Ng
 2025-08-24 23:50:59,912 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-01 00:09:51,751 - app.core.logging - INFO - Logging configured successfully
+2025-09-01 00:09:51,752 - app.core.logging - INFO - Log level: INFO
+2025-09-01 00:09:51,752 - app.core.logging - INFO - Debug mode: True
+2025-09-01 00:09:51,768 - app.main - INFO - Starting n8n-copilot backend...
+2025-09-01 00:09:51,769 - app.main - ERROR - Failed to initialize database: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-09-01 00:12:54,111 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-09-01 00:12:57,235 - app.core.logging - INFO - Logging configured successfully
+2025-09-01 00:12:57,235 - app.core.logging - INFO - Log level: INFO
+2025-09-01 00:12:57,235 - app.core.logging - INFO - Debug mode: True
+2025-09-01 00:12:57,251 - app.main - INFO - Starting n8n-copilot backend...
+2025-09-01 00:12:57,252 - app.main - ERROR - Failed to initialize database: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-09-01 00:13:13,034 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-09-01 00:13:22,217 - app.core.logging - INFO - Logging configured successfully
+2025-09-01 00:13:22,218 - app.core.logging - INFO - Log level: INFO
+2025-09-01 00:13:22,218 - app.core.logging - INFO - Debug mode: True
+2025-09-01 00:13:22,232 - app.main - INFO - Starting n8n-copilot backend...
+2025-09-01 00:13:22,233 - app.main - ERROR - Failed to initialize database: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-09-01 00:16:18,080 - app.main - INFO - Shutting down n8n-copilot backend...
+2025-09-01 00:16:47,347 - app.core.logging - INFO - Logging configured successfully
+2025-09-01 00:16:47,347 - app.core.logging - INFO - Log level: INFO
+2025-09-01 00:16:47,347 - app.core.logging - INFO - Debug mode: True
+2025-09-01 00:16:47,362 - app.main - INFO - Starting n8n-copilot backend...
+2025-09-01 00:16:47,373 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-09-01 00:16:47,374 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-09-01 00:16:47,374 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-09-01 00:16:47,375 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-09-01 00:16:47,375 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-09-01 00:16:47,376 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-09-01 00:16:47,376 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:16:47,378 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-09-01 00:16:47,378 - sqlalchemy.engine.Engine - INFO - [generated in 0.00026s] {'table_name': 'workflow_dialogs', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-09-01 00:16:47,381 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-09-01 00:16:47,383 - sqlalchemy.engine.Engine - INFO - [cached since 0.005131s ago] {'table_name': 'chat_sessions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-09-01 00:16:47,385 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-09-01 00:16:47,386 - sqlalchemy.engine.Engine - INFO - [cached since 0.008074s ago] {'table_name': 'messages', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-09-01 00:16:47,388 - sqlalchemy.engine.Engine - INFO - 
+CREATE TABLE workflow_dialogs (
+	id UUID NOT NULL, 
+	workflow_id VARCHAR(255) NOT NULL, 
+	workflow_name VARCHAR(500), 
+	workflow_data JSONB, 
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	is_active BOOLEAN NOT NULL, 
+	meta_data JSONB, 
+	PRIMARY KEY (id)
+)
+
+
+2025-09-01 00:16:47,388 - sqlalchemy.engine.Engine - INFO - [no key 0.00024s] {}
+2025-09-01 00:16:47,394 - sqlalchemy.engine.Engine - INFO - CREATE INDEX ix_workflow_dialogs_workflow_id ON workflow_dialogs (workflow_id)
+2025-09-01 00:16:47,394 - sqlalchemy.engine.Engine - INFO - [no key 0.00027s] {}
+2025-09-01 00:16:47,397 - sqlalchemy.engine.Engine - INFO - 
+CREATE TABLE chat_sessions (
+	id UUID NOT NULL, 
+	session_id VARCHAR(255) NOT NULL, 
+	workflow_dialog_id UUID NOT NULL, 
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	last_activity TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	meta_data JSONB, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(workflow_dialog_id) REFERENCES workflow_dialogs (id)
+)
+
+
+2025-09-01 00:16:47,397 - sqlalchemy.engine.Engine - INFO - [no key 0.00030s] {}
+2025-09-01 00:16:47,401 - sqlalchemy.engine.Engine - INFO - CREATE UNIQUE INDEX ix_chat_sessions_session_id ON chat_sessions (session_id)
+2025-09-01 00:16:47,401 - sqlalchemy.engine.Engine - INFO - [no key 0.00035s] {}
+2025-09-01 00:16:47,403 - sqlalchemy.engine.Engine - INFO - 
+CREATE TABLE messages (
+	id UUID NOT NULL, 
+	message_id VARCHAR(255) NOT NULL, 
+	session_id UUID NOT NULL, 
+	role VARCHAR(50) NOT NULL, 
+	content TEXT NOT NULL, 
+	timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL, 
+	tokens_used INTEGER, 
+	provider VARCHAR(50), 
+	meta_data JSONB, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(session_id) REFERENCES chat_sessions (id)
+)
+
+
+2025-09-01 00:16:47,404 - sqlalchemy.engine.Engine - INFO - [no key 0.00040s] {}
+2025-09-01 00:16:47,408 - sqlalchemy.engine.Engine - INFO - CREATE UNIQUE INDEX ix_messages_message_id ON messages (message_id)
+2025-09-01 00:16:47,408 - sqlalchemy.engine.Engine - INFO - [no key 0.00030s] {}
+2025-09-01 00:16:47,409 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:16:47,410 - app.main - INFO - Database initialized successfully
+2025-09-01 00:17:11,854 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,856 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,857 - sqlalchemy.engine.Engine - INFO - [generated in 0.00045s] {'workflow_id_1': 'check-url', 'param_1': 1}
+2025-09-01 00:17:11,859 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:11,865 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,867 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,869 - sqlalchemy.engine.Engine - INFO - [cached since 0.01258s ago] {'workflow_id_1': 'unknown_workflow', 'param_1': 1}
+2025-09-01 00:17:11,870 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:11,876 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,877 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,878 - sqlalchemy.engine.Engine - INFO - [cached since 0.02176s ago] {'workflow_id_1': 'unknown_workflow', 'param_1': 1}
+2025-09-01 00:17:11,882 - sqlalchemy.engine.Engine - INFO - INSERT INTO workflow_dialogs (id, workflow_id, workflow_name, workflow_data, created_at, updated_at, is_active, meta_data) VALUES (%(id)s::UUID, %(workflow_id)s, %(workflow_name)s, %(workflow_data)s::JSONB, %(created_at)s, %(updated_at)s, %(is_active)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:11,884 - sqlalchemy.engine.Engine - INFO - [generated in 0.00159s] {'id': UUID('80661981-741a-48ad-b4a8-d73ba312e92f'), 'workflow_id': 'unknown_workflow', 'workflow_name': 'Workflow unknown_workflow', 'workflow_data': 'null', 'created_at': datetime.datetime(2025, 9, 1, 0, 17, 11, 881989), 'updated_at': datetime.datetime(2025, 9, 1, 0, 17, 11, 881992), 'is_active': True, 'meta_data': '{}'}
+2025-09-01 00:17:11,885 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:11,887 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,888 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id, workflow_dialogs.workflow_id, workflow_dialogs.workflow_name, workflow_dialogs.workflow_data, workflow_dialogs.created_at, workflow_dialogs.updated_at, workflow_dialogs.is_active, workflow_dialogs.meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.id = %(pk_1)s::UUID
+2025-09-01 00:17:11,888 - sqlalchemy.engine.Engine - INFO - [generated in 0.00021s] {'pk_1': UUID('80661981-741a-48ad-b4a8-d73ba312e92f')}
+2025-09-01 00:17:11,890 - app.services.workflow_dialog_service - INFO - Created workflow dialog for workflow unknown_workflow
+2025-09-01 00:17:11,892 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:11,892 - sqlalchemy.engine.Engine - INFO - [generated in 0.00036s] {'workflow_dialog_id_1': UUID('80661981-741a-48ad-b4a8-d73ba312e92f')}
+2025-09-01 00:17:11,895 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:11,895 - sqlalchemy.engine.Engine - INFO - [generated in 0.00048s] {'workflow_dialog_id_1': UUID('80661981-741a-48ad-b4a8-d73ba312e92f')}
+2025-09-01 00:17:11,898 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:11,902 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,903 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions JOIN workflow_dialogs ON workflow_dialogs.id = chat_sessions.workflow_dialog_id 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true ORDER BY chat_sessions.last_activity DESC 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,903 - sqlalchemy.engine.Engine - INFO - [generated in 0.00039s] {'workflow_id_1': 'unknown_workflow', 'param_1': 1}
+2025-09-01 00:17:11,905 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:11,909 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,910 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,910 - sqlalchemy.engine.Engine - INFO - [cached since 0.05391s ago] {'workflow_id_1': 'unknown_workflow', 'param_1': 1}
+2025-09-01 00:17:11,912 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:11,912 - sqlalchemy.engine.Engine - INFO - [cached since 0.02047s ago] {'workflow_dialog_id_1': UUID('80661981-741a-48ad-b4a8-d73ba312e92f')}
+2025-09-01 00:17:11,913 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:11,913 - sqlalchemy.engine.Engine - INFO - [cached since 0.01864s ago] {'workflow_dialog_id_1': UUID('80661981-741a-48ad-b4a8-d73ba312e92f')}
+2025-09-01 00:17:11,914 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:11,915 - sqlalchemy.engine.Engine - INFO - [cached since 0.0583s ago] {'workflow_id_1': 'unknown_workflow', 'param_1': 1}
+2025-09-01 00:17:11,916 - sqlalchemy.engine.Engine - INFO - INSERT INTO chat_sessions (id, session_id, workflow_dialog_id, created_at, last_activity, meta_data) VALUES (%(id)s::UUID, %(session_id)s, %(workflow_dialog_id)s::UUID, %(created_at)s, %(last_activity)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:11,916 - sqlalchemy.engine.Engine - INFO - [generated in 0.00059s] {'id': UUID('bd8906b9-11a4-4d24-9994-ea24e000968a'), 'session_id': 'c51cb404-f5d2-439f-b91a-c7607e703838', 'workflow_dialog_id': UUID('80661981-741a-48ad-b4a8-d73ba312e92f'), 'created_at': datetime.datetime(2025, 9, 1, 0, 17, 11, 916363), 'last_activity': datetime.datetime(2025, 9, 1, 0, 17, 11, 916365), 'meta_data': '{}'}
+2025-09-01 00:17:11,918 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:11,920 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:11,921 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id, chat_sessions.session_id, chat_sessions.workflow_dialog_id, chat_sessions.created_at, chat_sessions.last_activity, chat_sessions.meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.id = %(pk_1)s::UUID
+2025-09-01 00:17:11,922 - sqlalchemy.engine.Engine - INFO - [generated in 0.00056s] {'pk_1': UUID('bd8906b9-11a4-4d24-9994-ea24e000968a')}
+2025-09-01 00:17:11,923 - app.services.workflow_dialog_service - INFO - Created chat session c51cb404-f5d2-439f-b91a-c7607e703838 for workflow unknown_workflow
+2025-09-01 00:17:11,925 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages 
+WHERE messages.session_id = %(session_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:11,925 - sqlalchemy.engine.Engine - INFO - [generated in 0.00035s] {'session_id_1': UUID('bd8906b9-11a4-4d24-9994-ea24e000968a')}
+2025-09-01 00:17:11,927 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,912 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,914 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,914 - sqlalchemy.engine.Engine - INFO - [cached since 2.058s ago] {'workflow_id_1': 'check-url', 'param_1': 1}
+2025-09-01 00:17:13,915 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,918 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,919 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,919 - sqlalchemy.engine.Engine - INFO - [cached since 2.063s ago] {'workflow_id_1': 'check-url', 'param_1': 1}
+2025-09-01 00:17:13,920 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,922 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,923 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,924 - sqlalchemy.engine.Engine - INFO - [cached since 2.068s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,925 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,928 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,928 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,928 - sqlalchemy.engine.Engine - INFO - [cached since 2.072s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,931 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,936 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,937 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,937 - sqlalchemy.engine.Engine - INFO - [cached since 2.081s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,940 - sqlalchemy.engine.Engine - INFO - INSERT INTO workflow_dialogs (id, workflow_id, workflow_name, workflow_data, created_at, updated_at, is_active, meta_data) VALUES (%(id)s::UUID, %(workflow_id)s, %(workflow_name)s, %(workflow_data)s::JSONB, %(created_at)s, %(updated_at)s, %(is_active)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:13,940 - sqlalchemy.engine.Engine - INFO - [cached since 2.059s ago] {'id': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d'), 'workflow_id': 'new_workflow', 'workflow_name': 'New Workflow', 'workflow_data': 'null', 'created_at': datetime.datetime(2025, 9, 1, 0, 17, 13, 940151), 'updated_at': datetime.datetime(2025, 9, 1, 0, 17, 13, 940152), 'is_active': True, 'meta_data': '{}'}
+2025-09-01 00:17:13,941 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:13,943 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,943 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id, workflow_dialogs.workflow_id, workflow_dialogs.workflow_name, workflow_dialogs.workflow_data, workflow_dialogs.created_at, workflow_dialogs.updated_at, workflow_dialogs.is_active, workflow_dialogs.meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.id = %(pk_1)s::UUID
+2025-09-01 00:17:13,944 - sqlalchemy.engine.Engine - INFO - [cached since 2.056s ago] {'pk_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,945 - app.services.workflow_dialog_service - INFO - Created workflow dialog for workflow new_workflow
+2025-09-01 00:17:13,945 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,946 - sqlalchemy.engine.Engine - INFO - [cached since 2.054s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,946 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,947 - sqlalchemy.engine.Engine - INFO - [cached since 2.052s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,948 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,952 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,953 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions JOIN workflow_dialogs ON workflow_dialogs.id = chat_sessions.workflow_dialog_id 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true ORDER BY chat_sessions.last_activity DESC 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,953 - sqlalchemy.engine.Engine - INFO - [cached since 2.05s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,955 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,955 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,956 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,957 - sqlalchemy.engine.Engine - INFO - [cached since 2.1s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,959 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,959 - sqlalchemy.engine.Engine - INFO - [cached since 2.068s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,961 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,961 - sqlalchemy.engine.Engine - INFO - [cached since 2.066s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,963 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,966 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,967 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,967 - sqlalchemy.engine.Engine - INFO - [cached since 2.111s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,968 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,969 - sqlalchemy.engine.Engine - INFO - [cached since 2.077s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,969 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.workflow_dialog_id = %(workflow_dialog_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,970 - sqlalchemy.engine.Engine - INFO - [cached since 2.075s ago] {'workflow_dialog_id_1': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d')}
+2025-09-01 00:17:13,971 - sqlalchemy.engine.Engine - INFO - SELECT workflow_dialogs.id AS workflow_dialogs_id, workflow_dialogs.workflow_id AS workflow_dialogs_workflow_id, workflow_dialogs.workflow_name AS workflow_dialogs_workflow_name, workflow_dialogs.workflow_data AS workflow_dialogs_workflow_data, workflow_dialogs.created_at AS workflow_dialogs_created_at, workflow_dialogs.updated_at AS workflow_dialogs_updated_at, workflow_dialogs.is_active AS workflow_dialogs_is_active, workflow_dialogs.meta_data AS workflow_dialogs_meta_data 
+FROM workflow_dialogs 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,971 - sqlalchemy.engine.Engine - INFO - [cached since 2.115s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,972 - sqlalchemy.engine.Engine - INFO - INSERT INTO chat_sessions (id, session_id, workflow_dialog_id, created_at, last_activity, meta_data) VALUES (%(id)s::UUID, %(session_id)s, %(workflow_dialog_id)s::UUID, %(created_at)s, %(last_activity)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:13,972 - sqlalchemy.engine.Engine - INFO - [cached since 2.056s ago] {'id': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290'), 'session_id': '020b1998-39e6-4f0a-80e3-a82919aff01d', 'workflow_dialog_id': UUID('03e1c656-0e6b-4963-aa88-2ecc6ba1a11d'), 'created_at': datetime.datetime(2025, 9, 1, 0, 17, 13, 972362), 'last_activity': datetime.datetime(2025, 9, 1, 0, 17, 13, 972364), 'meta_data': '{}'}
+2025-09-01 00:17:13,973 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:13,976 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,977 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id, chat_sessions.session_id, chat_sessions.workflow_dialog_id, chat_sessions.created_at, chat_sessions.last_activity, chat_sessions.meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.id = %(pk_1)s::UUID
+2025-09-01 00:17:13,977 - sqlalchemy.engine.Engine - INFO - [cached since 2.056s ago] {'pk_1': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290')}
+2025-09-01 00:17:13,979 - app.services.workflow_dialog_service - INFO - Created chat session 020b1998-39e6-4f0a-80e3-a82919aff01d for workflow new_workflow
+2025-09-01 00:17:13,980 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages 
+WHERE messages.session_id = %(session_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,980 - sqlalchemy.engine.Engine - INFO - [cached since 2.055s ago] {'session_id_1': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290')}
+2025-09-01 00:17:13,982 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:13,983 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions JOIN workflow_dialogs ON workflow_dialogs.id = chat_sessions.workflow_dialog_id 
+WHERE workflow_dialogs.workflow_id = %(workflow_id_1)s AND workflow_dialogs.is_active = true ORDER BY chat_sessions.last_activity DESC 
+ LIMIT %(param_1)s
+2025-09-01 00:17:13,983 - sqlalchemy.engine.Engine - INFO - [cached since 2.08s ago] {'workflow_id_1': 'new_workflow', 'param_1': 1}
+2025-09-01 00:17:13,985 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages 
+WHERE messages.session_id = %(session_id_1)s::UUID) AS anon_1
+2025-09-01 00:17:13,985 - sqlalchemy.engine.Engine - INFO - [cached since 2.06s ago] {'session_id_1': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290')}
+2025-09-01 00:17:13,986 - sqlalchemy.engine.Engine - INFO - SELECT messages.id AS messages_id, messages.message_id AS messages_message_id, messages.session_id AS messages_session_id, messages.role AS messages_role, messages.content AS messages_content, messages.timestamp AS messages_timestamp, messages.tokens_used AS messages_tokens_used, messages.provider AS messages_provider, messages.meta_data AS messages_meta_data 
+FROM messages JOIN chat_sessions ON chat_sessions.id = messages.session_id 
+WHERE chat_sessions.session_id = %(session_id_1)s ORDER BY messages.timestamp
+2025-09-01 00:17:13,987 - sqlalchemy.engine.Engine - INFO - [generated in 0.00031s] {'session_id_1': '020b1998-39e6-4f0a-80e3-a82919aff01d'}
+2025-09-01 00:17:13,987 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:13,988 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:22,303 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:22,304 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.session_id = %(session_id_1)s 
+ LIMIT %(param_1)s
+2025-09-01 00:17:22,305 - sqlalchemy.engine.Engine - INFO - [generated in 0.00050s] {'session_id_1': '020b1998-39e6-4f0a-80e3-a82919aff01d', 'param_1': 1}
+2025-09-01 00:17:22,307 - sqlalchemy.engine.Engine - INFO - UPDATE chat_sessions SET last_activity=%(last_activity)s WHERE chat_sessions.id = %(chat_sessions_id)s::UUID
+2025-09-01 00:17:22,307 - sqlalchemy.engine.Engine - INFO - [generated in 0.00030s] {'last_activity': datetime.datetime(2025, 9, 1, 0, 17, 22, 306102), 'chat_sessions_id': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290')}
+2025-09-01 00:17:22,308 - sqlalchemy.engine.Engine - INFO - INSERT INTO messages (id, message_id, session_id, role, content, timestamp, tokens_used, provider, meta_data) VALUES (%(id)s::UUID, %(message_id)s, %(session_id)s::UUID, %(role)s, %(content)s, %(timestamp)s, %(tokens_used)s, %(provider)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:22,308 - sqlalchemy.engine.Engine - INFO - [generated in 0.00033s] {'id': UUID('9ef7c0b1-db4a-4224-977e-1ac380a368a9'), 'message_id': '2958c8aa-edd4-4d71-8208-a8f762cf66d3', 'session_id': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290'), 'role': 'user', 'content': 'asd', 'timestamp': datetime.datetime(2025, 9, 1, 0, 17, 22, 308502), 'tokens_used': None, 'provider': None, 'meta_data': '{}'}
+2025-09-01 00:17:22,309 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:22,311 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:22,312 - sqlalchemy.engine.Engine - INFO - SELECT messages.id, messages.message_id, messages.session_id, messages.role, messages.content, messages.timestamp, messages.tokens_used, messages.provider, messages.meta_data 
+FROM messages 
+WHERE messages.id = %(pk_1)s::UUID
+2025-09-01 00:17:22,312 - sqlalchemy.engine.Engine - INFO - [generated in 0.00035s] {'pk_1': UUID('9ef7c0b1-db4a-4224-977e-1ac380a368a9')}
+2025-09-01 00:17:22,313 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-09-01 00:17:22,320 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:22,320 - sqlalchemy.engine.Engine - INFO - SELECT chat_sessions.id AS chat_sessions_id, chat_sessions.session_id AS chat_sessions_session_id, chat_sessions.workflow_dialog_id AS chat_sessions_workflow_dialog_id, chat_sessions.created_at AS chat_sessions_created_at, chat_sessions.last_activity AS chat_sessions_last_activity, chat_sessions.meta_data AS chat_sessions_meta_data 
+FROM chat_sessions 
+WHERE chat_sessions.session_id = %(session_id_1)s 
+ LIMIT %(param_1)s
+2025-09-01 00:17:22,320 - sqlalchemy.engine.Engine - INFO - [cached since 0.01625s ago] {'session_id_1': '020b1998-39e6-4f0a-80e3-a82919aff01d', 'param_1': 1}
+2025-09-01 00:17:22,322 - sqlalchemy.engine.Engine - INFO - UPDATE chat_sessions SET last_activity=%(last_activity)s WHERE chat_sessions.id = %(chat_sessions_id)s::UUID
+2025-09-01 00:17:22,322 - sqlalchemy.engine.Engine - INFO - [cached since 0.01545s ago] {'last_activity': datetime.datetime(2025, 9, 1, 0, 17, 22, 321999), 'chat_sessions_id': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290')}
+2025-09-01 00:17:22,323 - sqlalchemy.engine.Engine - INFO - INSERT INTO messages (id, message_id, session_id, role, content, timestamp, tokens_used, provider, meta_data) VALUES (%(id)s::UUID, %(message_id)s, %(session_id)s::UUID, %(role)s, %(content)s, %(timestamp)s, %(tokens_used)s, %(provider)s, %(meta_data)s::JSONB)
+2025-09-01 00:17:22,323 - sqlalchemy.engine.Engine - INFO - [cached since 0.01539s ago] {'id': UUID('cc8edcaa-683f-43be-8718-67b97ab34043'), 'message_id': '36d20bbb-1e63-472f-b76c-7b8970e978ff', 'session_id': UUID('d6a6b77d-d961-4ff5-aded-637c6cc8b290'), 'role': 'assistant', 'content': "Error: Cannot read properties of undefined (reading 'replace')", 'timestamp': datetime.datetime(2025, 9, 1, 0, 17, 22, 323557), 'tokens_used': None, 'provider': None, 'meta_data': '{}'}
+2025-09-01 00:17:22,324 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-09-01 00:17:22,326 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-09-01 00:17:22,326 - sqlalchemy.engine.Engine - INFO - SELECT messages.id, messages.message_id, messages.session_id, messages.role, messages.content, messages.timestamp, messages.tokens_used, messages.provider, messages.meta_data 
+FROM messages 
+WHERE messages.id = %(pk_1)s::UUID
+2025-09-01 00:17:22,326 - sqlalchemy.engine.Engine - INFO - [cached since 0.01472s ago] {'pk_1': UUID('cc8edcaa-683f-43be-8718-67b97ab34043')}
+2025-09-01 00:17:22,327 - sqlalchemy.engine.Engine - INFO - ROLLBACK

@@ -72,10 +72,11 @@ class ThemeManager {
   }
 }
 
-// Chat storage - workflow-specific
+// Chat storage - workflow-specific (now using API)
 let currentWorkflowId = null;
-let allWorkflowChats = {};
+let currentSessionId = null;
 let chatMemory = [];
+let currentWorkflowDialog = null;
 let settings = {
   openaiKey: '',
   anthropicKey: '',
@@ -84,17 +85,20 @@ let settings = {
   n8nApiKey: '',
   autoApplyWorkflows: false,
   saveChatHistory: true,
-  maxHistory: 25
+  maxHistory: 25,
+  backendUrl: 'http://localhost:8000'
 };
 
 // Theme manager instance
 let themeManager;
 
-// Storage keys
+// Storage keys (reduced - most data now in backend)
 const STORAGE_KEYS = {
-  WORKFLOW_CHATS: 'n8n_copilot_workflow_chats',
   LAST_ACTIVE_WORKFLOW: 'n8n_copilot_last_workflow'
 };
+
+// Initialize API client
+let workflowAPI = null;
 
 // Initialize the side panel
 document.addEventListener('DOMContentLoaded', async () => {
@@ -103,9 +107,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize theme manager first
   themeManager = new ThemeManager();
   
-  // Load settings and chat storage
+  // Load settings
   await loadSettings();
-  loadChatStorage();
+  
+  // Initialize API client
+  initializeAPI();
   
   // Setup event listeners
   setupEventListeners();
@@ -118,6 +124,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   console.log('Side panel initialized successfully');
 });
+
+// Initialize API client
+function initializeAPI() {
+  workflowAPI = new WorkflowDialogAPI(settings.backendUrl);
+  console.log('Workflow API client initialized');
+}
 
 // Get current workflow ID from URL
 function getCurrentWorkflowId(url) {
@@ -150,15 +162,37 @@ async function getCurrentTabInfo() {
       const isN8n = isN8nPage(url);
       
       // Update status
-      updateStatus('page', isN8n ? 'active' : 'warning', 
+      updateStatus('page', isN8n ? 'active' : 'warning',
         isN8n ? 'n8n page detected' : 'Not an n8n page');
       
-      // Get workflow ID
-      currentWorkflowId = getCurrentWorkflowId(url);
+      // Check for workflow ID using both local logic and API
+      let detectedWorkflowId = getCurrentWorkflowId(url);
+      
+      // Also check with API for more robust detection
+      if (workflowAPI && isN8n) {
+        try {
+          const urlCheck = await workflowAPI.checkWorkflowFromUrl(url);
+          if (urlCheck.has_workflow_id && urlCheck.workflow_id) {
+            detectedWorkflowId = urlCheck.workflow_id;
+            console.log('Workflow ID detected via API:', detectedWorkflowId);
+          }
+        } catch (error) {
+          console.warn('API workflow detection failed, using local detection:', error);
+        }
+      }
+      
+      currentWorkflowId = detectedWorkflowId;
       updateWorkflowInfo();
       
       // Load chat for this workflow
-      loadWorkflowChat(currentWorkflowId);
+      if (currentWorkflowId) {
+        await loadWorkflowChat(currentWorkflowId);
+        
+        // If this is a n8n page with a workflow, save current workflow data
+        if (isN8n && currentWorkflowId !== 'unknown_workflow' && currentWorkflowId !== 'new_workflow') {
+          await saveCurrentWorkflowToAPI();
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to get current tab:', error);
@@ -172,7 +206,7 @@ async function loadSettings() {
     const stored = await chrome.storage.sync.get([
       'openaiKey', 'anthropicKey', 'activeProvider',
       'n8nApiUrl', 'n8nApiKey', 'autoApplyWorkflows', 
-      'saveChatHistory', 'maxHistory'
+      'saveChatHistory', 'maxHistory', 'backendUrl'
     ]);
     
     settings = { ...settings, ...stored };
@@ -190,79 +224,103 @@ async function loadSettings() {
   }
 }
 
-// Load chat storage from localStorage
-function loadChatStorage() {
+// Load workflow chat from API
+async function loadWorkflowChatFromAPI(workflowId) {
+  if (!workflowAPI || !workflowId) return;
+  
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.WORKFLOW_CHATS);
-    if (stored) {
-      allWorkflowChats = JSON.parse(stored);
-      console.log('Loaded chat storage:', Object.keys(allWorkflowChats).length, 'workflows');
+    // Get or create workflow dialog
+    let workflowDialog = await workflowAPI.getWorkflowDialog(workflowId);
+    if (!workflowDialog) {
+      workflowDialog = await workflowAPI.createWorkflowDialog(
+        workflowId, 
+        workflowId === 'new_workflow' ? 'New Workflow' : `Workflow ${workflowId}`
+      );
     }
+    
+    currentWorkflowDialog = workflowDialog;
+    
+    // Get latest chat session or create one
+    let session = await workflowAPI.getLatestChatSession(workflowId, true);
+    if (!session) {
+      session = await workflowAPI.createChatSession(workflowId);
+      session.messages = []; // New session has no messages
+    }
+    
+    currentSessionId = session.session_id;
+    chatMemory = session.messages || [];
+    
+    console.log(`Loaded ${chatMemory.length} messages for workflow:`, workflowId);
+    return { workflowDialog, session };
+    
   } catch (error) {
-    console.error('Error loading chat storage:', error);
-    allWorkflowChats = {};
+    console.error('Error loading workflow chat from API:', error);
+    // Fallback to empty state
+    chatMemory = [];
+    currentSessionId = null;
+    currentWorkflowDialog = null;
+    return null;
   }
 }
 
-// Save chat storage to localStorage
-function saveChatStorage() {
+// Save current chat to API
+async function saveCurrentChatToAPI() {
+  if (!workflowAPI || !currentWorkflowId || !currentSessionId) return;
+  
   try {
-    // Clean up old chats (keep only last 50 workflows)
-    const workflowIds = Object.keys(allWorkflowChats);
-    if (workflowIds.length > 50) {
-      const sortedByTime = workflowIds
-        .map(id => ({ id, lastActivity: allWorkflowChats[id].lastActivity || 0 }))
-        .sort((a, b) => b.lastActivity - a.lastActivity)
-        .slice(0, 50);
-      
-      const newChats = {};
-      sortedByTime.forEach(({ id }) => {
-        newChats[id] = allWorkflowChats[id];
-      });
-      allWorkflowChats = newChats;
-    }
-    
-    localStorage.setItem(STORAGE_KEYS.WORKFLOW_CHATS, JSON.stringify(allWorkflowChats));
+    // Update session activity
+    await workflowAPI.updateSessionActivity(currentSessionId);
     localStorage.setItem(STORAGE_KEYS.LAST_ACTIVE_WORKFLOW, currentWorkflowId);
+    console.log('Saved current chat activity to API');
   } catch (error) {
-    console.error('Error saving chat storage:', error);
+    console.error('Error saving chat to API:', error);
   }
 }
 
 // Load chat for current workflow
-function loadWorkflowChat(workflowId) {
+async function loadWorkflowChat(workflowId) {
   if (!workflowId) return;
   
   currentWorkflowId = workflowId;
   
-  if (allWorkflowChats[workflowId]) {
-    chatMemory = allWorkflowChats[workflowId].messages || [];
-    console.log(`Loaded ${chatMemory.length} messages for workflow:`, workflowId);
-  } else {
-    chatMemory = [];
-    allWorkflowChats[workflowId] = {
-      messages: [],
-      workflowName: workflowId === 'new_workflow' ? 'New Workflow' : 'Unknown Workflow',
-      lastActivity: Date.now(),
-      createdAt: Date.now()
-    };
-    console.log('Created new chat for workflow:', workflowId);
-  }
+  // Load from API
+  await loadWorkflowChatFromAPI(workflowId);
   
   refreshChatUI();
 }
 
 // Save current chat to storage
-function saveCurrentChat() {
+async function saveCurrentChat() {
   if (!currentWorkflowId) return;
   
-  allWorkflowChats[currentWorkflowId] = {
-    ...allWorkflowChats[currentWorkflowId],
-    messages: chatMemory,
-    lastActivity: Date.now()
-  };
+  await saveCurrentChatToAPI();
+}
+
+// Save current workflow data to API
+async function saveCurrentWorkflowToAPI() {
+  if (!workflowAPI || !currentWorkflowId || !settings.n8nApiUrl || !settings.n8nApiKey) return;
   
-  saveChatStorage();
+  try {
+    // Get workflow data from n8n API
+    const response = await fetch(`${settings.n8nApiUrl}/api/v1/workflows/${currentWorkflowId}`, {
+      headers: { 'X-N8N-API-KEY': settings.n8nApiKey }
+    });
+    
+    if (response.ok) {
+      const workflowData = await response.json();
+      
+      // Save to dialog service
+      await workflowAPI.saveWorkflowToDialog(
+        currentWorkflowId,
+        workflowData,
+        workflowData.name || `Workflow ${currentWorkflowId}`
+      );
+      
+      console.log('Saved current workflow to API:', currentWorkflowId);
+    }
+  } catch (error) {
+    console.warn('Failed to save current workflow to API:', error);
+  }
 }
 
 // Setup all event listeners
@@ -339,7 +397,7 @@ function updateWorkflowInfo() {
   const idEl = document.getElementById('workflow-id');
   
   if (currentWorkflowId) {
-    const workflowName = allWorkflowChats[currentWorkflowId]?.workflowName || 
+    const workflowName = currentWorkflowDialog?.workflow_name || 
       (currentWorkflowId === 'new_workflow' ? 'New Workflow' : `Workflow ${currentWorkflowId}`);
     
     nameEl.textContent = workflowName;
@@ -379,10 +437,14 @@ async function loadWorkflowStats() {
         `<span class="stat">${connectionCount} connections</span>`;
       
       // Update workflow name if we got it from API
-      if (workflow.name && allWorkflowChats[currentWorkflowId]) {
-        allWorkflowChats[currentWorkflowId].workflowName = workflow.name;
+      if (workflow.name && currentWorkflowDialog) {
         document.getElementById('workflow-name').textContent = workflow.name;
-        saveChatStorage();
+        // Update the workflow dialog with the name
+        if (workflowAPI) {
+          workflowAPI.updateWorkflowDialog(currentWorkflowId, {
+            workflow_name: workflow.name
+          }).catch(err => console.warn('Failed to update workflow name:', err));
+        }
       }
     }
   } catch (error) {
@@ -451,15 +513,27 @@ async function refreshWorkflowInfo() {
 }
 
 // Clear current workflow's chat history
-function clearCurrentWorkflowChat() {
+async function clearCurrentWorkflowChat() {
   if (!currentWorkflowId) return;
   
-  if (confirm(`Clear chat history for "${allWorkflowChats[currentWorkflowId]?.workflowName || currentWorkflowId}"?`)) {
-    chatMemory = [];
-    allWorkflowChats[currentWorkflowId].messages = [];
-    saveCurrentChat();
-    refreshChatUI();
-    showToast('Chat history cleared');
+  const workflowName = currentWorkflowDialog?.workflow_name || currentWorkflowId;
+  if (confirm(`Clear chat history for "${workflowName}"?`)) {
+    // Create a new session (effectively clearing the current one)
+    if (workflowAPI && currentWorkflowId) {
+      try {
+        const newSession = await workflowAPI.createChatSession(currentWorkflowId);
+        currentSessionId = newSession.session_id;
+        chatMemory = [];
+        refreshChatUI();
+        showToast('Chat history cleared - new session created');
+      } catch (error) {
+        console.error('Failed to create new session:', error);
+        // Fallback: just clear local memory
+        chatMemory = [];
+        refreshChatUI();
+        showToast('Chat history cleared locally');
+      }
+    }
   }
 }
 
@@ -500,7 +574,7 @@ function addWelcomeMessage() {
       false
     );
   } else {
-    const workflowName = allWorkflowChats[currentWorkflowId]?.workflowName || currentWorkflowId;
+    const workflowName = currentWorkflowDialog?.workflow_name || currentWorkflowId;
     addMessage('assistant', 
       `Hello! I'm here to help you build your n8n workflow "${workflowName}". What would you like to add or modify?`, 
       false
@@ -552,7 +626,7 @@ async function sendMessage() {
   input.style.height = '60px';
   
   // Add user message
-  addMessage('user', message);
+  await addMessage('user', message);
   
   // Show typing indicator
   showTypingIndicator();
@@ -561,7 +635,89 @@ async function sendMessage() {
     // Call AI API based on provider
     let response;
     if (settings.activeProvider === 'openai') {
-      
+      response = `\`\`\`{
+        "nodes": [
+          {
+            "parameters": {},
+            "name": "Calendly Trigger",
+            "type": "n8n-nodes-base.calendlyTrigger",
+            "position": [100, 100]
+          },
+          {
+            "parameters": {
+              "url": "https://your.webhook.url",
+              "options": {},
+              "bodyParametersUi": {
+                "parameter": [
+                  {
+                    "name": "event",
+                    "value": "={{$json[\\"event\\"]}}"
+                  }
+                ]
+              }
+            },
+            "name": "HTTP Request",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [300, 100]
+          },
+          {
+            "parameters": {
+              "operation": "create",
+              "calendarId": "your-calendar-id",
+              "start": "={{$json[\\"start_time\\"]}}",
+              "end": "={{$json[\\"end_time\\"]}}",
+              "title": "={{$json[\\"event\\"]}}"
+            },
+            "name": "Google Calendar",
+            "type": "n8n-nodes-base.googleCalendar",
+            "position": [500, 100]
+          },
+          {
+            "parameters": {
+              "webhookUrl": "your-discord-webhook-url",
+              "text": "New event booked: {{$json[\\"event\\"]}}"
+            },
+            "name": "Discord",
+            "type": "n8n-nodes-base.discord",
+            "position": [700, 100]
+          }
+        ],
+        "connections": {
+          "Calendly Trigger": {
+            "main": [
+              [
+                {
+                  "node": "HTTP Request",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "HTTP Request": {
+            "main": [
+              [
+                {
+                  "node": "Google Calendar",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          },
+          "Google Calendar": {
+            "main": [
+              [
+                {
+                  "node": "Discord",
+                  "type": "main",
+                  "index": 0
+                }
+              ]
+            ]
+          }
+        }
+      }\`\`\``;
     } else {
       response = await callAnthropic(message);
     }
@@ -569,16 +725,16 @@ async function sendMessage() {
     // Hide typing indicator
     hideTypingIndicator();
     
-    // Add AI response
-    addMessage('assistant', response);
+    // Add AI response with provider info
+    await addMessage('assistant', response.message, true, settings.activeProvider, response.tokens_used);
     
-    // Process response for workflow JSON
-    processWorkflowResponse(response);
+      // Process response for workflow JSON (for real-time responses)
+  processWorkflowResponse(response.message);
     
   } catch (error) {
     console.error('AI API error:', error);
     hideTypingIndicator();
-    addMessage('assistant', `Error: ${error.message || 'Failed to get AI response'}`);
+    await addMessage('assistant', `Error: ${error.message || 'Failed to get AI response'}`);
   }
 }
 
@@ -637,7 +793,11 @@ Ensure the JSON is valid and follows n8n's schema. Only include nodes and connec
   }
   
   if (data.choices && data.choices[0] && data.choices[0].message) {
-    return data.choices[0].message.content;
+    return {
+      message: data.choices[0].message.content,
+      tokens_used: data.usage?.total_tokens || null,
+      provider: 'openai'
+    };
   } else {
     throw new Error('Unexpected API response format');
   }
@@ -675,31 +835,51 @@ async function callAnthropic(message) {
   }
   
   if (data.content && data.content[0] && data.content[0].text) {
-    return data.content[0].text;
+    return {
+      message: data.content[0].text,
+      tokens_used: data.usage?.input_tokens + data.usage?.output_tokens || null,
+      provider: 'anthropic'
+    };
   } else {
     throw new Error('Unexpected API response format');
   }
 }
 
 // Add message to chat
-function addMessage(role, content, saveToHistory = true) {
+async function addMessage(role, content, saveToHistory = true, provider = null, tokensUsed = null) {
   addMessageToUI(role, content, saveToHistory);
   
-  if (saveToHistory && settings.saveChatHistory) {
-    // Add to current chat
-    chatMemory.push({
-      role: role,
-      content: content,
-      timestamp: Date.now()
-    });
-    
-    // Update workflow chat
-    if (currentWorkflowId && allWorkflowChats[currentWorkflowId]) {
-      allWorkflowChats[currentWorkflowId].messages = chatMemory;
-      allWorkflowChats[currentWorkflowId].lastActivity = Date.now();
+  if (saveToHistory && settings.saveChatHistory && currentSessionId && workflowAPI) {
+    try {
+      // Save message to API
+      const messageResponse = await workflowAPI.addMessage(
+        currentSessionId,
+        role,
+        content,
+        tokensUsed,
+        provider
+      );
       
-      // Save to storage
-      saveCurrentChat();
+      // Add to local chat memory with API message data
+      chatMemory.push({
+        id: messageResponse.id,
+        message_id: messageResponse.message_id,
+        role: role,
+        content: content,
+        timestamp: new Date(messageResponse.timestamp).getTime(),
+        tokens_used: tokensUsed,
+        provider: provider
+      });
+      
+      console.log('Message saved to API:', messageResponse.message_id);
+    } catch (error) {
+      console.error('Failed to save message to API:', error);
+      // Fallback to local storage only
+      chatMemory.push({
+        role: role,
+        content: content,
+        timestamp: Date.now()
+      });
     }
   }
 }
@@ -724,11 +904,56 @@ function addMessageToUI(role, content, saveToHistory = true) {
   messageDiv.appendChild(avatar);
   messageDiv.appendChild(contentDiv);
   
+  // Check if this assistant message contains workflow JSON and add apply button
+  if (role === 'assistant' && currentWorkflowId && currentWorkflowId !== 'unknown_workflow') {
+    const extractedJson = extractJsonFromResponse(content);
+    if (extractedJson) {
+      addWorkflowActionButtons(messageDiv, extractedJson);
+    }
+  }
+  
   messagesContainer.appendChild(messageDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
   
   // Add fade-in animation
   messageDiv.classList.add('fade-in');
+}
+
+// Add workflow action buttons to a message
+function addWorkflowActionButtons(messageDiv, workflowJson) {
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'message-actions';
+  actionsDiv.innerHTML = `
+    <button class="message-action-btn primary" data-action="apply-workflow">
+      Apply to Canvas
+    </button>
+    <button class="message-action-btn" data-action="copy-workflow">
+      Copy JSON
+    </button>
+  `;
+  
+  // Store workflow JSON
+  actionsDiv.setAttribute('data-workflow-json', JSON.stringify(workflowJson));
+  
+  // Add event listeners
+  actionsDiv.querySelectorAll('.message-action-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = btn.getAttribute('data-action');
+      const workflowData = JSON.parse(actionsDiv.getAttribute('data-workflow-json'));
+      
+      switch(action) {
+        case 'apply-workflow':
+          applyWorkflow(workflowData);
+          break;
+        case 'copy-workflow':
+          copyWorkflowJson(workflowData);
+          break;
+      }
+    });
+  });
+  
+  messageDiv.appendChild(actionsDiv);
 }
 
 // Format message content
@@ -1000,15 +1225,17 @@ async function createNewWorkflow(cleanIncomingJson) {
           // Update our current workflow ID
           currentWorkflowId = workflowId;
           
-          // Create a new entry in the workflow chats
-          allWorkflowChats[workflowId] = {
-            messages: [...chatMemory], // Copy the current chat
-            workflowName: 'New Workflow',
-            lastActivity: Date.now(),
-            createdAt: Date.now()
-          };
+          // Create a new workflow dialog entry
+          if (workflowAPI) {
+            try {
+              workflowAPI.createWorkflowDialog(workflowId, 'New Workflow');
+              console.log('Created workflow dialog for new workflow:', workflowId);
+            } catch (error) {
+              console.warn('Failed to create workflow dialog:', error);
+            }
+          }
           
-          saveChatStorage();
+          // No need to save chat storage anymore - handled by API
           
           // Show toast inside the side panel
           showToast('Created new workflow and redirecting...');
@@ -1212,13 +1439,9 @@ function loadHistoryList() {
   const historyList = document.getElementById('history-list');
   historyList.innerHTML = '';
   
-  const workflows = Object.entries(allWorkflowChats)
-    .map(([id, workflow]) => ({
-      ...workflow,
-      workflowId: id
-    }))
-    .sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0))
-    .slice(0, settings.maxHistory);
+  // TODO: Implement history loading from API
+  // For now, show placeholder
+  const workflows = [];
   
   if (workflows.length === 0) {
     historyList.innerHTML = '<div class="loading-indicator">No chat history</div>';
@@ -1252,12 +1475,10 @@ function loadHistoryList() {
   });
 }
 
-function loadHistoryItem(workflowId) {
-  if (allWorkflowChats[workflowId]) {
-    loadWorkflowChat(workflowId);
-    switchTab('chat');
-    updateWorkflowInfo();
-  }
+async function loadHistoryItem(workflowId) {
+  await loadWorkflowChat(workflowId);
+  switchTab('chat');
+  updateWorkflowInfo();
 }
 
 function searchHistory(query) {
@@ -1278,14 +1499,18 @@ function searchHistory(query) {
   });
 }
 
-function clearHistory() {
+async function clearHistory() {
   if (confirm('Clear all chat history? This cannot be undone.')) {
-    allWorkflowChats = {};
+    // Clear current local data
     chatMemory = [];
-    saveChatStorage();
+    currentSessionId = null;
+    currentWorkflowDialog = null;
+    
+    // TODO: Implement bulk cleanup via API
+    // For now, just clear local state
     refreshChatUI();
     loadHistoryList();
-    showToast('Chat history cleared');
+    showToast('Local chat history cleared');
   }
 }
 
@@ -1387,6 +1612,7 @@ function updateSettingsUI() {
   document.getElementById('anthropic-key').value = settings.anthropicKey || '';
   document.getElementById('n8n-url').value = settings.n8nApiUrl || '';
   document.getElementById('n8n-key').value = settings.n8nApiKey || '';
+  document.getElementById('backend-url').value = settings.backendUrl || 'http://localhost:8000';
   document.getElementById('auto-apply-workflows').checked = settings.autoApplyWorkflows;
   document.getElementById('save-chat-history').checked = settings.saveChatHistory;
   document.getElementById('max-history').value = settings.maxHistory;
@@ -1398,9 +1624,13 @@ async function saveSettings() {
   settings.anthropicKey = document.getElementById('anthropic-key').value.trim();
   settings.n8nApiUrl = document.getElementById('n8n-url').value.trim();
   settings.n8nApiKey = document.getElementById('n8n-key').value.trim();
+  settings.backendUrl = document.getElementById('backend-url').value.trim() || 'http://localhost:8000';
   settings.autoApplyWorkflows = document.getElementById('auto-apply-workflows').checked;
   settings.saveChatHistory = document.getElementById('save-chat-history').checked;
   settings.maxHistory = parseInt(document.getElementById('max-history').value);
+  
+  // Reinitialize API client with new backend URL
+  initializeAPI();
   
   try {
     await chrome.storage.sync.set(settings);

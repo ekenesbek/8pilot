@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     
     # Database
-    database_url: Optional[str] = None
+    database_url: Optional[str] = "postgresql://n8n_user:n8n_password@localhost:5432/n8n_copilot"
     redis_url: Optional[str] = "redis://localhost:6379"
     
     # AI Providers

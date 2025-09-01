@@ -215,6 +215,16 @@
           <button id="test-connection-btn" class="secondary-btn">Test Connection</button>
         </div>
 
+        <!-- Backend Settings -->
+        <div class="settings-section">
+          <h4>Backend Settings</h4>
+          <div class="form-group">
+            <label for="backend-url">Backend API URL</label>
+            <input type="text" id="backend-url" placeholder="http://localhost:8000" value="http://localhost:8000">
+            <small>URL of the n8n-copilot backend service</small>
+          </div>
+        </div>
+
         <!-- Chat Settings -->
         <div class="settings-section">
           <h4>Chat Settings</h4>
@@ -249,6 +259,7 @@
     </div>
   </div>
 
+  <script src="sidepanel_service.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>
