@@ -441,6 +441,7 @@ function showChatWindow() {
     font-family: inherit;
     outline: none;
     padding: 4px 0;
+    transition: opacity 0.3s ease;
   `;
   
   // Create send button with arrow icon
@@ -480,6 +481,8 @@ function showChatWindow() {
       stopPlaceholderCycling();
       showResponseOverlay(message);
       messageInput.value = '';
+      // Reset opacity to full when clearing input
+      messageInput.style.opacity = '1';
       messageInput.placeholder = 'Ask me anything about workflow...';
     }
   });
@@ -493,6 +496,8 @@ function showChatWindow() {
         stopPlaceholderCycling();
         showResponseOverlay(message);
         messageInput.value = '';
+        // Reset opacity to full when clearing input
+        messageInput.style.opacity = '1';
         messageInput.placeholder = 'Ask me anything about workflow...';
       }
     }
@@ -510,7 +515,6 @@ function showChatWindow() {
       this.style.borderColor = '#000000';
       this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       stopPlaceholderCycling();
-      messageInput.placeholder = 'Ask me anything about workflow...';
     }
   });
   
@@ -524,7 +528,6 @@ function showChatWindow() {
     inputWrapper.style.borderColor = '#000000';
     inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
     stopPlaceholderCycling();
-    messageInput.placeholder = 'Ask me anything about workflow...';
   });
 
   inputWrapper.appendChild(messageInput);
@@ -585,6 +588,21 @@ function cyclePlaceholder() {
   }, 3000);
 }
 
+// Function to smoothly change placeholder
+function changePlaceholderSmoothly(newPlaceholder) {
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (!messageInput) return;
+  
+  // Fade out current placeholder
+  messageInput.style.opacity = '0.3';
+  
+  setTimeout(() => {
+    messageInput.placeholder = newPlaceholder;
+    // Fade in new placeholder
+    messageInput.style.opacity = '1';
+  }, 150);
+}
+
 // Function to start placeholder cycling
 function startPlaceholderCycling() {
   const messageInput = document.getElementById('8pilot-message-input');
@@ -595,14 +613,14 @@ function startPlaceholderCycling() {
     clearInterval(placeholderInterval);
   }
   
-  // Start cycling immediately
-  messageInput.placeholder = placeholderExamples[currentPlaceholderIndex];
+  // Start cycling immediately with animation
+  changePlaceholderSmoothly(placeholderExamples[currentPlaceholderIndex]);
   currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderExamples.length;
   
   // Set up interval for continuous cycling
   placeholderInterval = setInterval(() => {
     if (messageInput && messageInput.value === '') {
-      messageInput.placeholder = placeholderExamples[currentPlaceholderIndex];
+      changePlaceholderSmoothly(placeholderExamples[currentPlaceholderIndex]);
       currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderExamples.length;
     } else {
       stopPlaceholderCycling();
@@ -615,6 +633,12 @@ function stopPlaceholderCycling() {
   if (placeholderInterval) {
     clearInterval(placeholderInterval);
     placeholderInterval = null;
+  }
+  
+  // Smoothly return to default placeholder
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (messageInput && messageInput.value === '') {
+    changePlaceholderSmoothly('Ask me anything about workflow...');
   }
 }
 
