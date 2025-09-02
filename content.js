@@ -1,6 +1,9 @@
 // Content script for 8pilot extension
 console.log('8pilot content script loaded');
 
+// State tracking
+let isChatWindowVisible = false;
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Content script received message:', request);
@@ -192,8 +195,11 @@ function hideActivationIcon() {
   if (existingIcon) {
     existingIcon.remove();
   }
-  // Also hide menu if it exists
+  // Also hide menu and chat window if they exist
   hideMenu();
+  hideChatWindow();
+  // Reset state
+  isChatWindowVisible = false;
 }
 
 // Function to toggle menu visibility
@@ -296,34 +302,44 @@ function createMenu() {
   });
   
   // Add click handlers
-  historyIcon.addEventListener('click', function() {
+  historyIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
     handleMenuAction('history');
-    hideMenu();
   });
   
-  chatIcon.addEventListener('click', function() {
+  chatIcon.addEventListener('click', function(e) {
+    e.stopPropagation();
     handleMenuAction('chat');
-    hideMenu();
   });
   
   // Add to document
   document.body.appendChild(historyIcon);
   document.body.appendChild(chatIcon);
   
-  // Add click outside handler to close menu
-  document.addEventListener('click', function(e) {
-    const icon = document.getElementById('8pilot-activation-icon');
-    const historyIcon = document.getElementById('8pilot-history-icon');
-    const chatIcon = document.getElementById('8pilot-chat-icon');
-    
-    if (historyIcon && chatIcon) {
-      if (!icon.contains(e.target) && 
-          !historyIcon.contains(e.target) && 
-          !chatIcon.contains(e.target)) {
-        hideMenu();
+  // Add click outside handler to close menu (but not chat window)
+  setTimeout(() => {
+    const clickHandler = function(e) {
+      const icon = document.getElementById('8pilot-activation-icon');
+      const historyIcon = document.getElementById('8pilot-history-icon');
+      const chatIcon = document.getElementById('8pilot-chat-icon');
+      const chatContainer = document.getElementById('8pilot-chat-container');
+      const responseOverlay = document.getElementById('8pilot-response-overlay');
+      
+      if (historyIcon && chatIcon) {
+        if (!icon?.contains(e.target) && 
+            !historyIcon.contains(e.target) && 
+            !chatIcon.contains(e.target) &&
+            !chatContainer?.contains(e.target) &&
+            !responseOverlay?.contains(e.target)) {
+          hideMenu();
+          // Remove this event listener after hiding menu
+          document.removeEventListener('click', clickHandler);
+        }
       }
-    }
-  });
+    };
+    
+    document.addEventListener('click', clickHandler);
+  }, 100);
 }
 
 // Function to show menu with animation
@@ -361,10 +377,10 @@ function hideMenu() {
     
     // Remove from DOM after animation
     setTimeout(() => {
-      if (historyIcon.parentNode) {
+      if (historyIcon?.parentNode) {
         historyIcon.parentNode.removeChild(historyIcon);
       }
-      if (chatIcon.parentNode) {
+      if (chatIcon?.parentNode) {
         chatIcon.parentNode.removeChild(chatIcon);
       }
     }, 300);
@@ -377,8 +393,8 @@ function handleMenuAction(action) {
   
   switch (action) {
     case 'chat':
-      // Open chat functionality
-      showChatWindow();
+      // Toggle chat window
+      toggleChatWindow();
       break;
     case 'history':
       // Open history functionality
@@ -389,12 +405,39 @@ function handleMenuAction(action) {
   }
 }
 
+// Function to toggle chat window
+function toggleChatWindow() {
+  console.log('Toggle chat window, current state:', isChatWindowVisible);
+  
+  // Check if chat window actually exists in DOM
+  const existingChatContainer = document.getElementById('8pilot-chat-container');
+  
+  // If state says visible but element doesn't exist, fix the state
+  if (isChatWindowVisible && !existingChatContainer) {
+    console.log('State mismatch detected, fixing state');
+    isChatWindowVisible = false;
+  }
+  
+  if (isChatWindowVisible && existingChatContainer) {
+    hideChatWindow();
+  } else {
+    showChatWindow();
+  }
+}
+
 // Function to show chat window
 function showChatWindow() {
-  // Remove existing chat if any
-  hideChatWindow();
+  // Check if already exists in DOM
+  const existingChatContainer = document.getElementById('8pilot-chat-container');
+  if (existingChatContainer) {
+    console.log('Chat window already exists');
+    return;
+  }
   
   console.log('Showing 8pilot simple chat input');
+  
+  // Update state first
+  isChatWindowVisible = true;
   
   // Create input container
   const inputContainer = document.createElement('div');
@@ -475,7 +518,8 @@ function showChatWindow() {
     this.style.transform = 'translateX(0)';
   });
   
-  sendButton.addEventListener('click', function() {
+  sendButton.addEventListener('click', function(e) {
+    e.stopPropagation();
     const message = messageInput.value.trim();
     if (message) {
       stopPlaceholderCycling();
@@ -530,6 +574,11 @@ function showChatWindow() {
     stopPlaceholderCycling();
   });
 
+  // Prevent click propagation on input container
+  inputContainer.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+
   inputWrapper.appendChild(messageInput);
   inputWrapper.appendChild(sendButton);
   inputContainer.appendChild(inputWrapper);
@@ -546,13 +595,6 @@ function showChatWindow() {
   setTimeout(() => {
     messageInput.focus();
   }, 300);
-  
-  // Add click outside handler to close
-  document.addEventListener('click', function(e) {
-    if (!inputContainer.contains(e.target) && !document.getElementById('8pilot-chat-icon')?.contains(e.target)) {
-      hideChatWindow();
-    }
-  });
 }
 
 // Array of placeholder examples
@@ -684,6 +726,11 @@ function showResponseOverlay(userMessage) {
   let aiResponse = generateAIResponse(userMessage);
   responseContent.innerHTML = aiResponse;
   
+  // Prevent click propagation on response container
+  responseContainer.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  
   responseContainer.appendChild(responseContent);
   document.body.appendChild(responseContainer);
   
@@ -697,11 +744,6 @@ function showResponseOverlay(userMessage) {
   setTimeout(() => {
     hideResponseOverlay();
   }, 10000);
-  
-  // Add click to close
-  responseContainer.addEventListener('click', function() {
-    hideResponseOverlay();
-  });
 }
 
 // Function to generate AI response
