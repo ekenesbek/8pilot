@@ -378,7 +378,7 @@ function handleMenuAction(action) {
   switch (action) {
     case 'chat':
       // Open chat functionality
-      chrome.runtime.sendMessage({ action: 'openChat' });
+      showChatWindow();
       break;
     case 'history':
       // Open history functionality
@@ -386,6 +386,359 @@ function handleMenuAction(action) {
       break;
     default:
       console.log('Unknown menu action:', action);
+  }
+}
+
+// Function to show chat window
+function showChatWindow() {
+  // Remove existing chat if any
+  hideChatWindow();
+  
+  console.log('Showing 8pilot simple chat input');
+  
+  // Create input container
+  const inputContainer = document.createElement('div');
+  inputContainer.id = '8pilot-chat-container';
+  inputContainer.style.cssText = `
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    max-width: 90vw;
+    z-index: 10002;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+  
+  // Create input wrapper
+  const inputWrapper = document.createElement('div');
+  inputWrapper.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(79, 209, 199, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
+  `;
+  
+  // Create message input
+  const messageInput = document.createElement('input');
+  messageInput.type = 'text';
+  messageInput.id = '8pilot-message-input';
+  messageInput.placeholder = 'Create a workflow to help me automate my social media.';
+  messageInput.style.cssText = `
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    padding: 4px 0;
+  `;
+  
+  // Create send button with arrow icon
+  const sendButton = document.createElement('button');
+  sendButton.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  sendButton.style.cssText = `
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4fd1c7;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  sendButton.addEventListener('mouseenter', function() {
+    this.style.color = '#06b6d4';
+    this.style.transform = 'translateX(2px)';
+  });
+  
+  sendButton.addEventListener('mouseleave', function() {
+    this.style.color = '#4fd1c7';
+    this.style.transform = 'translateX(0)';
+  });
+  
+  sendButton.addEventListener('click', function() {
+    const message = messageInput.value.trim();
+    if (message) {
+      showResponseOverlay(message);
+      messageInput.value = '';
+      cyclePlaceholder();
+    }
+  });
+  
+  // Handle Enter key
+  messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendButton.click();
+    }
+  });
+  
+  inputWrapper.appendChild(messageInput);
+  inputWrapper.appendChild(sendButton);
+  inputContainer.appendChild(inputWrapper);
+  
+  // Add to document
+  document.body.appendChild(inputContainer);
+  
+  // Animate in
+  setTimeout(() => {
+    inputContainer.style.opacity = '1';
+  }, 10);
+  
+  // Focus input
+  setTimeout(() => {
+    messageInput.focus();
+  }, 300);
+  
+  // Start cycling placeholders
+  cyclePlaceholder();
+  
+  // Add click outside handler to close
+  document.addEventListener('click', function(e) {
+    if (!inputContainer.contains(e.target) && !document.getElementById('8pilot-chat-icon')?.contains(e.target)) {
+      hideChatWindow();
+    }
+  });
+}
+
+// Array of placeholder examples
+const placeholderExamples = [
+  'Create a workflow to help me automate my social media.',
+  'How would you optimize this workflow?',
+  'Create sticky notes explaining this workflow.',
+  'Why isn\'t my workflow working?',
+  'How do I use the AI Agent node?',
+  'Is there a way to optimize this?',
+  'Explain this workflow to me step by step.',
+  'Create a workflow to help me automate my social media.',
+  'How would you optimize this workflow?',
+  'Create sticky notes explaining this workflow.'
+];
+
+let currentPlaceholderIndex = 0;
+
+// Function to cycle through placeholder examples
+function cyclePlaceholder() {
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (!messageInput) return;
+  
+  messageInput.placeholder = placeholderExamples[currentPlaceholderIndex];
+  currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderExamples.length;
+  
+  // Change placeholder every 3 seconds
+  setTimeout(() => {
+    if (messageInput === document.activeElement && messageInput.value === '') {
+      cyclePlaceholder();
+    }
+  }, 3000);
+}
+
+// Function to show response overlay
+function showResponseOverlay(userMessage) {
+  // Remove existing response if any
+  hideResponseOverlay();
+  
+  console.log('Showing response overlay for:', userMessage);
+  
+  // Create response container
+  const responseContainer = document.createElement('div');
+  responseContainer.id = '8pilot-response-overlay';
+  responseContainer.style.cssText = `
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 60vw;
+    max-height: 50vh;
+    background: #000000;
+    border: 1px solid rgba(79, 209, 199, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
+    z-index: 10003;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-y: auto;
+  `;
+  
+  // Create response content
+  const responseContent = document.createElement('div');
+  responseContent.style.cssText = `
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+  `;
+  
+  // Simulate AI response based on user message
+  let aiResponse = generateAIResponse(userMessage);
+  responseContent.innerHTML = aiResponse;
+  
+  responseContainer.appendChild(responseContent);
+  document.body.appendChild(responseContainer);
+  
+  // Animate in
+  setTimeout(() => {
+    responseContainer.style.opacity = '1';
+    responseContainer.style.transform = 'translate(-50%, -50%) scale(1)';
+  }, 10);
+  
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    hideResponseOverlay();
+  }, 10000);
+  
+  // Add click to close
+  responseContainer.addEventListener('click', function() {
+    hideResponseOverlay();
+  });
+}
+
+// Function to generate AI response
+function generateAIResponse(userMessage) {
+  const message = userMessage.toLowerCase();
+  
+  if (message.includes('social media') || message.includes('automate')) {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">Social Media Automation Workflow</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">I'll help you create a comprehensive social media automation workflow. Here's what I recommend:</p>
+        <ul style="margin: 8px 0; padding-left: 16px;">
+          <li>Content scheduling across platforms</li>
+          <li>Automated engagement responses</li>
+          <li>Analytics tracking and reporting</li>
+          <li>Cross-platform posting optimization</li>
+        </ul>
+      </div>
+      <p style="margin: 0;">Would you like me to create specific nodes for your preferred social media platforms?</p>
+    `;
+  } else if (message.includes('optimize') || message.includes('optimization')) {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">Workflow Optimization</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">To optimize your workflow, I suggest:</p>
+        <ul style="margin: 8px 0; padding-left: 16px;">
+          <li>Adding error handling nodes</li>
+          <li>Implementing retry mechanisms</li>
+          <li>Using batch processing for efficiency</li>
+          <li>Adding monitoring and logging</li>
+        </ul>
+      </div>
+      <p style="margin: 0;">Let me analyze your current workflow structure to provide specific recommendations.</p>
+    `;
+  } else if (message.includes('sticky notes') || message.includes('explain')) {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">Workflow Documentation</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">I'll create detailed sticky notes for your workflow:</p>
+        <ul style="margin: 8px 0; padding-left: 16px;">
+          <li>Node-by-node explanations</li>
+          <li>Data flow documentation</li>
+          <li>Troubleshooting tips</li>
+          <li>Best practices and warnings</li>
+        </ul>
+      </div>
+      <p style="margin: 0;">This will help you and your team understand the workflow better.</p>
+    `;
+  } else if (message.includes('not working') || message.includes('error')) {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">Troubleshooting Help</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">Let me help you debug your workflow. Common issues include:</p>
+        <ul style="margin: 8px 0; padding-left: 16px;">
+          <li>Authentication problems</li>
+          <li>Data format mismatches</li>
+          <li>Rate limiting issues</li>
+          <li>Missing required fields</li>
+        </ul>
+      </div>
+      <p style="margin: 0;">Can you share the specific error message or describe what's happening?</p>
+    `;
+  } else if (message.includes('ai agent') || message.includes('agent')) {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">AI Agent Node Guide</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">The AI Agent node is powerful for:</p>
+        <ul style="margin: 8px 0; padding-left: 16px;">
+          <li>Natural language processing</li>
+          <li>Content generation and analysis</li>
+          <li>Decision making based on context</li>
+          <li>Integration with various AI models</li>
+        </ul>
+      </div>
+      <p style="margin: 0;">Would you like me to show you how to configure it for your specific use case?</p>
+    `;
+  } else {
+    return `
+      <div style="margin-bottom: 12px;">
+        <strong style="color: #4fd1c7; font-size: 15px;">8pilot AI Assistant</strong>
+      </div>
+      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+        <p style="margin: 0 0 8px 0;">I understand you're asking: "${userMessage}"</p>
+        <p style="margin: 0;">I'm here to help you with workflow automation, optimization, and troubleshooting. How can I assist you further?</p>
+      </div>
+      <p style="margin: 0;">Try asking me about workflow creation, optimization, or specific n8n features!</p>
+    `;
+  }
+}
+
+// Function to hide response overlay
+function hideResponseOverlay() {
+  const responseOverlay = document.getElementById('8pilot-response-overlay');
+  if (responseOverlay) {
+    responseOverlay.style.opacity = '0';
+    responseOverlay.style.transform = 'translate(-50%, -50%) scale(0.95)';
+    
+    setTimeout(() => {
+      if (responseOverlay.parentNode) {
+        responseOverlay.parentNode.removeChild(responseOverlay);
+      }
+    }, 300);
+  }
+}
+
+
+
+// Function to hide chat window
+function hideChatWindow() {
+  const chatContainer = document.getElementById('8pilot-chat-container');
+  if (chatContainer) {
+    chatContainer.style.opacity = '0';
+    chatContainer.style.transform = 'translateY(20px) scale(0.95)';
+    
+    setTimeout(() => {
+      if (chatContainer.parentNode) {
+        chatContainer.parentNode.removeChild(chatContainer);
+      }
+    }, 300);
   }
 }
 
