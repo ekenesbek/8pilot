@@ -418,24 +418,25 @@ function showChatWindow() {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.85);
+    background: #000000;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(79, 209, 199, 0.3);
+    border: 2px solid #000000;
     border-radius: 8px;
     padding: 8px 12px;
     box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
+    transition: border-color 0.2s ease;
   `;
   
   // Create message input
   const messageInput = document.createElement('input');
   messageInput.type = 'text';
   messageInput.id = '8pilot-message-input';
-  messageInput.placeholder = 'Create a workflow to help me automate my social media.';
+  messageInput.placeholder = 'Ask me anything about workflow...';
   messageInput.style.cssText = `
     flex: 1;
     background: transparent;
     border: none;
-    color: #e2e8f0;
+    color: #ffffff;
     font-size: 14px;
     font-family: inherit;
     outline: none;
@@ -476,9 +477,10 @@ function showChatWindow() {
   sendButton.addEventListener('click', function() {
     const message = messageInput.value.trim();
     if (message) {
+      stopPlaceholderCycling();
       showResponseOverlay(message);
       messageInput.value = '';
-      cyclePlaceholder();
+      messageInput.placeholder = 'Ask me anything about workflow...';
     }
   });
   
@@ -486,10 +488,45 @@ function showChatWindow() {
   messageInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      sendButton.click();
+      const message = messageInput.value.trim();
+      if (message) {
+        stopPlaceholderCycling();
+        showResponseOverlay(message);
+        messageInput.value = '';
+        messageInput.placeholder = 'Ask me anything about workflow...';
+      }
     }
   });
   
+  // Add hover and focus effects
+  inputWrapper.addEventListener('mouseenter', function() {
+    this.style.borderColor = '#ffffff';
+    this.style.boxShadow = '0 4px 20px rgba(255, 255, 255, 0.6)';
+    startPlaceholderCycling();
+  });
+  
+  inputWrapper.addEventListener('mouseleave', function() {
+    if (messageInput !== document.activeElement) {
+      this.style.borderColor = '#000000';
+      this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
+      stopPlaceholderCycling();
+      messageInput.placeholder = 'Ask me anything about workflow...';
+    }
+  });
+  
+  messageInput.addEventListener('focus', function() {
+    inputWrapper.style.borderColor = '#4fd1c7';
+    inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.8)';
+    startPlaceholderCycling();
+  });
+  
+  messageInput.addEventListener('blur', function() {
+    inputWrapper.style.borderColor = '#000000';
+    inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
+    stopPlaceholderCycling();
+    messageInput.placeholder = 'Ask me anything about workflow...';
+  });
+
   inputWrapper.appendChild(messageInput);
   inputWrapper.appendChild(sendButton);
   inputContainer.appendChild(inputWrapper);
@@ -506,9 +543,6 @@ function showChatWindow() {
   setTimeout(() => {
     messageInput.focus();
   }, 300);
-  
-  // Start cycling placeholders
-  cyclePlaceholder();
   
   // Add click outside handler to close
   document.addEventListener('click', function(e) {
@@ -533,6 +567,7 @@ const placeholderExamples = [
 ];
 
 let currentPlaceholderIndex = 0;
+let placeholderInterval = null;
 
 // Function to cycle through placeholder examples
 function cyclePlaceholder() {
@@ -548,6 +583,39 @@ function cyclePlaceholder() {
       cyclePlaceholder();
     }
   }, 3000);
+}
+
+// Function to start placeholder cycling
+function startPlaceholderCycling() {
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (!messageInput || messageInput.value !== '') return;
+  
+  // Clear any existing interval
+  if (placeholderInterval) {
+    clearInterval(placeholderInterval);
+  }
+  
+  // Start cycling immediately
+  messageInput.placeholder = placeholderExamples[currentPlaceholderIndex];
+  currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderExamples.length;
+  
+  // Set up interval for continuous cycling
+  placeholderInterval = setInterval(() => {
+    if (messageInput && messageInput.value === '') {
+      messageInput.placeholder = placeholderExamples[currentPlaceholderIndex];
+      currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderExamples.length;
+    } else {
+      stopPlaceholderCycling();
+    }
+  }, 4000);
+}
+
+// Function to stop placeholder cycling
+function stopPlaceholderCycling() {
+  if (placeholderInterval) {
+    clearInterval(placeholderInterval);
+    placeholderInterval = null;
+  }
 }
 
 // Function to show response overlay
@@ -731,6 +799,9 @@ function hideResponseOverlay() {
 function hideChatWindow() {
   const chatContainer = document.getElementById('8pilot-chat-container');
   if (chatContainer) {
+    // Stop placeholder cycling
+    stopPlaceholderCycling();
+    
     chatContainer.style.opacity = '0';
     chatContainer.style.transform = 'translateY(20px) scale(0.95)';
     
