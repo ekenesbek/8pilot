@@ -496,9 +496,9 @@ function createDragButton() {
     const inputContainer = document.getElementById('8pilot-chat-container');
     const rect = inputContainer.getBoundingClientRect();
     
-    // Вычисляем смещение курсора относительно центра контейнера
-    dragOffset.x = e.clientX - rect.left - rect.width / 2;
-    dragOffset.y = e.clientY - rect.top - rect.height / 2;
+    // Вычисляем смещение курсора относительно левого верхнего угла контейнера
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
     
     // Добавляем визуальную обратную связь
     this.style.color = '#00d9ff';
