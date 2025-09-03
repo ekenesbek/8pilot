@@ -788,7 +788,7 @@ function showChatMessages() {
   messagesWrapper.style.cssText = `
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     padding: 20px 0;
     overflow-y: auto;
     max-height: 100%;
@@ -865,6 +865,8 @@ function addMessageToChat(role, content) {
     opacity: 0;
     transform: translateY(20px);
     animation: slideInUp 0.3s ease-out forwards;
+    margin: 0;
+    padding: 0;
   `;
   
   // Create message bubble
