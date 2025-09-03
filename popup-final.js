@@ -2,6 +2,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Popup loaded');
     
+    // Get form elements
+    const providerSelect = document.getElementById('provider');
+    const modelSelect = document.getElementById('model');
+    const apiKeyInput = document.getElementById('apiKey');
+    const reasoningSelect = document.getElementById('reasoning');
+    const activateBtn = document.getElementById('activateBtn');
+    const activateSection = document.getElementById('activateSection');
+    const statusDisplay = document.getElementById('statusDisplay');
+    const sectionDescription = document.getElementById('sectionDescription');
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    
+    // Load saved settings on startup
+    loadSavedSettings();
+    
     // Tab switching
     function initTabs() {
         const tabs = document.querySelectorAll('.nav-tab');
@@ -40,6 +54,185 @@ document.addEventListener('DOMContentLoaded', function() {
         initTabs();
     }, 100);
 
+    // API Key and settings management
+    function loadSavedSettings() {
+        chrome.storage.sync.get(['openaiApiKey', 'provider', 'model', 'reasoning'], function(result) {
+            console.log('Loaded settings:', result);
+            
+            // Load API key (masked if exists)
+            if (result.openaiApiKey) {
+                apiKeyInput.value = '••••••••••••••••';
+                apiKeyInput.dataset.hasKey = 'true';
+                updateActivateButtonState(true);
+            } else {
+                updateActivateButtonState(false);
+            }
+            
+            // Load provider
+            if (result.provider && providerSelect) {
+                providerSelect.value = result.provider;
+            }
+            
+            // Load model
+            if (result.model && modelSelect) {
+                modelSelect.value = result.model;
+            }
+            
+            // Load reasoning
+            if (result.reasoning && reasoningSelect) {
+                reasoningSelect.value = result.reasoning;
+            }
+        });
+    }
+    
+    // Update activate button state based on API key presence
+    function updateActivateButtonState(hasApiKey) {
+        if (activateBtn) {
+            if (hasApiKey) {
+                activateBtn.disabled = false;
+                activateBtn.style.opacity = '1';
+                activateBtn.style.cursor = 'pointer';
+                activateBtn.title = '';
+            } else {
+                activateBtn.disabled = true;
+                activateBtn.style.opacity = '0.5';
+                activateBtn.style.cursor = 'not-allowed';
+                activateBtn.title = 'Please enter an API key first';
+            }
+        }
+    }
+    
+    // API Key input handling
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('focus', function() {
+            // Clear masked value when focusing
+            if (this.value === '••••••••••••••••') {
+                this.value = '';
+            }
+        });
+        
+        apiKeyInput.addEventListener('blur', function() {
+            const apiKey = this.value.trim();
+            if (apiKey && apiKey !== '••••••••••••••••') {
+                // Validate API key format
+                if (apiKey.startsWith('sk-')) {
+                    // Save API key
+                    saveApiKey(apiKey);
+                } else {
+                    alert('Invalid API key format. OpenAI API keys should start with "sk-"');
+                    this.value = '';
+                    updateActivateButtonState(false);
+                }
+            } else if (!apiKey) {
+                // If empty, check if we had a saved key
+                chrome.storage.sync.get(['openaiApiKey'], function(result) {
+                    if (result.openaiApiKey) {
+                        apiKeyInput.value = '••••••••••••••••';
+                        apiKeyInput.dataset.hasKey = 'true';
+                        updateActivateButtonState(true);
+                    } else {
+                        updateActivateButtonState(false);
+                    }
+                });
+            }
+        });
+        
+        apiKeyInput.addEventListener('input', function() {
+            const apiKey = this.value.trim();
+            if (apiKey && apiKey !== '••••••••••••••••') {
+                updateActivateButtonState(true);
+            } else {
+                updateActivateButtonState(false);
+            }
+        });
+        
+        apiKeyInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur(); // Trigger blur event to save
+            }
+        });
+    }
+    
+    // Save API key function
+    function saveApiKey(apiKey) {
+        console.log('Saving API key...');
+        chrome.storage.sync.set({ 
+            openaiApiKey: apiKey 
+        }, function() {
+            if (chrome.runtime.lastError) {
+                console.error('Failed to save API key:', chrome.runtime.lastError);
+                alert('Failed to save API key');
+                updateActivateButtonState(false);
+            } else {
+                console.log('API key saved successfully');
+                // Mask the input after saving
+                apiKeyInput.value = '••••••••••••••••';
+                apiKeyInput.dataset.hasKey = 'true';
+                updateActivateButtonState(true);
+                
+                // Show success indicator briefly
+                const originalBorder = apiKeyInput.style.borderColor;
+                apiKeyInput.style.borderColor = '#4fd1c7';
+                setTimeout(() => {
+                    apiKeyInput.style.borderColor = originalBorder;
+                }, 1000);
+            }
+        });
+    }
+    
+    // Save other settings
+    function saveSettings() {
+        const settings = {
+            provider: providerSelect ? providerSelect.value : 'openai',
+            model: modelSelect ? modelSelect.value : 'gpt-4o-mini',
+            reasoning: reasoningSelect ? reasoningSelect.value : 'medium'
+        };
+        
+        chrome.storage.sync.set(settings, function() {
+            if (chrome.runtime.lastError) {
+                console.error('Failed to save settings:', chrome.runtime.lastError);
+            } else {
+                console.log('Settings saved:', settings);
+            }
+        });
+    }
+    
+    // Add event listeners for settings
+    if (providerSelect) {
+        providerSelect.addEventListener('change', saveSettings);
+    }
+    
+    if (modelSelect) {
+        modelSelect.addEventListener('change', saveSettings);
+    }
+    
+    if (reasoningSelect) {
+        reasoningSelect.addEventListener('change', saveSettings);
+    }
+    
+    // Restore defaults button
+    const restoreBtn = document.querySelector('.restore-btn');
+    if (restoreBtn) {
+        restoreBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Reset to defaults
+            if (providerSelect) providerSelect.value = 'openai';
+            if (modelSelect) modelSelect.value = 'gpt-4o-mini';
+            if (reasoningSelect) reasoningSelect.value = 'medium';
+            
+            // Save defaults
+            saveSettings();
+            
+            // Visual feedback
+            this.textContent = 'Restored!';
+            setTimeout(() => {
+                this.textContent = 'Restore Defaults';
+            }, 1500);
+        });
+    }
+
     // Billing toggle
     const billingOptions = document.querySelectorAll('.toggle-option');
     console.log('Found billing options:', billingOptions.length);
@@ -74,13 +267,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Activate button
-    const activateBtn = document.getElementById('activateBtn');
-    const activateSection = document.getElementById('activateSection');
-    const statusDisplay = document.getElementById('statusDisplay');
-    const sectionDescription = document.getElementById('sectionDescription');
-    const deactivateBtn = document.getElementById('deactivateBtn');
-
     // Check if extension is already activated on page load
     async function checkActivationStatus() {
         try {
@@ -112,6 +298,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             console.log('Activate button clicked');
             
+            // Check if button is disabled
+            if (this.disabled) {
+                alert('Please enter your OpenAI API key first in the API tab');
+                // Switch to API tab
+                document.querySelector('.nav-tab[data-tab="api"]').click();
+                return;
+            }
+            
             // Check if current page is n8n before activation
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
@@ -119,31 +313,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     const isN8n = isN8nPage(tab.url);
                     
                     if (isN8n) {
-                        // Send message to background script first
-                        if (chrome && chrome.runtime) {
-                            chrome.runtime.sendMessage({
-                                action: 'activateAndOpenSidePanel',
-                                data: {
-                                    url: tab.url
-                                }
-                            }, async (response) => {
-                                console.log('Activation response:', response);
-                                if (response && response.status === 'activated') {
-                                    // Save activation state
-                                    await chrome.storage.local.set({ [`activated_${tab.id}`]: true });
-                                    
-                                    // Only show activated state if activation was successful
-                                    activateSection.classList.add('activated');
-                                    statusDisplay.classList.add('active');
-                                    sectionDescription.style.display = 'none';
-                                    activateBtn.style.display = 'none';
-                                    deactivateBtn.classList.add('active');
-                                } else {
-                                    // Show error if activation failed
-                                    alert('Activation failed: ' + (response?.message || 'Unknown error'));
-                                }
-                            });
-                        }
+                        // Send message to content script to activate
+                        chrome.tabs.sendMessage(tab.id, {
+                            action: 'activateExtension'
+                        }, async (response) => {
+                            console.log('Activation response:', response);
+                            if (response && response.status === 'activated') {
+                                // Save activation state
+                                await chrome.storage.local.set({ [`activated_${tab.id}`]: true });
+                                
+                                // Show activated state
+                                activateSection.classList.add('activated');
+                                statusDisplay.classList.add('active');
+                                sectionDescription.style.display = 'none';
+                                activateBtn.style.display = 'none';
+                                deactivateBtn.classList.add('active');
+                            } else {
+                                // Show error if activation failed
+                                alert('Activation failed. Please make sure you are on an n8n workflow page.');
+                            }
+                        });
                     } else {
                         // Show error message - do not activate
                         alert('Please navigate to an n8n workflow page first');
@@ -203,9 +392,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 await chrome.storage.local.remove([`activated_${tab.id}`]);
             }
             
-            // Send message to background script
-            if (chrome && chrome.runtime) {
-                chrome.runtime.sendMessage({
+            // Send message to content script to deactivate
+            if (tab) {
+                chrome.tabs.sendMessage(tab.id, {
                     action: 'deactivateExtension'
                 }, (response) => {
                     console.log('Deactivation response:', response);

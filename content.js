@@ -3,6 +3,8 @@ console.log('8pilot content script loaded');
 
 // State tracking
 let isChatWindowVisible = false;
+let isChatMessagesVisible = false;
+let chatMessages = [];
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -198,8 +200,10 @@ function hideActivationIcon() {
   // Also hide menu and chat window if they exist
   hideMenu();
   hideChatWindow();
+  hideChatMessages();
   // Reset state
   isChatWindowVisible = false;
+  isChatMessagesVisible = false;
 }
 
 // Function to toggle menu visibility
@@ -323,14 +327,14 @@ function createMenu() {
       const historyIcon = document.getElementById('8pilot-history-icon');
       const chatIcon = document.getElementById('8pilot-chat-icon');
       const chatContainer = document.getElementById('8pilot-chat-container');
-      const responseOverlay = document.getElementById('8pilot-response-overlay');
+      const chatMessagesContainer = document.getElementById('8pilot-chat-messages');
       
       if (historyIcon && chatIcon) {
         if (!icon?.contains(e.target) && 
             !historyIcon.contains(e.target) && 
             !chatIcon.contains(e.target) &&
             !chatContainer?.contains(e.target) &&
-            !responseOverlay?.contains(e.target)) {
+            !chatMessagesContainer?.contains(e.target)) {
           hideMenu();
           // Remove this event listener after hiding menu
           document.removeEventListener('click', clickHandler);
@@ -420,6 +424,7 @@ function toggleChatWindow() {
   
   if (isChatWindowVisible && existingChatContainer) {
     hideChatWindow();
+    hideChatMessages();
   } else {
     showChatWindow();
   }
@@ -434,7 +439,7 @@ function showChatWindow() {
     return;
   }
   
-  console.log('Showing 8pilot simple chat input');
+  console.log('Showing 8pilot chat input');
   
   // Update state first
   isChatWindowVisible = true;
@@ -523,7 +528,7 @@ function showChatWindow() {
     const message = messageInput.value.trim();
     if (message) {
       stopPlaceholderCycling();
-      showResponseOverlay(message);
+      sendChatMessage(message);
       messageInput.value = '';
       // Reset opacity to full when clearing input
       messageInput.style.opacity = '1';
@@ -538,7 +543,7 @@ function showChatWindow() {
       const message = messageInput.value.trim();
       if (message) {
         stopPlaceholderCycling();
-        showResponseOverlay(message);
+        sendChatMessage(message);
         messageInput.value = '';
         // Reset opacity to full when clearing input
         messageInput.style.opacity = '1';
@@ -684,182 +689,323 @@ function stopPlaceholderCycling() {
   }
 }
 
-// Function to show response overlay
-function showResponseOverlay(userMessage) {
-  // Remove existing response if any
-  hideResponseOverlay();
+// Function to send chat message
+function sendChatMessage(message) {
+  console.log('Sending chat message:', message);
   
-  console.log('Showing response overlay for:', userMessage);
+  // Show chat messages if not visible
+  if (!isChatMessagesVisible) {
+    showChatMessages();
+  }
   
-  // Create response container
-  const responseContainer = document.createElement('div');
-  responseContainer.id = '8pilot-response-overlay';
-  responseContainer.style.cssText = `
+  // Add user message to chat
+  addMessageToChat('user', message);
+  
+  // Add loading message
+  const loadingMessageId = addMessageToChat('assistant', '');
+  showTypingIndicator(loadingMessageId);
+  
+  // Send to OpenAI API
+  sendToOpenAI(message, loadingMessageId);
+}
+
+// Function to show chat messages container
+function showChatMessages() {
+  // Check if already exists
+  const existingContainer = document.getElementById('8pilot-chat-messages');
+  if (existingContainer) return;
+  
+  console.log('Showing chat messages container');
+  isChatMessagesVisible = true;
+  
+  // Create messages container
+  const messagesContainer = document.createElement('div');
+  messagesContainer.id = '8pilot-chat-messages';
+  messagesContainer.style.cssText = `
     position: fixed;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 60vw;
-    max-height: 50vh;
-    background: #000000;
-    border: 1px solid rgba(79, 209, 199, 0.3);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
-    z-index: 10003;
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 140px;
+    z-index: 10001;
+    pointer-events: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
   `;
   
-  // Create response content
-  const responseContent = document.createElement('div');
-  responseContent.style.cssText = `
-    color: #e2e8f0;
-    font-size: 14px;
-    line-height: 1.5;
+  // Create messages wrapper
+  const messagesWrapper = document.createElement('div');
+  messagesWrapper.id = '8pilot-messages-wrapper';
+  messagesWrapper.style.cssText = `
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   `;
   
-  // Simulate AI response based on user message
-  let aiResponse = generateAIResponse(userMessage);
-  responseContent.innerHTML = aiResponse;
+  messagesContainer.appendChild(messagesWrapper);
+  document.body.appendChild(messagesContainer);
   
-  // Prevent click propagation on response container
-  responseContainer.addEventListener('click', function(e) {
+  // Prevent clicks from closing the chat
+  messagesContainer.addEventListener('click', function(e) {
     e.stopPropagation();
   });
-  
-  responseContainer.appendChild(responseContent);
-  document.body.appendChild(responseContainer);
-  
-  // Animate in
-  setTimeout(() => {
-    responseContainer.style.opacity = '1';
-    responseContainer.style.transform = 'translate(-50%, -50%) scale(1)';
-  }, 10);
-  
-  // Auto-hide after 10 seconds
-  setTimeout(() => {
-    hideResponseOverlay();
-  }, 10000);
 }
 
-// Function to generate AI response
-function generateAIResponse(userMessage) {
-  const message = userMessage.toLowerCase();
-  
-  if (message.includes('social media') || message.includes('automate')) {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">Social Media Automation Workflow</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">I'll help you create a comprehensive social media automation workflow. Here's what I recommend:</p>
-        <ul style="margin: 8px 0; padding-left: 16px;">
-          <li>Content scheduling across platforms</li>
-          <li>Automated engagement responses</li>
-          <li>Analytics tracking and reporting</li>
-          <li>Cross-platform posting optimization</li>
-        </ul>
-      </div>
-      <p style="margin: 0;">Would you like me to create specific nodes for your preferred social media platforms?</p>
-    `;
-  } else if (message.includes('optimize') || message.includes('optimization')) {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">Workflow Optimization</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">To optimize your workflow, I suggest:</p>
-        <ul style="margin: 8px 0; padding-left: 16px;">
-          <li>Adding error handling nodes</li>
-          <li>Implementing retry mechanisms</li>
-          <li>Using batch processing for efficiency</li>
-          <li>Adding monitoring and logging</li>
-        </ul>
-      </div>
-      <p style="margin: 0;">Let me analyze your current workflow structure to provide specific recommendations.</p>
-    `;
-  } else if (message.includes('sticky notes') || message.includes('explain')) {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">Workflow Documentation</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">I'll create detailed sticky notes for your workflow:</p>
-        <ul style="margin: 8px 0; padding-left: 16px;">
-          <li>Node-by-node explanations</li>
-          <li>Data flow documentation</li>
-          <li>Troubleshooting tips</li>
-          <li>Best practices and warnings</li>
-        </ul>
-      </div>
-      <p style="margin: 0;">This will help you and your team understand the workflow better.</p>
-    `;
-  } else if (message.includes('not working') || message.includes('error')) {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">Troubleshooting Help</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">Let me help you debug your workflow. Common issues include:</p>
-        <ul style="margin: 8px 0; padding-left: 16px;">
-          <li>Authentication problems</li>
-          <li>Data format mismatches</li>
-          <li>Rate limiting issues</li>
-          <li>Missing required fields</li>
-        </ul>
-      </div>
-      <p style="margin: 0;">Can you share the specific error message or describe what's happening?</p>
-    `;
-  } else if (message.includes('ai agent') || message.includes('agent')) {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">AI Agent Node Guide</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">The AI Agent node is powerful for:</p>
-        <ul style="margin: 8px 0; padding-left: 16px;">
-          <li>Natural language processing</li>
-          <li>Content generation and analysis</li>
-          <li>Decision making based on context</li>
-          <li>Integration with various AI models</li>
-        </ul>
-      </div>
-      <p style="margin: 0;">Would you like me to show you how to configure it for your specific use case?</p>
-    `;
-  } else {
-    return `
-      <div style="margin-bottom: 12px;">
-        <strong style="color: #4fd1c7; font-size: 15px;">8pilot AI Assistant</strong>
-      </div>
-      <div style="background: rgba(79, 209, 199, 0.1); border-left: 3px solid #4fd1c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-        <p style="margin: 0 0 8px 0;">I understand you're asking: "${userMessage}"</p>
-        <p style="margin: 0;">I'm here to help you with workflow automation, optimization, and troubleshooting. How can I assist you further?</p>
-      </div>
-      <p style="margin: 0;">Try asking me about workflow creation, optimization, or specific n8n features!</p>
-    `;
+// Function to hide chat messages
+function hideChatMessages() {
+  const messagesContainer = document.getElementById('8pilot-chat-messages');
+  if (messagesContainer) {
+    messagesContainer.remove();
+    isChatMessagesVisible = false;
+    chatMessages = [];
   }
 }
 
-// Function to hide response overlay
-function hideResponseOverlay() {
-  const responseOverlay = document.getElementById('8pilot-response-overlay');
-  if (responseOverlay) {
-    responseOverlay.style.opacity = '0';
-    responseOverlay.style.transform = 'translate(-50%, -50%) scale(0.95)';
-    
-    setTimeout(() => {
-      if (responseOverlay.parentNode) {
-        responseOverlay.parentNode.removeChild(responseOverlay);
+// Function to add message to chat
+function addMessageToChat(role, content) {
+  const messagesWrapper = document.getElementById('8pilot-messages-wrapper');
+  if (!messagesWrapper) return;
+  
+  const messageId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const isUser = role === 'user';
+  
+  // Create message container
+  const messageContainer = document.createElement('div');
+  messageContainer.id = messageId;
+  messageContainer.className = `chat-message ${role}`;
+  messageContainer.style.cssText = `
+    display: flex;
+    ${isUser ? 'justify-content: flex-end' : 'justify-content: flex-start'};
+    margin-bottom: 12px;
+    pointer-events: auto;
+  `;
+  
+  // Create message bubble
+  const messageBubble = document.createElement('div');
+  messageBubble.style.cssText = `
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    ${isUser ? 
+      'background: rgba(79, 209, 199, 0.1); border: 1px solid rgba(79, 209, 199, 0.3); color: #e2e8f0; margin-left: auto;' : 
+      'background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0; backdrop-filter: blur(10px);'
+    }
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  `;
+  
+  // Add hover effect
+  messageBubble.addEventListener('mouseenter', function() {
+    this.style.transform = 'translateY(-1px)';
+    this.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
+  });
+  
+  messageBubble.addEventListener('mouseleave', function() {
+    this.style.transform = 'translateY(0)';
+    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+  });
+  
+  if (content) {
+    messageBubble.innerHTML = formatMessage(content);
+  }
+  
+  messageContainer.appendChild(messageBubble);
+  messagesWrapper.appendChild(messageContainer);
+  
+  // Store message
+  chatMessages.push({
+    id: messageId,
+    role: role,
+    content: content,
+    element: messageContainer
+  });
+  
+  // Scroll to bottom
+  scrollToBottom();
+  
+  return messageId;
+}
+
+// Function to format message content
+function formatMessage(content) {
+  // Convert markdown-like formatting to HTML
+  return content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>')
+    .replace(/\n/g, '<br>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; overflow-x: auto; font-family: monospace; margin: 8px 0;"><code>$1</code></pre>');
+}
+
+// Function to show typing indicator
+function showTypingIndicator(messageId) {
+  const messageElement = document.getElementById(messageId);
+  if (!messageElement) return;
+  
+  const bubble = messageElement.querySelector('div');
+  if (!bubble) return;
+  
+  bubble.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <div style="display: flex; gap: 2px;">
+        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
+        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
+        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.4s;"></div>
+      </div>
+      <span style="color: #9ca3af; font-size: 12px; margin-left: 8px;">AI is thinking...</span>
+    </div>
+  `;
+  
+  // Add typing animation styles if not already added
+  if (!document.getElementById('typing-animation-styles')) {
+    const style = document.createElement('style');
+    style.id = 'typing-animation-styles';
+    style.textContent = `
+      @keyframes typing-bounce {
+        0%, 60%, 100% { transform: translateY(0); opacity: 1; }
+        30% { transform: translateY(-8px); opacity: 0.7; }
       }
-    }, 300);
+    `;
+    document.head.appendChild(style);
   }
 }
 
+// Function to update message content
+function updateMessageContent(messageId, content) {
+  const messageElement = document.getElementById(messageId);
+  if (!messageElement) return;
+  
+  const bubble = messageElement.querySelector('div');
+  if (!bubble) return;
+  
+  bubble.innerHTML = formatMessage(content);
+  
+  // Update stored message
+  const messageIndex = chatMessages.findIndex(msg => msg.id === messageId);
+  if (messageIndex !== -1) {
+    chatMessages[messageIndex].content = content;
+  }
+  
+  scrollToBottom();
+}
 
+// Function to scroll to bottom of messages
+function scrollToBottom() {
+  const messagesContainer = document.getElementById('8pilot-chat-messages');
+  if (messagesContainer) {
+    setTimeout(() => {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 100);
+  }
+}
+
+// Function to send message to OpenAI API
+async function sendToOpenAI(message, messageId) {
+  try {
+    // Get API key from chrome storage
+    const result = await new Promise((resolve) => {
+      chrome.storage.sync.get(['openaiApiKey'], resolve);
+    });
+    
+    const apiKey = result.openaiApiKey;
+    
+    if (!apiKey) {
+      updateMessageContent(messageId, '❌ OpenAI API key not found. Please set your API key in the extension settings.');
+      return;
+    }
+    
+    // Prepare messages for API
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are 8pilot AI, an expert assistant for n8n workflow automation. You help users create, optimize, and troubleshoot n8n workflows. Be helpful, concise, and provide actionable advice.'
+      }
+    ];
+    
+    // Add previous messages for context (last 10 messages)
+    const recentMessages = chatMessages
+      .filter(msg => msg.content && msg.role !== 'system')
+      .slice(-10)
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    
+    messages.push(...recentMessages);
+    messages.push({ role: 'user', content: message });
+    
+    // Make API call
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        max_tokens: 1000,
+        stream: true,
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+    
+    // Handle streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let assistantResponse = '';
+    
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          
+          if (data === '[DONE]') {
+            continue;
+          }
+          
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            
+            if (delta) {
+              assistantResponse += delta;
+              updateMessageContent(messageId, assistantResponse);
+            }
+          } catch (e) {
+            // Ignore parsing errors for incomplete chunks
+          }
+        }
+      }
+    }
+    
+    // If no response was received, show error
+    if (!assistantResponse) {
+      updateMessageContent(messageId, '❌ No response received from OpenAI API');
+    }
+    
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    updateMessageContent(messageId, `❌ Error: ${error.message}. Please check your API key and try again.`);
+  }
+}
 
 // Function to hide chat window
 function hideChatWindow() {
@@ -869,7 +1015,7 @@ function hideChatWindow() {
     stopPlaceholderCycling();
     
     chatContainer.style.opacity = '0';
-    chatContainer.style.transform = 'translateY(20px) scale(0.95)';
+    chatContainer.style.transform = 'translateX(-50%) translateY(20px)';
     
     setTimeout(() => {
       if (chatContainer.parentNode) {
@@ -877,6 +1023,8 @@ function hideChatWindow() {
       }
     }, 300);
   }
+  
+  isChatWindowVisible = false;
 }
 
 // Initialize content script
