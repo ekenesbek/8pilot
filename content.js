@@ -718,34 +718,109 @@ function showChatMessages() {
   console.log('Showing chat messages container');
   isChatMessagesVisible = true;
   
+  // Add slide-in animation styles
+  if (!document.getElementById('chat-animation-styles')) {
+    const animationStyles = document.createElement('style');
+    animationStyles.id = 'chat-animation-styles';
+    animationStyles.textContent = `
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes fadeOutUp {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+    `;
+    document.head.appendChild(animationStyles);
+  }
+  
   // Create messages container
   const messagesContainer = document.createElement('div');
   messagesContainer.id = '8pilot-chat-messages';
   messagesContainer.style.cssText = `
     position: fixed;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 120px;
+    width: 600px;
+    max-width: 90vw;
+    height: 400px;
+    max-height: 50vh;
     z-index: 10001;
     pointer-events: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    overflow-y: auto;
-    padding: 20px;
-    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  `;
+  
+  // Create fade mask for top
+  const fadeMask = document.createElement('div');
+  fadeMask.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
   `;
   
   // Create messages wrapper
   const messagesWrapper = document.createElement('div');
   messagesWrapper.id = '8pilot-messages-wrapper';
   messagesWrapper.style.cssText = `
-    max-width: 800px;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
+    padding: 20px 0;
+    overflow-y: auto;
+    max-height: 100%;
+    
+    /* Кастомный скроллбар */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(79, 209, 199, 0.3) transparent;
   `;
   
+  // Add custom scrollbar styles
+  if (!document.getElementById('scrollbar-styles')) {
+    const scrollbarStyle = document.createElement('style');
+    scrollbarStyle.id = 'scrollbar-styles';
+    scrollbarStyle.textContent = `
+      #8pilot-messages-wrapper::-webkit-scrollbar {
+        width: 4px;
+      }
+      #8pilot-messages-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #8pilot-messages-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(79, 209, 199, 0.3);
+        border-radius: 2px;
+      }
+      #8pilot-messages-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(79, 209, 199, 0.5);
+      }
+    `;
+    document.head.appendChild(scrollbarStyle);
+  }
+  
+  messagesContainer.appendChild(fadeMask);
   messagesContainer.appendChild(messagesWrapper);
   document.body.appendChild(messagesContainer);
   
@@ -753,6 +828,12 @@ function showChatMessages() {
   messagesContainer.addEventListener('click', function(e) {
     e.stopPropagation();
   });
+  
+  // Auto-scroll to bottom when new messages arrive
+  const observer = new MutationObserver(() => {
+    messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+  });
+  observer.observe(messagesWrapper, { childList: true });
 }
 
 // Function to hide chat messages
@@ -780,36 +861,45 @@ function addMessageToChat(role, content) {
   messageContainer.style.cssText = `
     display: flex;
     ${isUser ? 'justify-content: flex-end' : 'justify-content: flex-start'};
-    margin-bottom: 12px;
     pointer-events: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideInUp 0.3s ease-out forwards;
   `;
   
   // Create message bubble
   const messageBubble = document.createElement('div');
   messageBubble.style.cssText = `
-    max-width: 70%;
+    max-width: 85%;
     padding: 12px 16px;
-    border-radius: 18px;
+    border-radius: 8px;
     ${isUser ? 
-      'background: rgba(79, 209, 199, 0.1); border: 1px solid rgba(79, 209, 199, 0.3); color: #e2e8f0; margin-left: auto;' : 
-      'background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0; backdrop-filter: blur(10px);'
+      `background: rgba(7, 27, 25, 0.85); 
+       color: #e2e8f0;
+       border: 1px solid rgba(79, 209, 199, 0.7); 
+       margin-left: auto;` : 
+      `background: rgba(0, 0, 0, 1); 
+       border: 1px solid rgba(255, 255, 255, 0.1); 
+       color: #e2e8f0; 
+       backdrop-filter: blur(10px);`
     }
     font-size: 14px;
     line-height: 1.5;
     word-wrap: break-word;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    position: relative;
   `;
   
-  // Add hover effect
+  // Add subtle hover effect
   messageBubble.addEventListener('mouseenter', function() {
     this.style.transform = 'translateY(-1px)';
-    this.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
+    this.style.boxShadow = '0 6px 25px rgba(0, 0, 0, 0.3)';
   });
   
   messageBubble.addEventListener('mouseleave', function() {
     this.style.transform = 'translateY(0)';
-    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    this.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
   });
   
   if (content) {
@@ -827,8 +917,10 @@ function addMessageToChat(role, content) {
     element: messageContainer
   });
   
-  // Scroll to bottom
-  scrollToBottom();
+  // Auto-scroll to bottom
+  setTimeout(() => {
+    messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+  }, 50);
   
   return messageId;
 }
@@ -853,13 +945,13 @@ function showTypingIndicator(messageId) {
   if (!bubble) return;
   
   bubble.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 4px;">
-      <div style="display: flex; gap: 2px;">
-        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
-        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
-        <div class="typing-dot" style="width: 6px; height: 6px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.4s;"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="color: #a1a1aa; font-size: 14px;">thinking</span>
+      <div style="display: flex; gap: 3px;">
+        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
+        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
+        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.4s;"></div>
       </div>
-      <span style="color: #9ca3af; font-size: 12px; margin-left: 8px;">AI is thinking...</span>
     </div>
   `;
   
@@ -869,8 +961,14 @@ function showTypingIndicator(messageId) {
     style.id = 'typing-animation-styles';
     style.textContent = `
       @keyframes typing-bounce {
-        0%, 60%, 100% { transform: translateY(0); opacity: 1; }
-        30% { transform: translateY(-8px); opacity: 0.7; }
+        0%, 60%, 100% { 
+          transform: translateY(0); 
+          opacity: 0.4; 
+        }
+        30% { 
+          transform: translateY(-4px); 
+          opacity: 1; 
+        }
       }
     `;
     document.head.appendChild(style);
@@ -900,21 +998,26 @@ function updateMessageContent(messageId, content) {
 function scrollToBottom() {
   const messagesContainer = document.getElementById('8pilot-chat-messages');
   if (messagesContainer) {
-    setTimeout(() => {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 100);
+    const messagesWrapper = document.getElementById('8pilot-messages-wrapper');
+    if (messagesWrapper) {
+      setTimeout(() => {
+        messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+      }, 100);
+    }
   }
 }
 
 // Function to send message to OpenAI API
 async function sendToOpenAI(message, messageId) {
   try {
-    // Get API key from chrome storage
+    // Get API key and model from chrome storage
     const result = await new Promise((resolve) => {
-      chrome.storage.sync.get(['openaiApiKey'], resolve);
+      chrome.storage.sync.get(['openaiApiKey', 'provider', 'model'], resolve);
     });
     
     const apiKey = result.openaiApiKey;
+    const provider = result.provider || 'openai';
+    const model = result.model || 'gpt-4o-mini';
     
     if (!apiKey) {
       updateMessageContent(messageId, '❌ OpenAI API key not found. Please set your API key in the extension settings.');
