@@ -430,6 +430,155 @@ function toggleChatWindow() {
   }
 }
 
+// Function to create drag button
+function createDragButton() {
+  const dragButton = document.createElement('button');
+  dragButton.id = '8pilot-drag-button';
+  dragButton.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Центральная точка -->
+      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      <!-- Стрелка вверх -->
+      <path d="M12 6l-3 3h6l-3-3z" fill="currentColor"/>
+      <!-- Стрелка вниз -->
+      <path d="M12 18l3-3h-6l3 3z" fill="currentColor"/>
+      <!-- Стрелка влево -->
+      <path d="M6 12l3-3v6l-3-3z" fill="currentColor"/>
+      <!-- Стрелка вправо -->
+      <path d="M18 12l-3 3v-6l3 3z" fill="currentColor"/>
+    </svg>
+  `;
+  
+  dragButton.style.cssText = `
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: move;
+    color: #4fd1c7;
+    transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    z-index: 10003;
+    filter: drop-shadow(0 0 6px rgba(79, 209, 199, 0.7));
+  `;
+  
+  // Эффекты при наведении
+  dragButton.addEventListener('mouseenter', function() {
+    this.style.color = '#06b6d4';
+    this.style.filter = 'drop-shadow(0 0 12px rgba(79, 209, 199, 0.9))';
+    this.style.transform = 'translateY(-50%) scale(1.15)';
+  });
+  
+  dragButton.addEventListener('mouseleave', function() {
+    this.style.color = '#4fd1c7';
+    this.style.filter = 'drop-shadow(0 0 6px rgba(79, 209, 199, 0.7))';
+    this.style.transform = 'translateY(-50%) scale(1)';
+  });
+  
+  // Переменные для отслеживания перетаскивания
+  let isDragging = false;
+  let dragOffset = { x: 0, y: 0 };
+  
+  // Обработчики перетаскивания
+  dragButton.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging = true;
+    
+    const inputContainer = document.getElementById('8pilot-chat-container');
+    const rect = inputContainer.getBoundingClientRect();
+    
+    // Вычисляем смещение курсора относительно центра контейнера
+    dragOffset.x = e.clientX - rect.left - rect.width / 2;
+    dragOffset.y = e.clientY - rect.top - rect.height / 2;
+    
+    // Добавляем визуальную обратную связь
+    this.style.color = '#00d9ff';
+    this.style.filter = 'drop-shadow(0 0 16px rgba(0, 217, 255, 1))';
+    this.style.transform = 'translateY(-50%) scale(1.3)';
+    
+    // Изменяем курсор для всего документа
+    document.body.style.cursor = 'move';
+    
+    // Добавляем класс для визуального feedback
+    inputContainer.style.transition = 'none';
+    inputContainer.style.opacity = '0.9';
+  });
+  
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    const inputContainer = document.getElementById('8pilot-chat-container');
+    if (!inputContainer) return;
+    
+    // Вычисляем новую позицию относительно курсора
+    const newLeft = e.clientX - dragOffset.x;
+    const newTop = e.clientY - dragOffset.y;
+    
+    // Ограничиваем перемещение в пределах экрана с отступами
+    const margin = 50;
+    const containerRect = inputContainer.getBoundingClientRect();
+    const maxLeft = window.innerWidth - containerRect.width - margin;
+    const minLeft = margin;
+    const maxTop = window.innerHeight - containerRect.height - margin;
+    const minTop = margin;
+    
+    const constrainedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+    const constrainedTop = Math.max(minTop, Math.min(maxTop, newTop));
+    
+    // Устанавливаем новую позицию для chat контейнера
+    inputContainer.style.left = constrainedLeft + 'px';
+    inputContainer.style.top = constrainedTop + 'px';
+    inputContainer.style.transform = 'none';
+    inputContainer.style.bottom = 'auto';
+    
+    // Также перемещаем контейнер сообщений синхронно
+    const messagesContainer = document.getElementById('8pilot-chat-messages');
+    if (messagesContainer) {
+      // Позиционируем сообщения прямо над chat контейнером
+      messagesContainer.style.left = constrainedLeft + 'px';
+      messagesContainer.style.top = (constrainedTop - 370) + 'px'; // 350px height + 20px gap
+      messagesContainer.style.transform = 'none';
+      messagesContainer.style.bottom = 'auto';
+    }
+  });
+  
+  document.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    const dragBtn = document.getElementById('8pilot-drag-button');
+    const inputContainer = document.getElementById('8pilot-chat-container');
+    
+    if (dragBtn) {
+      // Возвращаем обычное состояние кнопки
+      dragBtn.style.color = '#4fd1c7';
+      dragBtn.style.filter = 'drop-shadow(0 0 6px rgba(79, 209, 199, 0.7))';
+      dragBtn.style.transform = 'translateY(-50%) scale(1)';
+    }
+    
+    if (inputContainer) {
+      // Возвращаем переходы и непрозрачность
+      inputContainer.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      inputContainer.style.opacity = '1';
+    }
+    
+    // Возвращаем обычный курсор
+    document.body.style.cursor = 'default';
+  });
+  
+  return dragButton;
+}
+
 // Function to show chat window
 function showChatWindow() {
   // Check if already exists in DOM
@@ -456,7 +605,7 @@ function showChatWindow() {
     max-width: 90vw;
     z-index: 10002;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
   
@@ -473,7 +622,11 @@ function showChatWindow() {
     padding: 8px 12px;
     box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
   `;
+  
+  // Create drag button (positioned outside of input wrapper)
+  const dragButton = createDragButton();
   
   // Create message input
   const messageInput = document.createElement('input');
@@ -584,9 +737,13 @@ function showChatWindow() {
     e.stopPropagation();
   });
 
+  // Добавляем элементы: input, send button в wrapper
   inputWrapper.appendChild(messageInput);
   inputWrapper.appendChild(sendButton);
+  
+  // Добавляем wrapper и drag button в container
   inputContainer.appendChild(inputWrapper);
+  inputContainer.appendChild(dragButton); // Кнопка вне wrapper'а, позиционируется абсолютно
   
   // Add to document
   document.body.appendChild(inputContainer);
