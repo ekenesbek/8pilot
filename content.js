@@ -467,7 +467,7 @@ function showChatWindow() {
     border-radius: 8px;
     padding: 8px 12px;
     box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
-    transition: border-color 0.2s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
   `;
   
   // Create message input
@@ -549,8 +549,8 @@ function showChatWindow() {
   
   // Add hover and focus effects
   inputWrapper.addEventListener('mouseenter', function() {
-    this.style.borderColor = '#ffffff';
-    this.style.boxShadow = '0 4px 20px rgba(255, 255, 255, 0.6)';
+    this.style.borderColor = '#6b7280';
+    this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
     startPlaceholderCycling();
   });
   
