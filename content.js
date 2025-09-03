@@ -767,22 +767,7 @@ function showChatMessages() {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-  `;
-  
-  // Create fade mask for top
-  const fadeMask = document.createElement('div');
-  fadeMask.style.cssText = `
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-  `;
-  
-  // Create messages wrapper
+  `;  
   const messagesWrapper = document.createElement('div');
   messagesWrapper.id = '8pilot-messages-wrapper';
   messagesWrapper.style.cssText = `
@@ -793,11 +778,26 @@ function showChatMessages() {
     overflow-y: auto;
     max-height: 100%;
     
+    -webkit-mask: linear-gradient(to bottom, 
+      transparent 0px, 
+      rgba(0,0,0,0.2) 30px,
+      rgba(0,0,0,0.6) 60px,
+      rgba(0,0,0,1) 90px,
+      rgba(0,0,0,1) 100%
+    );
+    mask: linear-gradient(to bottom, 
+      transparent 0px, 
+      rgba(0,0,0,0.2) 30px,
+      rgba(0,0,0,0.6) 60px,
+      rgba(0,0,0,1) 90px,
+      rgba(0,0,0,1) 100%
+    );
+    
     /* Кастомный скроллбар */
     scrollbar-width: thin;
     scrollbar-color: rgba(79, 209, 199, 0.3) transparent;
   `;
-  
+    
   // Add custom scrollbar styles
   if (!document.getElementById('scrollbar-styles')) {
     const scrollbarStyle = document.createElement('style');
@@ -819,8 +819,6 @@ function showChatMessages() {
     `;
     document.head.appendChild(scrollbarStyle);
   }
-  
-  messagesContainer.appendChild(fadeMask);
   messagesContainer.appendChild(messagesWrapper);
   document.body.appendChild(messagesContainer);
   
