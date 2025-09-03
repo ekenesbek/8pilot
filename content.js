@@ -758,7 +758,7 @@ function showChatMessages() {
     bottom: 120px;
     width: 600px;
     max-width: 90vw;
-    height: 400px;
+    height: 350px;
     max-height: 50vh;
     z-index: 10001;
     pointer-events: none;
@@ -768,6 +768,7 @@ function showChatMessages() {
     flex-direction: column;
     justify-content: flex-end;
   `;  
+  
   const messagesWrapper = document.createElement('div');
   messagesWrapper.id = '8pilot-messages-wrapper';
   messagesWrapper.style.cssText = `
@@ -791,11 +792,11 @@ function showChatMessages() {
       rgba(0,0,0,0.6) 60px,
       rgba(0,0,0,1) 90px,
       rgba(0,0,0,1) 100%
-    );
-    
+  );
+      
     /* Кастомный скроллбар */
     scrollbar-width: thin;
-    scrollbar-color: rgba(79, 209, 199, 0.3) transparent;
+    scrollbar-color: rgba(79, 209, 199, 0) transparent;
   `;
     
   // Add custom scrollbar styles
