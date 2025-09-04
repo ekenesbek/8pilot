@@ -882,9 +882,9 @@ function showChatWindow() {
   buttonsContainer.appendChild(attachmentsRight);
   
   // Добавляем wrapper, buttonsContainer и drag button в container
+  inputWrapper.appendChild(dragButton);
   inputContainer.appendChild(inputWrapper);
   inputContainer.appendChild(buttonsContainer);
-  inputContainer.appendChild(dragButton); // Кнопка вне wrapper'а, позиционируется абсолютно
   
   // Add to document
   document.body.appendChild(inputContainer);
