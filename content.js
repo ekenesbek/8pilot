@@ -859,6 +859,13 @@ function showChatWindow() {
     inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
     stopPlaceholderCycling();
   });
+  
+  // Закрытие меню при клике на messageInput
+  messageInput.addEventListener('click', function() {
+    if (isPlusMenuVisible) {
+      hidePlusMenu();
+    }
+  });
 
   // Prevent click propagation on input container
   inputContainer.addEventListener('click', function(e) {
@@ -1568,10 +1575,14 @@ function showPlusMenu() {
   
   const menu = document.createElement('div');
   menu.id = '8pilot-plus-menu';
+  
+  // Получаем позицию plusButton для правильного позиционирования
+  const plusButtonRect = plusButton.getBoundingClientRect();
+  
   menu.style.cssText = `
-    position: absolute;
-    bottom: 35px;
-    left: 0;
+    position: fixed;
+    bottom: ${window.innerHeight - plusButtonRect.top + 10}px;
+    left: ${plusButtonRect.left}px;
     background: #000000;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -1643,7 +1654,8 @@ function showPlusMenu() {
     menu.appendChild(menuItem);
   });
   
-  plusButton.appendChild(menu);
+  // Добавляем меню к body вместо plusButton
+  document.body.appendChild(menu);
   isPlusMenuVisible = true;
   
   // Animate in
@@ -1655,7 +1667,7 @@ function showPlusMenu() {
   // Add click outside handler
   setTimeout(() => {
     const clickHandler = function(e) {
-      if (!plusButton.contains(e.target)) {
+      if (!menu.contains(e.target) && !plusButton.contains(e.target)) {
         hidePlusMenu();
         document.removeEventListener('click', clickHandler);
       }
