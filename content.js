@@ -1815,28 +1815,52 @@ function updateAttachmentsDisplay() {
     else if (fileInfo.type.includes('json')) fileIcon = '📝';
     else if (fileInfo.type.includes('csv') || fileInfo.type.includes('xlsx')) fileIcon = '📊';
     
-    fileChip.innerHTML = `
-      <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">
-        ${fileName}
-      </span>
-      <span style="font-size: 10px; color: #cccccc;">${fileSize}</span>
-      <button style="
-        background: none; 
-        border: none; 
-        color: #ffffff; 
-        cursor: pointer; 
-        padding: 1px 3px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: bold;
-        transition: all 0.2s ease;
-        margin-left: 2px;
-        line-height: 1;
-      " 
-      onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.2)'; this.style.color='#ffffff';"
-      onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ffffff';"
-      onclick="removeAttachment('${fileInfo.id}')">×</button>
+    // Создаем элементы отдельно для лучшего контроля
+    const fileNameSpan = document.createElement('span');
+    fileNameSpan.style.cssText = 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;';
+    fileNameSpan.textContent = fileName;
+    
+    const fileSizeSpan = document.createElement('span');
+    fileSizeSpan.style.cssText = 'font-size: 10px; color: #cccccc;';
+    fileSizeSpan.textContent = fileSize;
+    
+    const removeButton = document.createElement('button');
+    removeButton.innerHTML = '×';
+    removeButton.style.cssText = `
+      background: none; 
+      border: none; 
+      color: #ffffff; 
+      cursor: pointer; 
+      padding: 1px 3px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      margin-left: 2px;
+      line-height: 1;
     `;
+    
+    // Добавляем hover эффекты
+    removeButton.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+      this.style.color = '#ffffff';
+    });
+    
+    removeButton.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = 'transparent';
+      this.style.color = '#ffffff';
+    });
+    
+    // Добавляем обработчик клика для удаления файла
+    removeButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      removeAttachment(fileInfo.id);
+    });
+    
+    // Добавляем элементы в fileChip
+    fileChip.appendChild(fileNameSpan);
+    fileChip.appendChild(fileSizeSpan);
+    fileChip.appendChild(removeButton);
     
     // Добавить hover эффект для файла
     fileChip.addEventListener('mouseenter', function() {
@@ -1860,6 +1884,9 @@ function removeAttachment(fileId) {
   attachedFiles = attachedFiles.filter(file => file.id !== fileId);
   updateAttachmentsDisplay();
 }
+
+// Добавляем функцию в глобальную область видимости для доступа из HTML
+window.removeAttachment = removeAttachment;
 
 // Function to format file size
 function formatFileSize(bytes) {
