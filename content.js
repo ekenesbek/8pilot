@@ -430,7 +430,6 @@ function toggleChatWindow() {
   }
 }
 
-// Function to create drag button
 function createDragButton() {
   const dragButton = document.createElement('button');
   dragButton.id = '8pilot-drag-button';
@@ -524,13 +523,14 @@ function createDragButton() {
     const newLeft = e.clientX - dragOffset.x;
     const newTop = e.clientY - dragOffset.y;
     
-    // Ограничиваем перемещение в пределах экрана с отступами
-    const margin = 50;
+    // УВЕЛИЧЕННЫЕ ГРАНИЦЫ ПЕРЕМЕЩЕНИЯ
+    const margin = 10;
     const containerRect = inputContainer.getBoundingClientRect();
-    const maxLeft = window.innerWidth - containerRect.width - margin;
-    const minLeft = margin;
-    const maxTop = window.innerHeight - containerRect.height - margin;
-    const minTop = margin;
+    
+    const maxLeft = window.innerWidth - (containerRect.width * 0.2);
+    const minLeft = -(containerRect.width * 0.8);
+    const maxTop = window.innerHeight - (containerRect.height * 0.3);
+    const minTop = -(containerRect.height * 0.7);
     
     const constrainedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
     const constrainedTop = Math.max(minTop, Math.min(maxTop, newTop));
@@ -541,15 +541,8 @@ function createDragButton() {
     inputContainer.style.transform = 'none';
     inputContainer.style.bottom = 'auto';
     
-    // Также перемещаем контейнер сообщений синхронно
-    const messagesContainer = document.getElementById('8pilot-chat-messages');
-    if (messagesContainer) {
-      // Позиционируем сообщения прямо над chat контейнером
-      messagesContainer.style.left = constrainedLeft + 'px';
-      messagesContainer.style.top = (constrainedTop - 370) + 'px'; // 350px height + 20px gap
-      messagesContainer.style.transform = 'none';
-      messagesContainer.style.bottom = 'auto';
-    }
+    // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: обновляем позицию сообщений синхронно
+    updateMessagesPosition();
   });
   
   document.addEventListener('mouseup', function(e) {
@@ -570,6 +563,42 @@ function createDragButton() {
       // Возвращаем переходы и непрозрачность
       inputContainer.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
       inputContainer.style.opacity = '1';
+      
+      // Функция автоматического притягивания к краям экрана
+      const rect = inputContainer.getBoundingClientRect();
+      const snapDistance = 30;
+      let snapLeft = rect.left;
+      let snapTop = rect.top;
+      
+      // Притягивание к левому краю
+      if (rect.left < snapDistance && rect.left > -rect.width * 0.5) {
+        snapLeft = 10;
+      }
+      // Притягивание к правому краю
+      else if (rect.right > window.innerWidth - snapDistance && rect.right < window.innerWidth + rect.width * 0.5) {
+        snapLeft = window.innerWidth - rect.width - 10;
+      }
+      
+      // Притягивание к верхнему краю
+      if (rect.top < snapDistance && rect.top > -rect.height * 0.5) {
+        snapTop = 10;
+      }
+      // Притягивание к нижнему краю
+      else if (rect.bottom > window.innerHeight - snapDistance && rect.bottom < window.innerHeight + rect.height * 0.5) {
+        snapTop = window.innerHeight - rect.height - 10;
+      }
+      
+      // Применяем притягивание с анимацией
+      if (snapLeft !== rect.left || snapTop !== rect.top) {
+        inputContainer.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        inputContainer.style.left = snapLeft + 'px';
+        inputContainer.style.top = snapTop + 'px';
+        
+        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: синхронизируем сообщения после snap
+        setTimeout(() => {
+          updateMessagesPosition();
+        }, 300);
+      }
     }
     
     // Возвращаем обычный курсор
@@ -898,6 +927,21 @@ function showChatWindow() {
   setTimeout(() => {
     messageInput.focus();
   }, 300);
+  
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && 
+          (mutation.attributeName === 'style')) {
+        // Update messages position when chat container style changes
+        updateMessagesPosition();
+      }
+    });
+  });
+  
+  observer.observe(inputContainer, {
+    attributes: true,
+    attributeFilter: ['style']
+  });
 }
 
 // Array of placeholder examples
@@ -1062,13 +1106,28 @@ function showChatMessages() {
   // Create messages container
   const messagesContainer = document.createElement('div');
   messagesContainer.id = '8pilot-chat-messages';
+  
+  // Get current chat container position for adaptive positioning
+  const chatContainer = document.getElementById('8pilot-chat-container');
+  let containerLeft, containerTop, containerWidth;
+  
+  if (chatContainer) {
+    const rect = chatContainer.getBoundingClientRect();
+    containerLeft = rect.left;
+    containerTop = rect.top;
+    containerWidth = rect.width;
+  } else {
+    // Fallback to center positioning if chat container not found
+    containerLeft = window.innerWidth / 2;
+    containerTop = window.innerHeight - 120;
+    containerWidth = 600;
+  }
+  
   messagesContainer.style.cssText = `
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 120px;
-    width: 600px;
-    max-width: 90vw;
+    left: ${containerLeft}px;
+    top: ${containerTop - 370}px;
+    width: ${Math.min(containerWidth, Math.min(600, window.innerWidth * 0.9))}px;
     height: 350px;
     max-height: 50vh;
     z-index: 10001;
@@ -1078,6 +1137,7 @@ function showChatMessages() {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    transform: none;
   `;  
   
   const messagesWrapper = document.createElement('div');
@@ -1144,6 +1204,42 @@ function showChatMessages() {
     messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
   });
   observer.observe(messagesWrapper, { childList: true });
+}
+
+// Function to update messages container position based on chat container
+function updateMessagesPosition() {
+  const messagesContainer = document.getElementById('8pilot-chat-messages');
+  const chatContainer = document.getElementById('8pilot-chat-container');
+  
+  if (!messagesContainer || !chatContainer) return;
+  
+  const rect = chatContainer.getBoundingClientRect();
+  
+  // Update position to stay above chat container
+  messagesContainer.style.left = rect.left + 'px';
+  messagesContainer.style.top = (rect.top - 370) + 'px';
+  messagesContainer.style.width = Math.min(rect.width, Math.min(600, window.innerWidth * 0.9)) + 'px';
+  
+  // Ensure messages container doesn't go off-screen
+  const messagesRect = messagesContainer.getBoundingClientRect();
+  let adjustedLeft = rect.left;
+  let adjustedTop = rect.top - 370;
+  
+  // Adjust horizontal position if going off-screen
+  if (messagesRect.right > window.innerWidth) {
+    adjustedLeft = window.innerWidth - messagesRect.width - 10;
+  }
+  if (messagesRect.left < 0) {
+    adjustedLeft = 10;
+  }
+  
+  // Adjust vertical position if going off-screen
+  if (adjustedTop < 0) {
+    adjustedTop = 10;
+  }
+  
+  messagesContainer.style.left = adjustedLeft + 'px';
+  messagesContainer.style.top = adjustedTop + 'px';
 }
 
 // Function to hide chat messages
@@ -1258,7 +1354,7 @@ function showTypingIndicator(messageId) {
   
   bubble.innerHTML = `
     <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="color: #a1a1aa; font-size: 14px;">thinking</span>
+      <span style="color: #a1a1aa; font-size: 14px;">Thinking</span>
       <div style="display: flex; gap: 3px;">
         <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
         <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
