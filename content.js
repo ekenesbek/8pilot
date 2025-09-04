@@ -762,7 +762,7 @@ function showChatWindow() {
 
   plusButton.addEventListener('mouseleave', function() {
     if (!isPlusMenuVisible) {
-      this.style.color = '#6b7280';
+      this.style.color = '#4fd1c7';
       this.style.backgroundColor = 'transparent';
       this.style.transform = 'scale(1) rotate(0deg)';
     }
@@ -776,7 +776,7 @@ function showChatWindow() {
   });
 
   attachButton.addEventListener('mouseleave', function() {
-    this.style.color = '#6b7280';
+    this.style.color = '#4fd1c7';
     this.style.backgroundColor = 'transparent';
     this.style.transform = 'scale(1) rotate(0deg)';
   });
@@ -1702,7 +1702,7 @@ function hidePlusMenu() {
   
   // Возвращаем кнопку в исходное состояние
   if (plusButton) {
-    plusButton.style.color = '#6b7280';
+    plusButton.style.color = '#4fd1c7';
     plusButton.style.backgroundColor = 'transparent';
     plusButton.style.transform = 'scale(1) rotate(0deg)';
   }
