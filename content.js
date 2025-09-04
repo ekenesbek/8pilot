@@ -679,7 +679,7 @@ function showChatWindow() {
   plusButton.id = '8pilot-plus-button';
   plusButton.innerHTML = `
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
   `;
   plusButton.style.cssText = `
@@ -753,15 +753,19 @@ function showChatWindow() {
 
   // Plus button hover effects (clean)
   plusButton.addEventListener('mouseenter', function() {
-    this.style.color = '#06b6d4';
-    this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
-    this.style.transform = 'scale(1.1) rotate(45deg)';
+    if (!isPlusMenuVisible) {
+      this.style.color = '#06b6d4';
+      this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+      this.style.transform = 'scale(1.1) rotate(45deg)';
+    }
   });
 
   plusButton.addEventListener('mouseleave', function() {
-    this.style.color = '#6b7280';
-    this.style.backgroundColor = 'transparent';
-    this.style.transform = 'scale(1) rotate(0deg)';
+    if (!isPlusMenuVisible) {
+      this.style.color = '#6b7280';
+      this.style.backgroundColor = 'transparent';
+      this.style.transform = 'scale(1) rotate(0deg)';
+    }
   });
 
   // Attachment button hover effects (clean)
@@ -1658,6 +1662,11 @@ function showPlusMenu() {
   document.body.appendChild(menu);
   isPlusMenuVisible = true;
   
+  // Устанавливаем состояние кнопки как активное (повернутое)
+  plusButton.style.color = '#06b6d4';
+  plusButton.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+  plusButton.style.transform = 'scale(1.1) rotate(45deg)';
+  
   // Animate in
   setTimeout(() => {
     menu.style.opacity = '1';
@@ -1679,6 +1688,8 @@ function showPlusMenu() {
 // Function to hide plus menu
 function hidePlusMenu() {
   const menu = document.getElementById('8pilot-plus-menu');
+  const plusButton = document.getElementById('8pilot-plus-button');
+  
   if (menu) {
     menu.style.opacity = '0';
     menu.style.transform = 'translateY(10px) scale(0.95)';
@@ -1688,6 +1699,14 @@ function hidePlusMenu() {
       }
     }, 200);
   }
+  
+  // Возвращаем кнопку в исходное состояние
+  if (plusButton) {
+    plusButton.style.color = '#6b7280';
+    plusButton.style.backgroundColor = 'transparent';
+    plusButton.style.transform = 'scale(1) rotate(0deg)';
+  }
+  
   isPlusMenuVisible = false;
 }
 
