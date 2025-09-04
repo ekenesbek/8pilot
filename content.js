@@ -644,7 +644,63 @@ function showChatWindow() {
     padding: 4px 0;
     transition: opacity 0.3s ease;
   `;
-  
+
+  // Create plus button (clean design)
+  const plusButton = document.createElement('button');
+  plusButton.id = '8pilot-plus-button';
+  plusButton.innerHTML = `
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
+  plusButton.style.cssText = `
+    background: none !important;;
+    border: none !important;;
+    cursor: pointer;
+    color: #4fd1c7 !important;;
+    transition: all 0.2s ease;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 26px;
+    height: 26px;
+  `;
+
+  // Create attachment button (clean design)
+  const attachButton = document.createElement('button');
+  attachButton.id = '8pilot-attach-button';
+  attachButton.innerHTML = `
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  attachButton.style.cssText = `
+    background: none !important;;
+    border: none !important;;
+    cursor: pointer;
+    color: #4fd1c7;
+    transition: all 0.2s ease;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 26px;
+    height: 26px;
+  `;
+
+  // Create hidden file input for attachments
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.id = '8pilot-file-input';
+  fileInput.multiple = true;
+  fileInput.accept = '.pdf,.doc,.docx,.txt,.json,.csv,.xlsx,.png,.jpg,.jpeg,.gif,.webp';
+  fileInput.style.display = 'none';
+    
   // Create send button with arrow icon
   const sendButton = document.createElement('button');
   sendButton.innerHTML = `
@@ -665,6 +721,49 @@ function showChatWindow() {
     align-items: center;
     justify-content: center;
   `;
+
+  // Plus button hover effects (clean)
+  plusButton.addEventListener('mouseenter', function() {
+    this.style.color = '#06b6d4';
+    this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+    this.style.transform = 'scale(1.1) rotate(45deg)';
+  });
+
+  plusButton.addEventListener('mouseleave', function() {
+    this.style.color = '#6b7280';
+    this.style.backgroundColor = 'transparent';
+    this.style.transform = 'scale(1) rotate(0deg)';
+  });
+
+  // Attachment button hover effects (clean)
+  attachButton.addEventListener('mouseenter', function() {
+    this.style.color = '#06b6d4';
+    this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+    this.style.transform = 'scale(1.1) rotate(-5deg)';
+  });
+
+  attachButton.addEventListener('mouseleave', function() {
+    this.style.color = '#6b7280';
+    this.style.backgroundColor = 'transparent';
+    this.style.transform = 'scale(1) rotate(0deg)';
+  });
+
+  // Plus button click handler
+  plusButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    togglePlusMenu();
+  });
+
+  // Attachment button click handler
+  attachButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  // File input change handler
+  fileInput.addEventListener('change', function(e) {
+    handleFileSelection(e.target.files);
+  });
   
   sendButton.addEventListener('mouseenter', function() {
     this.style.color = '#06b6d4';
@@ -737,12 +836,54 @@ function showChatWindow() {
     e.stopPropagation();
   });
 
-  // Добавляем элементы: input, send button в wrapper
+  // Добавляем только input и send в wrapper
   inputWrapper.appendChild(messageInput);
   inputWrapper.appendChild(sendButton);
+  inputWrapper.appendChild(fileInput); // скрытый input остается в wrapper
+
+  // Создать контейнер для кнопок и вложений под полем ввода
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 4px;
+    padding-left: 4px;
+  `;
+
+  // Создать левую часть с кнопками
+  const buttonsLeft = document.createElement('div');
+  buttonsLeft.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  `;
+
+  // Создать правую часть для вложений
+  const attachmentsRight = document.createElement('div');
+  attachmentsRight.id = '8pilot-attachments-container';
+  attachmentsRight.style.cssText = `
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: 2px;
+    margin-top: 3.5px;
+  `;
+
+  // Добавить кнопки в левую часть
+  buttonsLeft.appendChild(plusButton);
+  buttonsLeft.appendChild(attachButton);
+
+  // Добавить части в контейнер
+  buttonsContainer.appendChild(buttonsLeft);
+  buttonsContainer.appendChild(attachmentsRight);
   
-  // Добавляем wrapper и drag button в container
+  // Добавляем wrapper, buttonsContainer и drag button в container
   inputContainer.appendChild(inputWrapper);
+  inputContainer.appendChild(buttonsContainer);
   inputContainer.appendChild(dragButton); // Кнопка вне wrapper'а, позиционируется абсолютно
   
   // Add to document
@@ -849,6 +990,15 @@ function stopPlaceholderCycling() {
 // Function to send chat message
 function sendChatMessage(message) {
   console.log('Sending chat message:', message);
+
+  // Handle attachments
+  let messageWithAttachments = message;
+  if (attachedFiles.length > 0) {
+    const attachmentsList = attachedFiles.map(file => 
+      `📎 ${file.name} (${formatFileSize(file.size)})`
+    ).join('\n');
+    messageWithAttachments = `${message}\n\nAttached files:\n${attachmentsList}`;
+  }
   
   // Show chat messages if not visible
   if (!isChatMessagesVisible) {
@@ -864,6 +1014,10 @@ function sendChatMessage(message) {
   
   // Send to OpenAI API
   sendToOpenAI(message, loadingMessageId);
+
+  // Clear attachments after sending
+  attachedFiles = [];
+  updateAttachmentsDisplay();
 }
 
 // Function to show chat messages container
@@ -1286,6 +1440,307 @@ function hideChatWindow() {
   }
   
   isChatWindowVisible = false;
+
+  // Clear attachments when hiding
+  attachedFiles = [];
+  const attachmentsContainer = document.getElementById('8pilot-attachments-container');
+  if (attachmentsContainer) {
+    attachmentsContainer.innerHTML = '';
+  }
+}
+
+// State for plus menu and attachments
+let isPlusMenuVisible = false;
+let attachedFiles = [];
+
+// Function to toggle plus menu
+function togglePlusMenu() {
+  if (isPlusMenuVisible) {
+    hidePlusMenu();
+  } else {
+    showPlusMenu();
+  }
+}
+
+// Function to show plus menu
+function showPlusMenu() {
+  // Remove existing menu if any
+  hidePlusMenu();
+  
+  const plusButton = document.getElementById('8pilot-plus-button');
+  if (!plusButton) return;
+  
+  const menu = document.createElement('div');
+  menu.id = '8pilot-plus-menu';
+  menu.style.cssText = `
+    position: absolute;
+    bottom: 35px;
+    left: 0;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    z-index: 10003;
+    min-width: 200px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  `;
+  
+  const menuItems = [
+    {
+      id: 'upload-document',
+      icon: '📄',
+      title: 'Upload Document',
+      description: 'Attach files to analyze'
+    },
+    {
+      id: 'quick-templates',
+      icon: '⚡',
+      title: 'Quick Templates',
+      description: 'Pre-made workflow questions'
+    },
+    {
+      id: 'workflow-analysis',
+      icon: '🔍',
+      title: 'Workflow Analysis',
+      description: 'Analyze current page'
+    }
+  ];
+  
+  menuItems.forEach((item, index) => {
+    const menuItem = document.createElement('div');
+    menuItem.style.cssText = `
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border-bottom: ${index < menuItems.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none'};
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    `;
+    
+    menuItem.innerHTML = `
+      <span style="font-size: 16px;">${item.icon}</span>
+      <div>
+        <div style="color: #ffffff; font-size: 13px; font-weight: 500;">${item.title}</div>
+        <div style="color: #a1a1aa; font-size: 11px; margin-top: 2px;">${item.description}</div>
+      </div>
+    `;
+    
+    menuItem.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+    });
+    
+    menuItem.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = 'transparent';
+    });
+    
+    menuItem.addEventListener('click', function(e) {
+      e.stopPropagation();
+      handlePlusMenuAction(item.id);
+      hidePlusMenu();
+    });
+    
+    menu.appendChild(menuItem);
+  });
+  
+  plusButton.appendChild(menu);
+  isPlusMenuVisible = true;
+  
+  // Animate in
+  setTimeout(() => {
+    menu.style.opacity = '1';
+    menu.style.transform = 'translateY(0) scale(1)';
+  }, 10);
+  
+  // Add click outside handler
+  setTimeout(() => {
+    const clickHandler = function(e) {
+      if (!plusButton.contains(e.target)) {
+        hidePlusMenu();
+        document.removeEventListener('click', clickHandler);
+      }
+    };
+    document.addEventListener('click', clickHandler);
+  }, 100);
+}
+
+// Function to hide plus menu
+function hidePlusMenu() {
+  const menu = document.getElementById('8pilot-plus-menu');
+  if (menu) {
+    menu.style.opacity = '0';
+    menu.style.transform = 'translateY(10px) scale(0.95)';
+    setTimeout(() => {
+      if (menu.parentNode) {
+        menu.parentNode.removeChild(menu);
+      }
+    }, 200);
+  }
+  isPlusMenuVisible = false;
+}
+
+// Function to handle plus menu actions
+function handlePlusMenuAction(actionId) {
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (!messageInput) return;
+  
+  switch (actionId) {
+    case 'upload-document':
+      document.getElementById('8pilot-file-input').click();
+      break;
+      
+    case 'quick-templates':
+      showQuickTemplates();
+      break;
+      
+    case 'workflow-analysis':
+      messageInput.value = 'Please analyze the current workflow on this page and provide optimization suggestions.';
+      messageInput.focus();
+      break;
+  }
+}
+
+// Function to show quick templates
+function showQuickTemplates() {
+  const messageInput = document.getElementById('8pilot-message-input');
+  if (!messageInput) return;
+  
+  const templates = [
+    'How can I optimize this workflow for better performance?',
+    'Create sticky notes explaining each step of this workflow.',
+    'What are potential error points in this workflow?',
+    'Help me add error handling to this workflow.',
+    'Suggest alternative approaches for this workflow.',
+    'How can I make this workflow more robust?'
+  ];
+  
+  const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+  messageInput.value = randomTemplate;
+  messageInput.focus();
+}
+
+// Function to handle file selection
+function handleFileSelection(files) {
+  if (!files || files.length === 0) return;
+  
+  Array.from(files).forEach(file => {
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      console.warn('File too large:', file.name);
+      return;
+    }
+    
+    const fileInfo = {
+      id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file
+    };
+    
+    attachedFiles.push(fileInfo);
+  });
+  
+  updateAttachmentsDisplay();
+}
+
+// Function to update attachments display
+function updateAttachmentsDisplay() {
+  // Найти контейнер для вложений рядом со скрепкой
+  const attachmentsContainer = document.getElementById('8pilot-attachments-container');
+  if (!attachmentsContainer) return;
+  
+  // Очистить существующие вложения
+  attachmentsContainer.innerHTML = '';
+  
+  if (attachedFiles.length === 0) return;
+  
+  attachedFiles.forEach(fileInfo => {
+    const fileChip = document.createElement('div');
+    fileChip.style.cssText = `
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 4px;
+      padding: 3px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #ffffff;
+      max-width: 140px;
+      height: 18px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+    `;
+    
+    const fileName = fileInfo.name.length > 18 
+      ? fileInfo.name.substring(0, 18) + '...' 
+      : fileInfo.name;
+    
+    const fileSize = formatFileSize(fileInfo.size);
+    
+    // Определить иконку по типу файла
+    let fileIcon = '📄';
+    if (fileInfo.type.includes('image')) fileIcon = '🖼️';
+    else if (fileInfo.type.includes('pdf')) fileIcon = '📋';
+    else if (fileInfo.type.includes('json')) fileIcon = '📝';
+    else if (fileInfo.type.includes('csv') || fileInfo.type.includes('xlsx')) fileIcon = '📊';
+    
+    fileChip.innerHTML = `
+      <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">
+        ${fileName}
+      </span>
+      <span style="font-size: 10px; color: #cccccc;">${fileSize}</span>
+      <button style="
+        background: none; 
+        border: none; 
+        color: #ffffff; 
+        cursor: pointer; 
+        padding: 1px 3px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.2s ease;
+        margin-left: 2px;
+        line-height: 1;
+      " 
+      onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.2)'; this.style.color='#ffffff';"
+      onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ffffff';"
+      onclick="removeAttachment('${fileInfo.id}')">×</button>
+    `;
+    
+    // Добавить hover эффект для файла
+    fileChip.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      this.style.borderColor = 'rgba(79, 209, 199, 0.4)';
+      this.style.transform = 'translateY(-1px)';
+    });
+    
+    fileChip.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+      this.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      this.style.transform = 'translateY(0)';
+    });
+    
+    attachmentsContainer.appendChild(fileChip);
+  });
+}
+
+// Function to remove attachment
+function removeAttachment(fileId) {
+  attachedFiles = attachedFiles.filter(file => file.id !== fileId);
+  updateAttachmentsDisplay();
+}
+
+// Function to format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 // Initialize content script
