@@ -646,7 +646,7 @@ function showChatWindow() {
     gap: 8px;
     background: #000000;
     backdrop-filter: blur(10px);
-    border: 2px solid #000000;
+    border: 1px solid #000000;
     border-radius: 8px;
     padding: 8px 12px;
     box-shadow: 0 4px 20px rgba(79, 209, 199, 0.4);
@@ -656,6 +656,9 @@ function showChatWindow() {
   
   // Create drag button (positioned outside of input wrapper)
   const dragButton = createDragButton();
+  
+  // Скрываем кнопки по умолчанию
+  dragButton.style.display = 'none';
   
   // Create message input
   const messageInput = document.createElement('input');
@@ -690,7 +693,7 @@ function showChatWindow() {
     transition: all 0.2s ease;
     padding: 6px;
     border-radius: 4px;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -714,7 +717,7 @@ function showChatWindow() {
     transition: all 0.2s ease;
     padding: 6px;
     border-radius: 4px;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -839,9 +842,12 @@ function showChatWindow() {
   
   // Add hover and focus effects
   inputWrapper.addEventListener('mouseenter', function() {
-    this.style.borderColor = '#6b7280';
+    this.style.borderColor = '#9ca3af';
     this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
     startPlaceholderCycling();
+    
+    // Показываем кнопки при наведении
+    toggleButtonsVisibility(true);
   });
   
   inputWrapper.addEventListener('mouseleave', function() {
@@ -849,6 +855,11 @@ function showChatWindow() {
       this.style.borderColor = '#000000';
       this.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       stopPlaceholderCycling();
+      
+      // Скрываем кнопки при уходе курсора (если не в фокусе)
+      if (!isChatVisible) {
+        toggleButtonsVisibility(false);
+      }
     }
   });
   
@@ -856,12 +867,20 @@ function showChatWindow() {
     inputWrapper.style.borderColor = '#4fd1c7';
     inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.8)';
     startPlaceholderCycling();
+    
+    // Показываем кнопки и чат при фокусе
+    toggleButtonsVisibility(true);
+    toggleChatVisibility(true);
   });
   
   messageInput.addEventListener('blur', function() {
     inputWrapper.style.borderColor = '#000000';
     inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
     stopPlaceholderCycling();
+    
+    // Скрываем кнопки и чат при потере фокуса
+    toggleButtonsVisibility(false);
+    toggleChatVisibility(false);
   });
   
   // Закрытие меню при клике на messageInput
@@ -1559,6 +1578,55 @@ function hideChatWindow() {
 // State for plus menu and attachments
 let isPlusMenuVisible = false;
 let attachedFiles = [];
+
+// State for UI visibility
+let isChatVisible = false;
+let areButtonsVisible = false;
+
+// Function to show/hide buttons
+function toggleButtonsVisibility(show) {
+  const dragButton = document.getElementById('8pilot-drag-button');
+  const plusButton = document.getElementById('8pilot-plus-button');
+  const attachButton = document.getElementById('8pilot-attach-button');
+  
+  if (dragButton) {
+    dragButton.style.display = show ? 'flex' : 'none';
+  }
+  if (plusButton) {
+    plusButton.style.display = show ? 'flex' : 'none';
+  }
+  if (attachButton) {
+    attachButton.style.display = show ? 'flex' : 'none';
+  }
+  
+  areButtonsVisible = show;
+}
+
+// Function to show/hide chat
+function toggleChatVisibility(show) {
+  if (show && !isChatVisible) {
+    showChatMessages();
+    isChatVisible = true;
+  } else if (!show && isChatVisible) {
+    hideChatMessages();
+    isChatVisible = false;
+  }
+}
+
+// Function to hide chat messages
+function hideChatMessages() {
+  const messagesContainer = document.getElementById('8pilot-chat-messages');
+  if (messagesContainer) {
+    messagesContainer.style.opacity = '0';
+    messagesContainer.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      if (messagesContainer.parentNode) {
+        messagesContainer.parentNode.removeChild(messagesContainer);
+      }
+    }, 200);
+  }
+  isChatMessagesVisible = false;
+}
 
 // Function to toggle plus menu
 function togglePlusMenu() {
