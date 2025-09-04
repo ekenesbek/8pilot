@@ -1146,7 +1146,7 @@ function showChatMessages() {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 20px 0;
+    padding: 20px 0 0 0;
     overflow-y: auto;
     max-height: 100%;
     
