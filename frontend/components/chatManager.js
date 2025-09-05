@@ -317,11 +317,11 @@ export class ChatManager {
   }
 
   handleOutsideClick() {
+    this.hideButtons();
+    this.hideChatMessages();
     const messageInput = document.getElementById(this.messageInputId);
-    
-    if (messageInput && messageInput !== document.activeElement && !this.isInteracting) {
-      this.hideButtons();
-      this.hideChatMessages();
+    if (messageInput && messageInput === document.activeElement) {
+      messageInput.blur();
     }
   }
 
@@ -535,7 +535,7 @@ export class ChatManager {
     });
   }
 
-      // Placeholder cycling methods
+  // Placeholder cycling methods
   startPlaceholderCycling() {
     const messageInput = document.getElementById(this.messageInputId);
     if (!messageInput || messageInput.value !== '') return;
