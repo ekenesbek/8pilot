@@ -42,6 +42,13 @@ function initializeExtension() {
     const menuManager = new MenuManager(stateManager);
     const chatManager = new ChatManager(stateManager);
 
+    // Store references for deactivation
+    window._8pilotComponents = {
+      activationIcon,
+      menuManager,
+      chatManager
+    };
+
     // Check if this is an n8n page before initializing
     if (!workflowExtractor.isN8nPage()) {
       console.log('Not an n8n page, skipping initialization');
@@ -69,7 +76,10 @@ function initializeExtension() {
           activationIcon.show();
           sendResponse({ status: 'activated' });
         } else if (request.action === 'deactivateExtension') {
+          // Hide all components when deactivating
           activationIcon.hide();
+          menuManager.hide();
+          chatManager.hide();
           sendResponse({ status: 'deactivated' });
         }
         
@@ -148,6 +158,19 @@ function initializeFallback() {
         sendResponse({ status: 'error', message: 'Activation failed. Please make sure you are on an n8n workflow page.' });
       }
     } else if (request.action === 'deactivateExtension') {
+      // Hide any existing components in fallback mode
+      const activationIcon = document.getElementById('8pilot-activation-icon');
+      const historyIcon = document.getElementById('8pilot-history-icon');
+      const chatIcon = document.getElementById('8pilot-chat-icon');
+      const chatContainer = document.getElementById('8pilot-chat-container');
+      const chatMessages = document.getElementById('8pilot-chat-messages');
+      
+      if (activationIcon) activationIcon.remove();
+      if (historyIcon) historyIcon.remove();
+      if (chatIcon) chatIcon.remove();
+      if (chatContainer) chatContainer.remove();
+      if (chatMessages) chatMessages.remove();
+      
       sendResponse({ status: 'deactivated' });
     }
     

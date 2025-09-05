@@ -565,4 +565,10 @@ export class ChatManager {
   updateMessagesPosition() {
     this.chatMessages.updatePosition();
   }
+
+  // Method to hide all chat components when extension is deactivated
+  hide() {
+    this.hideChatWindow();
+    this.hideChatMessages();
+  }
 }

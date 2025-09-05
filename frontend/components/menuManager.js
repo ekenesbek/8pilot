@@ -207,4 +207,9 @@ export class MenuManager {
       document.addEventListener('click', clickHandler);
     }, 100);
   }
+
+  // Method to hide menu when extension is deactivated
+  hide() {
+    this.hideMenu();
+  }
 }
