@@ -577,6 +577,14 @@ export class ChatManager {
     
     setTimeout(() => {
       messageInput.placeholder = newPlaceholder;
+      
+      // Применяем курсив только для placeholderExamples, не для основного placeholder
+      if (newPlaceholder === 'Ask me anything about workflow...') {
+        messageInput.style.fontStyle = 'normal';
+      } else {
+        messageInput.style.fontStyle = 'italic';
+      }
+      
       messageInput.style.opacity = '1';
     }, 150);
   }
