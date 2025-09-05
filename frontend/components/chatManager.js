@@ -131,7 +131,7 @@ export class ChatManager {
     
     // Create drag button
     const dragButton = this.dragButton.create();
-    dragButton.style.display = 'none';
+    dragButton.style.display = 'flex';
     
     // Create buttons container
     const buttonsContainer = this.createButtonsContainer();
@@ -293,7 +293,7 @@ export class ChatManager {
       transition: all 0.2s ease;
       padding: 6px;
       border-radius: 4px;
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
@@ -326,7 +326,7 @@ export class ChatManager {
       transition: all 0.2s ease;
       padding: 6px;
       border-radius: 4px;
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
@@ -394,12 +394,12 @@ export class ChatManager {
       this.fileAttachment.handleFileSelection(e.target.files);
     });
     
-    // Hover effects
+    // Hover effects - only visual changes, no movement
     inputWrapper.addEventListener('mouseenter', () => {
       inputWrapper.style.borderColor = '#9ca3af';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.startPlaceholderCycling();
-      this.toggleButtonsVisibility(true);
+      // Removed toggleButtonsVisibility to prevent movement
     });
     
     inputWrapper.addEventListener('mouseleave', () => {
@@ -407,27 +407,23 @@ export class ChatManager {
         inputWrapper.style.borderColor = '#000000';
         inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
         this.stopPlaceholderCycling();
-        if (!this.stateManager.get('isChatVisible')) {
-          this.toggleButtonsVisibility(false);
-        }
+        // Removed toggleButtonsVisibility to prevent movement
       }
     });
     
-    // Focus effects
+    // Focus effects - only visual changes, no movement
     messageInput.addEventListener('focus', () => {
       inputWrapper.style.borderColor = '#4fd1c7';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.8)';
       this.startPlaceholderCycling();
-      this.toggleButtonsVisibility(true);
-      this.toggleChatVisibility(true);
+      // Removed toggleButtonsVisibility to prevent movement
     });
     
     messageInput.addEventListener('blur', () => {
       inputWrapper.style.borderColor = '#000000';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.stopPlaceholderCycling();
-      this.toggleButtonsVisibility(false);
-      this.toggleChatVisibility(false);
+      // Removed toggleButtonsVisibility to prevent movement
     });
     
     // Prevent click propagation
