@@ -18,7 +18,12 @@ export class ChatManager {
     this.fileAttachment = new FileAttachment(this);
     this.chatMessages = new ChatMessages(this);
     this.openaiService = new OpenAIService(this.chatMessages);
+    this.isInteracting = false;
+    this.interactionTimeout = null;
     
+    // Добавляем глобальный обработчик кликов
+    this.setupGlobalClickHandler();
+        
     // Listen for menu actions
     window.addEventListener('8pilot-menu-action', (event) => {
       this.handleMenuAction(event.detail);
@@ -42,7 +47,7 @@ export class ChatManager {
     this.placeholderInterval = null;
   }
 
-  handleMenuAction(action) {
+    handleMenuAction(action) {
     console.log('Menu action:', action);
     
     switch (action) {
@@ -285,6 +290,59 @@ export class ChatManager {
     return buttonsLeft;
   }
 
+  setupGlobalClickHandler() {
+    document.addEventListener('click', (e) => {
+      const chatContainer = document.getElementById(this.chatContainerId);
+      const messagesContainer = document.getElementById(this.messagesContainerId);
+      const plusMenu = document.querySelector('.8pilot-plus-menu'); // если есть меню плюса
+      
+      let clickedInsideChat = false;
+      
+      if (chatContainer && chatContainer.contains(e.target)) {
+        clickedInsideChat = true;
+      }
+      
+      if (messagesContainer && messagesContainer.contains(e.target)) {
+        clickedInsideChat = true;
+      }
+      
+      if (plusMenu && plusMenu.contains(e.target)) {
+        clickedInsideChat = true;
+      }
+      
+      if (!clickedInsideChat) {
+        this.handleOutsideClick();
+      }
+    });
+  }
+
+  handleOutsideClick() {
+    const messageInput = document.getElementById(this.messageInputId);
+    
+    if (messageInput && messageInput !== document.activeElement && !this.isInteracting) {
+      this.hideButtons();
+      this.hideChatMessages();
+    }
+  }
+
+  startInteraction() {
+    this.isInteracting = true;
+    
+    if (this.interactionTimeout) {
+      clearTimeout(this.interactionTimeout);
+    }
+  }
+
+  endInteraction() {
+    if (this.interactionTimeout) {
+      clearTimeout(this.interactionTimeout);
+    }
+    
+    this.interactionTimeout = setTimeout(() => {
+      this.isInteracting = false;
+    }, 100);
+  }
+
   createPlusButton() {
     const plusButton = document.createElement('button');
     plusButton.id = '8pilot-plus-button';
@@ -312,7 +370,16 @@ export class ChatManager {
     // Add click handler for plus menu
     plusButton.addEventListener('click', (e) => {
       e.stopPropagation();
+      this.startInteraction();
       this.plusMenu.toggle();
+    });
+
+    plusButton.addEventListener('mouseenter', () => {
+      this.startInteraction();
+    });
+
+    plusButton.addEventListener('mouseleave', () => {
+      this.endInteraction();
     });
     
     return plusButton;
@@ -345,7 +412,16 @@ export class ChatManager {
     // Add click handler for file input
     attachButton.addEventListener('click', (e) => {
       e.stopPropagation();
+      this.startInteraction();
       document.getElementById('8pilot-file-input').click();
+    });
+
+    attachButton.addEventListener('mouseenter', () => {
+      this.startInteraction();
+    });
+
+    attachButton.addEventListener('mouseleave', () => {
+      this.endInteraction();
     });
     
     return attachButton;
@@ -399,6 +475,7 @@ export class ChatManager {
     
     // File input change handler
     fileInput.addEventListener('change', (e) => {
+      this.startInteraction();
       this.fileAttachment.handleFileSelection(e.target.files);
     });
     
@@ -408,15 +485,22 @@ export class ChatManager {
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.startPlaceholderCycling();
       this.showButtons();
+      this.startInteraction();
     });
     
     inputWrapper.addEventListener('mouseleave', () => {
+      inputWrapper.style.borderColor = '#000000';
+      inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
+      this.stopPlaceholderCycling();
+      this.endInteraction();
+      
       if (messageInput !== document.activeElement) {
-        inputWrapper.style.borderColor = '#000000';
-        inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
-        this.stopPlaceholderCycling();
-        this.hideButtons();
-        this.hideChatMessages();
+        setTimeout(() => {
+          if (!this.isInteracting) {
+            this.hideButtons();
+            this.hideChatMessages();
+          }
+        }, 150);
       }
     });
     
@@ -427,23 +511,31 @@ export class ChatManager {
       this.startPlaceholderCycling();
       this.showButtons();
       this.showChatMessages();
+      this.startInteraction();
     });
     
     messageInput.addEventListener('blur', () => {
       inputWrapper.style.borderColor = '#000000';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.stopPlaceholderCycling();
-      this.hideButtons();
-      this.hideChatMessages();
+      this.endInteraction();
+      
+      setTimeout(() => {
+        if (!this.isInteracting) {
+          this.hideButtons();
+          this.hideChatMessages();
+        }
+      }, 150);
     });
     
     // Prevent click propagation
     inputWrapper.addEventListener('click', (e) => {
       e.stopPropagation();
+      this.startInteraction();
     });
   }
 
-  // Placeholder cycling methods
+      // Placeholder cycling methods
   startPlaceholderCycling() {
     const messageInput = document.getElementById(this.messageInputId);
     if (!messageInput || messageInput.value !== '') return;
@@ -555,6 +647,8 @@ export class ChatManager {
   // Chat message methods
   sendChatMessage(message) {
     console.log('Sending chat message:', message);
+    
+    this.startInteraction();
     
     // Show chat messages if not visible (only when sending message)
     if (!this.stateManager.get('isChatMessagesVisible')) {
