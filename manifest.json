@@ -33,8 +33,9 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_end"
+      "js": ["frontend/content.js"],
+      "run_at": "document_end",
+      "type": "module"
     }
   ],
   "web_accessible_resources": [
@@ -47,7 +48,11 @@
         "icons/icon48.png",
         "icons/icon16.png",
         "icons/pixelated_sample_32.png",
-        "popup-final.js"
+        "popup-final.js",
+        "frontend/content.js",
+        "frontend/components/*.js",
+        "frontend/services/*.js",
+        "frontend/utils/*.js"
       ],
       "matches": ["<all_urls>"]
     }

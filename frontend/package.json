@@ -1,0 +1,14 @@
+{
+  "name": "8pilot-frontend",
+  "version": "1.0.0",
+  "description": "Frontend components for 8pilot extension",
+  "type": "module",
+  "main": "content.js",
+  "scripts": {
+    "build": "echo 'No build process needed for ES modules'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": ["chrome-extension", "n8n", "workflow", "ai"],
+  "author": "8pilot",
+  "license": "MIT"
+}
