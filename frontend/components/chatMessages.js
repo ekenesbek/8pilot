@@ -44,29 +44,54 @@ export class ChatMessages {
       }
     });
 
+    // Дополнительные обработчики для предотвращения закрытия чата
+    messagesContainer.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesContainer.addEventListener('mouseup', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesContainer.addEventListener('contextmenu', (e) => {
+      e.stopPropagation();
+    });
+
     // Отслеживаем наведение мыши для поддержания видимости
-    messagesContainer.addEventListener('mouseenter', () => {
+    messagesContainer.addEventListener('mouseenter', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.startInteraction) {
         this.chatManager.startInteraction();
       }
     });
 
-    messagesContainer.addEventListener('mouseleave', () => {
+    messagesContainer.addEventListener('mouseleave', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.endInteraction) {
         this.chatManager.endInteraction();
       }
     });
 
     // Отслеживаем фокус внутри контейнера сообщений
-    messagesContainer.addEventListener('focusin', () => {
+    messagesContainer.addEventListener('focusin', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.startInteraction) {
         this.chatManager.startInteraction();
       }
     });
 
-    messagesContainer.addEventListener('focusout', () => {
+    messagesContainer.addEventListener('focusout', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.endInteraction) {
         this.chatManager.endInteraction();
+      }
+    });
+
+    // Обработчик для выделения текста
+    messagesContainer.addEventListener('selectstart', (e) => {
+      e.stopPropagation();
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
       }
     });
   }
@@ -145,8 +170,33 @@ export class ChatMessages {
     this.addScrollbarStyles();
     
     // Добавляем обработчики событий для wrapper'а
-    messagesWrapper.addEventListener('scroll', () => {
+    messagesWrapper.addEventListener('scroll', (e) => {
+      e.stopPropagation();
       // Уведомляем о взаимодействии при скролле
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+    });
+
+    // Дополнительные обработчики для предотвращения закрытия чата
+    messagesWrapper.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesWrapper.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesWrapper.addEventListener('mouseup', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesWrapper.addEventListener('contextmenu', (e) => {
+      e.stopPropagation();
+    });
+
+    messagesWrapper.addEventListener('selectstart', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.startInteraction) {
         this.chatManager.startInteraction();
       }
@@ -296,7 +346,8 @@ export class ChatMessages {
 
   addBubbleInteractionHandlers(messageBubble) {
       // Hover эффекты
-    messageBubble.addEventListener('mouseenter', () => {
+    messageBubble.addEventListener('mouseenter', (e) => {
+      e.stopPropagation();
       messageBubble.style.transform = 'translateY(-1px)';
       messageBubble.style.boxShadow = '0 6px 25px rgba(0, 0, 0, 0.3)';
       
@@ -306,7 +357,8 @@ export class ChatMessages {
       }
     });
     
-    messageBubble.addEventListener('mouseleave', () => {
+    messageBubble.addEventListener('mouseleave', (e) => {
+      e.stopPropagation();
       messageBubble.style.transform = 'translateY(0)';
       messageBubble.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
       
@@ -321,6 +373,27 @@ export class ChatMessages {
       e.stopPropagation();
       
       // Уведомляем о взаимодействии
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+    });
+
+    // Дополнительные обработчики для предотвращения закрытия чата
+    messageBubble.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    messageBubble.addEventListener('mouseup', (e) => {
+      e.stopPropagation();
+    });
+
+    messageBubble.addEventListener('contextmenu', (e) => {
+      e.stopPropagation();
+    });
+
+    // Обработчик для выделения текста
+    messageBubble.addEventListener('selectstart', (e) => {
+      e.stopPropagation();
       if (this.chatManager && this.chatManager.startInteraction) {
         this.chatManager.startInteraction();
       }

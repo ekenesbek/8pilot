@@ -293,7 +293,7 @@ export class ChatManager {
   setupGlobalClickHandler() {
     document.addEventListener('click', (e) => {
       const chatContainer = document.getElementById(this.chatContainerId);
-      const messagesContainer = document.getElementById(this.messagesContainerId);
+      const messagesContainer = document.getElementById(this.chatMessages.messagesContainerId);
       const plusMenu = document.querySelector('.8pilot-plus-menu'); // если есть меню плюса
       
       let clickedInsideChat = false;
