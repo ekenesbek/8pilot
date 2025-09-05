@@ -131,7 +131,9 @@ export class ChatManager {
     
     // Create drag button
     const dragButton = this.dragButton.create();
-    dragButton.style.display = 'flex';
+    dragButton.style.opacity = '0'; // Скрываем через opacity
+    dragButton.style.visibility = 'hidden'; // И через visibility
+    dragButton.style.transition = 'opacity 0.3s ease, visibility 0.3s ease'; // Добавляем transition
     
     // Create buttons container
     const buttonsContainer = this.createButtonsContainer();
@@ -237,12 +239,18 @@ export class ChatManager {
 
   createButtonsContainer() {
     const buttonsContainer = document.createElement('div');
+    buttonsContainer.id = '8pilot-buttons-container';
     buttonsContainer.style.cssText = `
-      display: flex;
+      display: flex; /* Всегда занимаем место */
       justify-content: space-between;
       align-items: flex-start;
       margin-top: 4px;
       padding-left: 4px;
+      opacity: 0; /* Скрываем через opacity */
+      visibility: hidden; /* И через visibility */
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      height: 36px; /* Фиксированная высота для предотвращения подскока */
+      min-height: 36px; /* Минимальная высота */
     `;
     
     // Create left buttons
@@ -394,12 +402,12 @@ export class ChatManager {
       this.fileAttachment.handleFileSelection(e.target.files);
     });
     
-    // Hover effects - only visual changes, no movement
+    // Hover effects - показываем кнопки при наведении
     inputWrapper.addEventListener('mouseenter', () => {
       inputWrapper.style.borderColor = '#9ca3af';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.startPlaceholderCycling();
-      // Removed toggleButtonsVisibility to prevent movement
+      this.showButtons();
     });
     
     inputWrapper.addEventListener('mouseleave', () => {
@@ -407,23 +415,26 @@ export class ChatManager {
         inputWrapper.style.borderColor = '#000000';
         inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
         this.stopPlaceholderCycling();
-        // Removed toggleButtonsVisibility to prevent movement
+        this.hideButtons();
+        this.hideChatMessages();
       }
     });
     
-    // Focus effects - only visual changes, no movement
+    // Focus effects - показываем кнопки и чат при фокусе
     messageInput.addEventListener('focus', () => {
       inputWrapper.style.borderColor = '#4fd1c7';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.8)';
       this.startPlaceholderCycling();
-      // Removed toggleButtonsVisibility to prevent movement
+      this.showButtons();
+      this.showChatMessages();
     });
     
     messageInput.addEventListener('blur', () => {
       inputWrapper.style.borderColor = '#000000';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.4)';
       this.stopPlaceholderCycling();
-      // Removed toggleButtonsVisibility to prevent movement
+      this.hideButtons();
+      this.hideChatMessages();
     });
     
     // Prevent click propagation
@@ -479,31 +490,65 @@ export class ChatManager {
   }
 
   // Button visibility methods
-  toggleButtonsVisibility(show) {
+  showButtons() {
     const dragButton = document.getElementById('8pilot-drag-button');
-    const plusButton = document.getElementById('8pilot-plus-button');
-    const attachButton = document.getElementById('8pilot-attach-button');
+    const buttonsContainer = document.getElementById('8pilot-buttons-container');
     
     if (dragButton) {
-      dragButton.style.display = show ? 'flex' : 'none';
+      dragButton.style.opacity = '1';
+      dragButton.style.visibility = 'visible';
     }
-    if (plusButton) {
-      plusButton.style.display = show ? 'flex' : 'none';
-    }
-    if (attachButton) {
-      attachButton.style.display = show ? 'flex' : 'none';
+    if (buttonsContainer) {
+      buttonsContainer.style.opacity = '1';
+      buttonsContainer.style.visibility = 'visible';
     }
     
-    this.stateManager.set('areButtonsVisible', show);
+    this.stateManager.set('areButtonsVisible', true);
+  }
+  
+  hideButtons() {
+    const dragButton = document.getElementById('8pilot-drag-button');
+    const buttonsContainer = document.getElementById('8pilot-buttons-container');
+    
+    if (dragButton) {
+      dragButton.style.opacity = '0';
+      dragButton.style.visibility = 'hidden';
+    }
+    if (buttonsContainer) {
+      buttonsContainer.style.opacity = '0';
+      buttonsContainer.style.visibility = 'hidden';
+    }
+    
+    this.stateManager.set('areButtonsVisible', false);
+  }
+
+  toggleButtonsVisibility(show) {
+    if (show) {
+      this.showButtons();
+    } else {
+      this.hideButtons();
+    }
+  }
+
+  showChatMessages() {
+    if (!this.stateManager.get('isChatMessagesVisible')) {
+      this.chatMessages.show();
+      this.stateManager.set('isChatMessagesVisible', true);
+    }
+  }
+  
+  hideChatMessages() {
+    if (this.stateManager.get('isChatMessagesVisible')) {
+      this.chatMessages.hide();
+      this.stateManager.set('isChatMessagesVisible', false);
+    }
   }
 
   toggleChatVisibility(show) {
-    if (show && !this.stateManager.get('isChatVisible')) {
-      this.chatMessages.show();
-      this.stateManager.set('isChatVisible', true);
-    } else if (!show && this.stateManager.get('isChatVisible')) {
-      this.chatMessages.hide();
-      this.stateManager.set('isChatVisible', false);
+    if (show) {
+      this.showChatMessages();
+    } else {
+      this.hideChatMessages();
     }
   }
 
@@ -511,7 +556,7 @@ export class ChatManager {
   sendChatMessage(message) {
     console.log('Sending chat message:', message);
     
-    // Show chat messages if not visible
+    // Show chat messages if not visible (only when sending message)
     if (!this.stateManager.get('isChatMessagesVisible')) {
       this.chatMessages.show();
       this.stateManager.set('isChatMessagesVisible', true);
