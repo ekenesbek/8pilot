@@ -319,6 +319,9 @@ export class ChatManager {
   handleOutsideClick() {
     this.hideButtons();
     this.hideChatMessages();
+    if (this.plusMenu && this.plusMenu.isVisible) {
+      this.plusMenu.hide();
+    }
     const messageInput = document.getElementById(this.messageInputId);
     if (messageInput && messageInput === document.activeElement) {
       messageInput.blur();
@@ -366,7 +369,7 @@ export class ChatManager {
       width: 26px;
       height: 26px;
     `;
-    
+
     // Add click handler for plus menu
     plusButton.addEventListener('click', (e) => {
       e.stopPropagation();

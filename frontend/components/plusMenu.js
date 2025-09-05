@@ -21,8 +21,14 @@ export class PlusMenu {
     const plusButton = document.getElementById('8pilot-plus-button');
     if (!plusButton) return;
     
+    // Уведомляем chatManager о начале взаимодействия
+    if (this.chatManager && this.chatManager.startInteraction) {
+      this.chatManager.startInteraction();
+    }
+    
     const menu = document.createElement('div');
     menu.id = this.menuId;
+    menu.className = '8pilot-plus-menu'; // Добавляем класс для идентификации
     
     // Get plusButton position for proper positioning
     const plusButtonRect = plusButton.getBoundingClientRect();
@@ -70,6 +76,9 @@ export class PlusMenu {
       menu.appendChild(menuItem);
     });
     
+    // Добавляем обработчики событий для отслеживания взаимодействия
+    this.setupMenuEventHandlers(menu);
+    
     // Add menu to body
     document.body.appendChild(menu);
     this.isVisible = true;
@@ -85,8 +94,46 @@ export class PlusMenu {
       menu.style.transform = 'translateY(0) scale(1)';
     }, 10);
     
-    // Add click outside handler
-    this.addClickOutsideHandler(menu, plusButton);
+    // Add click outside handler - НЕ используем, так как это уже обрабатывается в ChatManager
+    // this.addClickOutsideHandler(menu, plusButton);
+  }
+
+  // Новый метод для настройки обработчиков событий меню
+  setupMenuEventHandlers(menu) {
+    // Предотвращаем всплытие кликов
+    menu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Поддерживаем взаимодействие
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+    });
+
+    // Отслеживаем наведение мыши
+    menu.addEventListener('mouseenter', () => {
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+    });
+
+    menu.addEventListener('mouseleave', () => {
+      if (this.chatManager && this.chatManager.endInteraction) {
+        this.chatManager.endInteraction();
+      }
+    });
+
+    // Отслеживаем фокус
+    menu.addEventListener('focusin', () => {
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+    });
+
+    menu.addEventListener('focusout', () => {
+      if (this.chatManager && this.chatManager.endInteraction) {
+        this.chatManager.endInteraction();
+      }
+    });
   }
 
   createMenuItem(item, index, totalItems) {
@@ -109,16 +156,28 @@ export class PlusMenu {
       </div>
     `;
     
-    menuItem.addEventListener('mouseenter', function() {
-      this.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+    // Улучшенные обработчики событий для элементов меню
+    menuItem.addEventListener('mouseenter', () => {
+      menuItem.style.backgroundColor = 'rgba(79, 209, 199, 0.1)';
+      // Поддерживаем взаимодействие
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
     });
     
-    menuItem.addEventListener('mouseleave', function() {
-      this.style.backgroundColor = 'transparent';
+    menuItem.addEventListener('mouseleave', () => {
+      menuItem.style.backgroundColor = 'transparent';
+      // НЕ завершаем взаимодействие при уходе с элемента меню
     });
     
     menuItem.addEventListener('click', (e) => {
       e.stopPropagation();
+      
+      // Поддерживаем взаимодействие во время обработки клика
+      if (this.chatManager && this.chatManager.startInteraction) {
+        this.chatManager.startInteraction();
+      }
+      
       this.handleAction(item.id);
       this.hide();
     });
@@ -148,23 +207,23 @@ export class PlusMenu {
     }
     
     this.isVisible = false;
+    
+    // Завершаем взаимодействие при скрытии меню
+    if (this.chatManager && this.chatManager.endInteraction) {
+      this.chatManager.endInteraction();
+    }
   }
 
-  addClickOutsideHandler(menu, plusButton) {
-    setTimeout(() => {
-      const clickHandler = (e) => {
-        if (!menu.contains(e.target) && !plusButton.contains(e.target)) {
-          this.hide();
-          document.removeEventListener('click', clickHandler);
-        }
-      };
-      document.addEventListener('click', clickHandler);
-    }, 100);
-  }
-
+  // Убираем старый метод addClickOutsideHandler, так как обработка теперь в ChatManager
+  
   handleAction(actionId) {
     const messageInput = document.getElementById('8pilot-message-input');
     if (!messageInput) return;
+    
+    // Поддерживаем взаимодействие при выполнении действий
+    if (this.chatManager && this.chatManager.startInteraction) {
+      this.chatManager.startInteraction();
+    }
     
     switch (actionId) {
       case 'upload-document':
@@ -185,6 +244,11 @@ export class PlusMenu {
   showQuickTemplates() {
     const messageInput = document.getElementById('8pilot-message-input');
     if (!messageInput) return;
+    
+    // Поддерживаем взаимодействие
+    if (this.chatManager && this.chatManager.startInteraction) {
+      this.chatManager.startInteraction();
+    }
     
     const templates = [
       'How can I optimize this workflow for better performance?',
