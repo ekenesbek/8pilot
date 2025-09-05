@@ -350,32 +350,37 @@ export class ChatMessages {
     if (!messagesContainer || !chatContainer) return;
     
     const rect = chatContainer.getBoundingClientRect();
+    const messagesHeight = 350; // Fixed height from CSS
+    const gap = 20; // Gap between chat container and messages
     
-    // Update position to stay above chat container
-    messagesContainer.style.left = rect.left + 'px';
-    messagesContainer.style.top = (rect.top - 370) + 'px';
-    messagesContainer.style.width = Math.min(rect.width, Math.min(600, window.innerWidth * 0.9)) + 'px';
+    // Calculate initial position
+    let newLeft = rect.left;
+    let newTop = rect.top - messagesHeight - gap;
+    let newWidth = Math.min(rect.width, Math.min(600, window.innerWidth * 0.9));
     
-    // Ensure messages container doesn't go off-screen
-    const messagesRect = messagesContainer.getBoundingClientRect();
-    let adjustedLeft = rect.left;
-    let adjustedTop = rect.top - 370;
-    
-    // Adjust horizontal position if going off-screen
-    if (messagesRect.right > window.innerWidth) {
-      adjustedLeft = window.innerWidth - messagesRect.width - 10;
+    // Ensure messages container doesn't go off-screen horizontally
+    if (newLeft + newWidth > window.innerWidth) {
+      newLeft = window.innerWidth - newWidth - 10;
     }
-    if (messagesRect.left < 0) {
-      adjustedLeft = 10;
+    if (newLeft < 10) {
+      newLeft = 10;
     }
     
-    // Adjust vertical position if going off-screen
-    if (adjustedTop < 0) {
-      adjustedTop = 10;
+    // Ensure messages container doesn't go off-screen vertically
+    if (newTop < 10) {
+      // If not enough space above, position below the chat container
+      newTop = rect.bottom + gap;
+      
+      // If still not enough space below, position at the top of screen
+      if (newTop + messagesHeight > window.innerHeight - 10) {
+        newTop = 10;
+      }
     }
     
-    messagesContainer.style.left = adjustedLeft + 'px';
-    messagesContainer.style.top = adjustedTop + 'px';
+    // Apply the new position
+    messagesContainer.style.left = newLeft + 'px';
+    messagesContainer.style.top = newTop + 'px';
+    messagesContainer.style.width = newWidth + 'px';
   }
 
   hide() {

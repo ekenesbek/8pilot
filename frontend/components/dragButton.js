@@ -70,6 +70,7 @@ export class DragButton {
   addDragFunctionality(dragButton) {
     let isDragging = false;
     let dragOffset = { x: 0, y: 0 };
+    let handleMouseMove, handleMouseUp;
     
     dragButton.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -91,68 +92,70 @@ export class DragButton {
       
       inputContainer.style.transition = 'none';
       inputContainer.style.opacity = '0.9';
-    });
-    
-    const handleMouseMove = (e) => {
-      if (!isDragging) return;
       
-      e.preventDefault();
-      const inputContainer = document.getElementById('8pilot-chat-container');
-      if (!inputContainer) return;
-      
-      const newLeft = e.clientX - dragOffset.x;
-      const newTop = e.clientY - dragOffset.y;
-      
-      // Constrain movement boundaries
-      const margin = 10;
-      const containerRect = inputContainer.getBoundingClientRect();
-      
-      const maxLeft = window.innerWidth - (containerRect.width * 0.2);
-      const minLeft = -(containerRect.width * 0.8);
-      const maxTop = window.innerHeight - (containerRect.height * 0.3);
-      const minTop = -(containerRect.height * 0.7);
-      
-      const constrainedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
-      const constrainedTop = Math.max(minTop, Math.min(maxTop, newTop));
-      
-      inputContainer.style.left = constrainedLeft + 'px';
-      inputContainer.style.top = constrainedTop + 'px';
-      inputContainer.style.transform = 'none';
-      inputContainer.style.bottom = 'auto';
-      
-      // Update messages position
-      this.chatManager.updateMessagesPosition();
-    };
-    
-    const handleMouseUp = (e) => {
-      if (!isDragging) return;
-      
-      isDragging = false;
-      const inputContainer = document.getElementById('8pilot-chat-container');
-      
-      if (dragButton) {
-        dragButton.style.color = '#4fd1c7';
-        dragButton.style.filter = 'drop-shadow(0 0 6px rgba(79, 209, 199, 0.7))';
-        dragButton.style.transform = 'translateY(-50%) scale(1)';
-      }
-      
-      if (inputContainer) {
-        inputContainer.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        inputContainer.style.opacity = '1';
+      // Create new event handlers for this drag session
+      handleMouseMove = (e) => {
+        if (!isDragging) return;
         
-        // Snap to edges
-        this.snapToEdges(inputContainer);
-      }
+        e.preventDefault();
+        const inputContainer = document.getElementById('8pilot-chat-container');
+        if (!inputContainer) return;
+        
+        const newLeft = e.clientX - dragOffset.x;
+        const newTop = e.clientY - dragOffset.y;
+        
+        // Constrain movement boundaries
+        const margin = 10;
+        const containerRect = inputContainer.getBoundingClientRect();
+        
+        const maxLeft = window.innerWidth - (containerRect.width * 0.2);
+        const minLeft = -(containerRect.width * 0.8);
+        const maxTop = window.innerHeight - (containerRect.height * 0.3);
+        const minTop = -(containerRect.height * 0.7);
+        
+        const constrainedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+        const constrainedTop = Math.max(minTop, Math.min(maxTop, newTop));
+        
+        inputContainer.style.left = constrainedLeft + 'px';
+        inputContainer.style.top = constrainedTop + 'px';
+        inputContainer.style.transform = 'none';
+        inputContainer.style.bottom = 'auto';
+        
+        // Update messages position
+        this.chatManager.updateMessagesPosition();
+      };
       
-      document.body.style.cursor = 'default';
+      handleMouseUp = (e) => {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        const inputContainer = document.getElementById('8pilot-chat-container');
+        
+        if (dragButton) {
+          dragButton.style.color = '#4fd1c7';
+          dragButton.style.filter = 'drop-shadow(0 0 6px rgba(79, 209, 199, 0.7))';
+          dragButton.style.transform = 'translateY(-50%) scale(1)';
+        }
+        
+        if (inputContainer) {
+          inputContainer.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+          inputContainer.style.opacity = '1';
+          
+          // Snap to edges
+          this.snapToEdges(inputContainer);
+        }
+        
+        document.body.style.cursor = 'default';
+        
+        // Remove event listeners for this drag session
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
       
-      // Remove event listeners
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+      // Add event listeners for this drag session
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    });
   }
 
   snapToEdges(inputContainer) {
