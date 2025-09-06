@@ -266,7 +266,7 @@ export class ChatMessages {
     observer.observe(messagesWrapper, { childList: true });
   }
 
-  addMessage(role, content) {
+  addMessage(role, content, animate = true) {
     const messagesWrapper = document.getElementById(this.messagesWrapperId);
     if (!messagesWrapper) return;
     
@@ -281,9 +281,14 @@ export class ChatMessages {
       display: flex;
       ${isUser ? 'justify-content: flex-end' : 'justify-content: flex-start'};
       pointer-events: auto;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: slideInUp 0.3s ease-out forwards;
+      ${animate ? `
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideInUp 0.3s ease-out forwards;
+      ` : `
+        opacity: 1;
+        transform: translateY(0);
+      `}
       margin: 0;
       padding: 0;
     `;
@@ -316,7 +321,7 @@ export class ChatMessages {
       padding: 12px 16px;
       border-radius: 8px;
       ${isUser ? 
-        `background: rgba(7, 27, 25, 0.85); 
+        `background: rgba(7, 27, 25, 0.95); 
          color: #e2e8f0;
          border: 1px solid rgba(79, 209, 199, 0.7); 
          margin-left: auto;` : 
@@ -453,7 +458,7 @@ export class ChatMessages {
     }
   }
 
-  updateMessageContent(messageId, content) {
+  updateMessage(messageId, content) {
     const messageElement = document.getElementById(messageId);
     if (!messageElement) return;
     
@@ -469,6 +474,32 @@ export class ChatMessages {
     }
     
     this.scrollToBottom();
+  }
+
+  updateMessageContent(messageId, content) {
+    this.updateMessage(messageId, content);
+  }
+
+  clearMessages() {
+    const messagesWrapper = document.getElementById(this.messagesWrapperId);
+    if (messagesWrapper) {
+      messagesWrapper.innerHTML = '';
+    }
+    this.messages = [];
+  }
+
+  hideTypingIndicator(messageId) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+    
+    const bubble = messageElement.querySelector('div');
+    if (!bubble) return;
+    
+    // Remove typing indicator and show actual content
+    const messageIndex = this.messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex !== -1) {
+      bubble.innerHTML = this.formatMessage(this.messages[messageIndex].content);
+    }
   }
 
   scrollToBottom() {

@@ -126,12 +126,22 @@ document.addEventListener('DOMContentLoaded', function() {
         apiKeyInput.addEventListener('blur', function() {
             const apiKey = this.value.trim();
             if (apiKey && apiKey !== '••••••••••••••••') {
-                // Validate API key format
-                if (apiKey.startsWith('sk-')) {
+                // Validate API key format based on provider
+                const provider = providerSelect ? providerSelect.value : 'openai';
+                let isValid = false;
+                
+                if (provider === 'openai' && apiKey.startsWith('sk-')) {
+                    isValid = true;
+                } else if (provider === 'anthropic' && apiKey.startsWith('sk-ant-')) {
+                    isValid = true;
+                }
+                
+                if (isValid) {
                     // Save API key
                     saveApiKey(apiKey);
                 } else {
-                    alert('Invalid API key format. OpenAI API keys should start with "sk-"');
+                    const expectedFormat = provider === 'openai' ? 'sk-' : 'sk-ant-';
+                    alert(`Invalid API key format. ${provider === 'openai' ? 'OpenAI' : 'Anthropic'} API keys should start with "${expectedFormat}"`);
                     this.value = '';
                     updateActivateButtonState(false);
                 }
@@ -169,8 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save API key function
     function saveApiKey(apiKey) {
         console.log('Saving API key...');
+        const provider = providerSelect ? providerSelect.value : 'openai';
+        
         chrome.storage.sync.set({ 
-            openaiApiKey: apiKey 
+            openaiApiKey: apiKey,
+            provider: provider
         }, function() {
             if (chrome.runtime.lastError) {
                 console.error('Failed to save API key:', chrome.runtime.lastError);
@@ -182,6 +195,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 apiKeyInput.value = '••••••••••••••••';
                 apiKeyInput.dataset.hasKey = 'true';
                 updateActivateButtonState(true);
+                
+                // Notify content scripts about API key update
+                chrome.tabs.query({}, (tabs) => {
+                    tabs.forEach(tab => {
+                        chrome.tabs.sendMessage(tab.id, {
+                            action: 'apiCredentialsUpdated',
+                            data: { apiKey, provider }
+                        }, (response) => {
+                            // Ignore errors for tabs without content script
+                        });
+                    });
+                });
                 
                 // Show success indicator briefly
                 const originalBorder = apiKeyInput.style.borderColor;
@@ -212,8 +237,44 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners for settings
     if (providerSelect) {
-        providerSelect.addEventListener('change', saveSettings);
+        providerSelect.addEventListener('change', function() {
+            updateProviderUI();
+            saveSettings();
+        });
     }
+    
+    // Update UI based on selected provider
+    function updateProviderUI() {
+        const provider = providerSelect ? providerSelect.value : 'openai';
+        const apiKeyLabel = document.getElementById('apiKeyLabel');
+        const apiKeyInput = document.getElementById('apiKey');
+        const helpLinks = document.getElementById('helpLinks');
+        
+        if (provider === 'anthropic') {
+            if (apiKeyLabel) apiKeyLabel.textContent = 'Anthropic API Key';
+            if (apiKeyInput) apiKeyInput.placeholder = 'Enter your Anthropic API key (sk-ant-...)';
+            if (helpLinks) {
+                helpLinks.innerHTML = `
+                    <a href="https://console.anthropic.com/" target="_blank" class="help-link">Get Anthropic API Key ↗</a>
+                    <div class="help-text">You must have valid billing setup with Anthropic</div>
+                    <a href="https://docs.anthropic.com/claude/reference/getting-started-with-the-api" target="_blank" class="help-link">Setup Guide ↗</a>
+                `;
+            }
+        } else {
+            if (apiKeyLabel) apiKeyLabel.textContent = 'OpenAI API Key';
+            if (apiKeyInput) apiKeyInput.placeholder = 'Enter your OpenAI API key (sk-...)';
+            if (helpLinks) {
+                helpLinks.innerHTML = `
+                    <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get OpenAI API Key ↗</a>
+                    <div class="help-text">You must have valid <a href="https://platform.openai.com/settings/organization/billing/payment-methods" target="_blank" class="help-link">billing information ↗</a> setup with OpenAI</div>
+                    <a href="https://www.youtube.com/watch?v=w6LbUiVMl8g" target="_blank" class="help-link">Not working? Watch setup tutorial ↗</a>
+                `;
+            }
+        }
+    }
+    
+    // Initialize provider UI
+    updateProviderUI();
     
     if (modelSelect) {
         modelSelect.addEventListener('change', saveSettings);
@@ -338,9 +399,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             sectionDescription.style.display = 'none';
                             activateBtn.style.display = 'none';
                             deactivateBtn.classList.add('active');
+                            
+                            // Show success message
+                            console.log('✅ Extension activated successfully');
                         } else {
                             // Show error if activation failed
-                            alert('Activation failed. Please try again.');
+                            console.error('❌ Activation failed:', response);
+                            alert('Activation failed. Please try again. Check console for details.');
                         }
                     });
                 }

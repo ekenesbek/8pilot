@@ -4,10 +4,12 @@ import { PlusMenu } from './plusMenu.js';
 import { FileAttachment } from './fileAttachment.js';
 import { ChatMessages } from './chatMessages.js';
 import { OpenAIService } from '../services/openaiService.js';
+import { ApiKeyManager } from './apiKeyManager.js';
 
 export class ChatManager {
-  constructor(stateManager) {
+  constructor(stateManager, backendApiService) {
     this.stateManager = stateManager;
+    this.backendApiService = backendApiService;
     this.chatContainerId = '8pilot-chat-container';
     this.chatMessagesId = '8pilot-chat-messages';
     this.messageInputId = '8pilot-message-input';
@@ -18,8 +20,15 @@ export class ChatManager {
     this.fileAttachment = new FileAttachment(this);
     this.chatMessages = new ChatMessages(this);
     this.openaiService = new OpenAIService(this.chatMessages);
+    this.apiKeyManager = new ApiKeyManager();
     this.isInteracting = false;
     this.interactionTimeout = null;
+    
+    // Chat session management
+    this.currentWorkflowId = null;
+    this.currentSessionId = null;
+    this.apiKey = null;
+    this.provider = 'openai';
     
     // Добавляем глобальный обработчик кликов
     this.setupGlobalClickHandler();
@@ -28,6 +37,21 @@ export class ChatManager {
     window.addEventListener('8pilot-menu-action', (event) => {
       this.handleMenuAction(event.detail);
     });
+    
+    // Listen for API credentials updates
+    window.addEventListener('8pilot-api-credentials-updated', (event) => {
+      this.setApiCredentials(event.detail.apiKey, event.detail.provider);
+    });
+    
+    // Listen for storage changes from popup
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync' && (changes.openaiApiKey || changes.provider)) {
+        this.loadApiCredentials();
+      }
+    });
+    
+    // Load existing API credentials
+    this.loadApiCredentials();
     
     // Initialize placeholder cycling
     this.placeholderExamples = [
@@ -82,7 +106,7 @@ export class ChatManager {
     }
   }
 
-  showChatWindow() {
+  async showChatWindow() {
     // Check if already exists in DOM
     const existingChatContainer = document.getElementById(this.chatContainerId);
     if (existingChatContainer) {
@@ -91,6 +115,9 @@ export class ChatManager {
     }
     
     console.log('Showing 8pilot chat input');
+    
+    // Update workflow context when showing chat
+    await this.updateWorkflowContext();
     
     // Update state first
     this.stateManager.set('isChatWindowVisible', true);
@@ -655,11 +682,109 @@ export class ChatManager {
     }
   }
 
+  // Workflow and session management
+  async updateWorkflowContext() {
+    try {
+      // Get current workflow ID from content script
+      const response = await chrome.runtime.sendMessage({ action: 'getWorkflowId' });
+      if (response.status === 'success' && response.data.workflowId) {
+        this.currentWorkflowId = response.data.workflowId;
+        console.log('Updated workflow ID:', this.currentWorkflowId);
+        
+        // Load existing chat history for this workflow
+        await this.loadChatHistory();
+      } else {
+        console.log('No workflow ID found or not on n8n page');
+        this.currentWorkflowId = null;
+      }
+    } catch (error) {
+      console.error('Error updating workflow context:', error);
+    }
+  }
+
+  async loadChatHistory() {
+    if (!this.currentWorkflowId || !this.backendApiService) return;
+    
+    try {
+      const history = await this.backendApiService.getChatHistory(this.currentWorkflowId);
+      if (history && history.sessions && history.sessions.length > 0) {
+        // Load the latest session
+        const latestSession = history.sessions[0];
+        this.currentSessionId = latestSession.session_id;
+        
+        // Clear current messages and load history
+        this.chatMessages.clearMessages();
+        
+        // Add messages from history
+        for (const message of latestSession.messages) {
+          this.chatMessages.addMessage(message.role, message.content, false);
+        }
+        
+        console.log('Loaded chat history for workflow:', this.currentWorkflowId);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  }
+
+  async loadApiCredentials() {
+    try {
+      // Load from chrome storage sync (popup format)
+      const result = await chrome.storage.sync.get(['openaiApiKey', 'provider']);
+      if (result.openaiApiKey) {
+        this.setApiCredentials(result.openaiApiKey, result.provider || 'openai');
+        console.log('API credentials loaded from popup:', { provider: result.provider || 'openai', hasKey: !!result.openaiApiKey });
+      } else {
+        console.log('No API credentials found in popup storage');
+      }
+    } catch (error) {
+      console.error('Error loading API credentials:', error);
+    }
+  }
+
+  setApiCredentials(apiKey, provider = 'openai') {
+    this.apiKey = apiKey;
+    this.provider = provider;
+    console.log('API credentials set:', { provider, hasKey: !!apiKey });
+  }
+
+  async checkApiCredentials() {
+    try {
+      const result = await chrome.storage.sync.get(['openaiApiKey', 'provider']);
+      const hasCredentials = result.openaiApiKey && result.openaiApiKey.trim() !== '';
+      
+      if (!hasCredentials) {
+        this.chatMessages.addMessage('assistant', 'Please configure your API key in the extension popup first. Click on the 8pilot icon in your browser toolbar to open settings.', false);
+        return false;
+      }
+      
+      // Update current credentials if they changed
+      if (result.openaiApiKey !== this.apiKey || result.provider !== this.provider) {
+        this.setApiCredentials(result.openaiApiKey, result.provider || 'openai');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking API credentials:', error);
+      this.chatMessages.addMessage('assistant', 'Error checking API credentials. Please try again.', false);
+      return false;
+    }
+  }
+
   // Chat message methods
-  sendChatMessage(message) {
+  async sendChatMessage(message) {
     console.log('Sending chat message:', message);
     
     this.startInteraction();
+    
+    // Check API credentials first
+    const hasCredentials = await this.checkApiCredentials();
+    if (!hasCredentials) {
+      return;
+    }
+    
+    // Update workflow context if needed
+    await this.updateWorkflowContext();
     
     // Show chat messages if not visible (only when sending message)
     if (!this.stateManager.get('isChatMessagesVisible')) {
@@ -674,8 +799,36 @@ export class ChatManager {
     const loadingMessageId = this.chatMessages.addMessage('assistant', '');
     this.chatMessages.showTypingIndicator(loadingMessageId);
     
-    // Send to OpenAI API
-    this.openaiService.sendMessage(message, loadingMessageId, this.chatMessages.messages);
+    try {
+      // Prepare API key based on provider
+      const apiKeyData = {};
+      if (this.provider === 'openai') {
+        apiKeyData.openai_api_key = this.apiKey;
+      } else if (this.provider === 'anthropic') {
+        apiKeyData.anthropic_api_key = this.apiKey;
+      }
+      
+      // Send to backend API
+      const response = await this.backendApiService.sendMessage(
+        message,
+        this.currentWorkflowId || 'unknown',
+        this.currentSessionId,
+        this.provider,
+        apiKeyData
+      );
+      
+      // Update session ID
+      this.currentSessionId = response.session_id;
+      
+      // Update the loading message with the response
+      this.chatMessages.updateMessage(loadingMessageId, response.message);
+      this.chatMessages.hideTypingIndicator(loadingMessageId);
+      
+    } catch (error) {
+      console.error('Error sending message to backend:', error);
+      this.chatMessages.updateMessage(loadingMessageId, `Error: ${error.message}`);
+      this.chatMessages.hideTypingIndicator(loadingMessageId);
+    }
     
     // Clear attachments after sending
     this.fileAttachment.clearAttachments();

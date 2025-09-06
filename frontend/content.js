@@ -5,9 +5,11 @@ console.log('8pilot content script loaded');
 let globalActivationState = false;
 let isN8nPage = false;
 let components = null;
+let modulesLoaded = false;
+let pendingActivation = false;
 
 // Import components with error handling
-let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager;
+let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, BackendApiService, ApiKeyManager;
 
 // Load modules asynchronously
 (async function loadModules() {
@@ -17,17 +19,29 @@ let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager;
     const menuModule = await import('./components/menuManager.js');
     const chatModule = await import('./components/chatManager.js');
     const stateModule = await import('./utils/stateManager.js');
+    const backendModule = await import('./services/backendApiService.js');
+    const apiKeyModule = await import('./components/apiKeyManager.js');
     
     WorkflowExtractor = workflowModule.WorkflowExtractor;
     ActivationIcon = activationModule.ActivationIcon;
     MenuManager = menuModule.MenuManager;
     ChatManager = chatModule.ChatManager;
     StateManager = stateModule.StateManager;
+    BackendApiService = backendModule.BackendApiService;
+    ApiKeyManager = apiKeyModule.ApiKeyManager;
     
     console.log('All modules loaded successfully');
+    modulesLoaded = true;
     
     // Initialize after modules are loaded
     initializeExtension();
+    
+    // Check if there was a pending activation
+    if (pendingActivation) {
+      console.log('Processing pending activation');
+      pendingActivation = false;
+      handleActivation();
+    }
   } catch (error) {
     console.error('Failed to load modules:', error);
     // Fallback to basic functionality
@@ -43,16 +57,20 @@ function initializeExtension() {
 
     // Initialize components
     const workflowExtractor = new WorkflowExtractor();
+    const backendApiService = new BackendApiService();
+    const apiKeyManager = new ApiKeyManager();
     const activationIcon = new ActivationIcon(stateManager);
     const menuManager = new MenuManager(stateManager);
-    const chatManager = new ChatManager(stateManager);
+    const chatManager = new ChatManager(stateManager, backendApiService);
 
     // Store references for deactivation
     components = {
       activationIcon,
       menuManager,
       chatManager,
-      workflowExtractor
+      workflowExtractor,
+      backendApiService,
+      apiKeyManager
     };
     window._8pilotComponents = components;
 
@@ -74,14 +92,11 @@ function initializeExtension() {
         globalActivationState = true;
         saveGlobalActivationState();
         
-        // Show UI only if this is an n8n page
-        if (isN8nPage) {
-          console.log('n8n page detected, showing UI');
-          activationIcon.show();
-          menuManager.createMenu();
-          menuManager.showMenu();
+        if (modulesLoaded) {
+          handleActivation();
         } else {
-          console.log('Not an n8n page, UI will appear when you navigate to n8n');
+          console.log('Modules not loaded yet, queuing activation');
+          pendingActivation = true;
         }
         
         sendResponse({ status: 'activated' });
@@ -103,6 +118,13 @@ function initializeExtension() {
         } else {
           sendResponse({ status: 'error', message: 'Not an n8n page' });
         }
+      } else if (request.action === 'getWorkflowId') {
+        if (isN8nPage) {
+          const workflowId = workflowExtractor.extractWorkflowId();
+          sendResponse({ status: 'success', data: { workflowId } });
+        } else {
+          sendResponse({ status: 'error', message: 'Not an n8n page' });
+        }
       } else if (request.action === 'checkActivationState') {
         sendResponse({ 
           status: 'success', 
@@ -111,6 +133,12 @@ function initializeExtension() {
             isN8nPage: isN8nPage 
           } 
         });
+      } else if (request.action === 'apiCredentialsUpdated') {
+        // Notify chat manager about API credentials update
+        if (components && components.chatManager) {
+          components.chatManager.setApiCredentials(request.data.apiKey, request.data.provider);
+        }
+        sendResponse({ status: 'success' });
       }
       
       return true;
@@ -119,6 +147,26 @@ function initializeExtension() {
     console.error('Failed to initialize extension:', error);
     // Fallback to basic functionality
     initializeFallback();
+  }
+}
+
+// Handle activation when modules are ready
+function handleActivation() {
+  if (!components) {
+    console.error('Components not initialized');
+    return;
+  }
+  
+  const { activationIcon, menuManager } = components;
+  
+  // Show UI only if this is an n8n page
+  if (isN8nPage) {
+    console.log('n8n page detected, showing UI');
+    activationIcon.show();
+    menuManager.createMenu();
+    menuManager.showMenu();
+  } else {
+    console.log('Not an n8n page, UI will appear when you navigate to n8n');
   }
 }
 
@@ -135,9 +183,7 @@ function checkN8nPageStatus() {
     // Show UI on n8n page when activated
     if (!wasN8nPage) {
       console.log('Navigated to n8n page, showing UI');
-      components.activationIcon.show();
-      components.menuManager.createMenu();
-      components.menuManager.showMenu();
+      handleActivation();
     }
   } else if (!isN8nPage && wasN8nPage) {
     // Hide UI when leaving n8n page
