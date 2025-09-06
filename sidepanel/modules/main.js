@@ -164,6 +164,9 @@ class SidepanelApp {
   async start() {
     console.log('Sidepanel App: Starting...');
     
+    // Check global activation state
+    await this.checkGlobalActivationState();
+    
     // Get current tab and workflow info
     if (this.modules.workflow) {
       await this.modules.workflow.getCurrentTabInfo();
@@ -182,6 +185,50 @@ class SidepanelApp {
     }, 1000);
     
     console.log('Sidepanel App: Started successfully');
+  }
+
+  // Check global activation state
+  async checkGlobalActivationState() {
+    try {
+      const result = await chrome.storage.local.get(['globalActivationState']);
+      const isActivated = result.globalActivationState || false;
+      
+      console.log('Global activation state:', isActivated);
+      
+      // Update UI based on activation state
+      this.updateActivationUI(isActivated);
+      
+      // Listen for activation state changes
+      chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local' && changes.globalActivationState) {
+          const newState = changes.globalActivationState.newValue;
+          console.log('Global activation state changed:', newState);
+          this.updateActivationUI(newState);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Failed to check global activation state:', error);
+    }
+  }
+
+  // Update UI based on activation state
+  updateActivationUI(isActivated) {
+    // Update status indicators
+    const statusElements = document.querySelectorAll('.status-indicator');
+    statusElements.forEach(element => {
+      if (isActivated) {
+        element.classList.add('activated');
+      } else {
+        element.classList.remove('activated');
+      }
+    });
+    
+    // Update any activation-related UI elements
+    const activationElements = document.querySelectorAll('[data-activation-state]');
+    activationElements.forEach(element => {
+      element.dataset.activationState = isActivated ? 'active' : 'inactive';
+    });
   }
 
   // Update elements that depend on theme

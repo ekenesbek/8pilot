@@ -1,6 +1,11 @@
 // Content script for 8pilot extension
 console.log('8pilot content script loaded');
 
+// Global state for activation
+let globalActivationState = false;
+let isN8nPage = false;
+let components = null;
+
 // Import components with error handling
 let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager;
 
@@ -43,51 +48,184 @@ function initializeExtension() {
     const chatManager = new ChatManager(stateManager);
 
     // Store references for deactivation
-    window._8pilotComponents = {
+    components = {
       activationIcon,
       menuManager,
-      chatManager
+      chatManager,
+      workflowExtractor
     };
+    window._8pilotComponents = components;
 
-    // Check if this is an n8n page before initializing
-    if (!workflowExtractor.isN8nPage()) {
-      console.log('Not an n8n page, skipping initialization');
-      // Still listen for messages but don't show UI
-      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === 'activateExtension') {
-          sendResponse({ status: 'error', message: 'Activation failed. Please make sure you are on an n8n workflow page.' });
-        } else if (request.action === 'getWorkflowData') {
-          sendResponse({ status: 'error', message: 'Not an n8n page' });
-        }
-        return true;
-      });
-    } else {
-      console.log('n8n workflow page detected, initializing components');
+    // Check initial n8n page status
+    checkN8nPageStatus();
+    
+    // Set up URL change listener for auto-detection
+    setupUrlChangeListener();
+    
+    // Set up global activation state listener
+    setupGlobalActivationListener();
+    
+    // Listen for messages
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      console.log('Content script received message:', request);
       
-      // Listen for messages from background script
-      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        console.log('Content script received message:', request);
+      if (request.action === 'activateExtension') {
+        console.log('Activating extension globally');
+        globalActivationState = true;
+        saveGlobalActivationState();
         
-        if (request.action === 'getWorkflowData') {
-          // Extract workflow data from n8n page
+        // Show UI only if this is an n8n page
+        if (isN8nPage) {
+          console.log('n8n page detected, showing UI');
+          activationIcon.show();
+          menuManager.createMenu();
+          menuManager.showMenu();
+        } else {
+          console.log('Not an n8n page, UI will appear when you navigate to n8n');
+        }
+        
+        sendResponse({ status: 'activated' });
+      } else if (request.action === 'deactivateExtension') {
+        console.log('Deactivating extension');
+        globalActivationState = false;
+        saveGlobalActivationState();
+        
+        // Hide all components
+        activationIcon.hide();
+        menuManager.hide();
+        chatManager.hide();
+        
+        sendResponse({ status: 'deactivated' });
+      } else if (request.action === 'getWorkflowData') {
+        if (isN8nPage) {
           const workflowData = workflowExtractor.extractWorkflowData();
           sendResponse({ status: 'success', data: workflowData });
-        } else if (request.action === 'activateExtension') {
-          activationIcon.show();
-          sendResponse({ status: 'activated' });
-        } else if (request.action === 'deactivateExtension') {
-          // Hide all components when deactivating
-          activationIcon.hide();
-          menuManager.hide();
-          chatManager.hide();
-          sendResponse({ status: 'deactivated' });
+        } else {
+          sendResponse({ status: 'error', message: 'Not an n8n page' });
         }
-        
-        return true;
-      });
-    }
+      } else if (request.action === 'checkActivationState') {
+        sendResponse({ 
+          status: 'success', 
+          data: { 
+            isActivated: globalActivationState, 
+            isN8nPage: isN8nPage 
+          } 
+        });
+      }
+      
+      return true;
+    });
   } catch (error) {
     console.error('Failed to initialize extension:', error);
+    // Fallback to basic functionality
+    initializeFallback();
+  }
+}
+
+// Check if current page is n8n and update UI accordingly
+function checkN8nPageStatus() {
+  if (!components) return;
+  
+  const wasN8nPage = isN8nPage;
+  isN8nPage = components.workflowExtractor.isN8nPage();
+  
+  console.log('N8N page status check:', { isN8nPage, wasN8nPage, globalActivationState });
+  
+  if (isN8nPage && globalActivationState) {
+    // Show UI on n8n page when activated
+    if (!wasN8nPage) {
+      console.log('Navigated to n8n page, showing UI');
+      components.activationIcon.show();
+      components.menuManager.createMenu();
+      components.menuManager.showMenu();
+    }
+  } else if (!isN8nPage && wasN8nPage) {
+    // Hide UI when leaving n8n page
+    console.log('Left n8n page, hiding UI');
+    components.activationIcon.hide();
+    components.menuManager.hide();
+  } else if (isN8nPage && !globalActivationState) {
+    // Show only activation icon on n8n page when not activated
+    components.activationIcon.show();
+    components.menuManager.hide();
+  }
+}
+
+// Set up listener for URL changes (SPA navigation)
+function setupUrlChangeListener() {
+  let currentUrl = window.location.href;
+  
+  // Listen for popstate (back/forward navigation)
+  window.addEventListener('popstate', () => {
+    if (window.location.href !== currentUrl) {
+      currentUrl = window.location.href;
+      setTimeout(checkN8nPageStatus, 100); // Small delay to let page load
+    }
+  });
+  
+  // Listen for pushstate/replacestate (programmatic navigation)
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+  
+  history.pushState = function(...args) {
+    originalPushState.apply(history, args);
+    if (window.location.href !== currentUrl) {
+      currentUrl = window.location.href;
+      setTimeout(checkN8nPageStatus, 100);
+    }
+  };
+  
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(history, args);
+    if (window.location.href !== currentUrl) {
+      currentUrl = window.location.href;
+      setTimeout(checkN8nPageStatus, 100);
+    }
+  };
+  
+  // Also listen for hash changes
+  window.addEventListener('hashchange', () => {
+    if (window.location.href !== currentUrl) {
+      currentUrl = window.location.href;
+      setTimeout(checkN8nPageStatus, 100);
+    }
+  });
+}
+
+// Set up listener for global activation state changes
+function setupGlobalActivationListener() {
+  // Listen for storage changes from other tabs
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.globalActivationState) {
+      const newState = changes.globalActivationState.newValue;
+      if (newState !== globalActivationState) {
+        globalActivationState = newState;
+        checkN8nPageStatus();
+      }
+    }
+  });
+  
+  // Load initial activation state
+  loadGlobalActivationState();
+}
+
+// Save global activation state
+async function saveGlobalActivationState() {
+  try {
+    await chrome.storage.local.set({ globalActivationState });
+  } catch (error) {
+    console.error('Failed to save global activation state:', error);
+  }
+}
+
+// Load global activation state
+async function loadGlobalActivationState() {
+  try {
+    const result = await chrome.storage.local.get(['globalActivationState']);
+    globalActivationState = result.globalActivationState || false;
+    checkN8nPageStatus();
+  } catch (error) {
+    console.error('Failed to load global activation state:', error);
   }
 }
 
@@ -151,12 +289,9 @@ function initializeFallback() {
         sendResponse({ status: 'error', message: 'Not an n8n page' });
       }
     } else if (request.action === 'activateExtension') {
-      if (isN8nPage()) {
-        console.log('Fallback: n8n page detected, but modules not loaded');
-        sendResponse({ status: 'error', message: 'Extension modules failed to load. Please refresh the page.' });
-      } else {
-        sendResponse({ status: 'error', message: 'Activation failed. Please make sure you are on an n8n workflow page.' });
-      }
+      console.log('Fallback: Activating extension globally');
+      // In fallback mode, we can't show UI, but we can still activate
+      sendResponse({ status: 'activated' });
     } else if (request.action === 'deactivateExtension') {
       // Hide any existing components in fallback mode
       const activationIcon = document.getElementById('8pilot-activation-icon');

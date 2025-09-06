@@ -73,9 +73,20 @@ class WorkflowManager {
         const url = tab.url;
         const isN8n = this.isN8nPage(url);
         
-        // Update status
-        this.updateStatus('page', isN8n ? 'active' : 'warning', 
-          isN8n ? 'n8n page detected' : 'Not an n8n page');
+        // Check global activation state
+        const activationResult = await chrome.storage.local.get(['globalActivationState']);
+        const isActivated = activationResult.globalActivationState || false;
+        
+        // Update status based on both n8n detection and activation state
+        if (isN8n && isActivated) {
+          this.updateStatus('page', 'active', 'n8n page detected - Extension active');
+        } else if (isN8n && !isActivated) {
+          this.updateStatus('page', 'warning', 'n8n page detected - Extension not activated');
+        } else if (!isN8n && isActivated) {
+          this.updateStatus('page', 'warning', 'Extension active - Not an n8n page');
+        } else {
+          this.updateStatus('page', 'warning', 'Not an n8n page - Extension not activated');
+        }
         
         // Get workflow ID
         this.currentWorkflowId = this.getCurrentWorkflowId(url);

@@ -83,6 +83,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 reasoningSelect.value = result.reasoning;
             }
         });
+        
+        // Check global activation state
+        chrome.storage.local.get(['globalActivationState'], function(result) {
+            if (result.globalActivationState) {
+                // Show activated state
+                activateSection.classList.add('activated');
+                statusDisplay.classList.add('active');
+                sectionDescription.style.display = 'none';
+                activateBtn.style.display = 'none';
+                deactivateBtn.classList.add('active');
+            }
+        });
     }
     
     // Update activate button state based on API key presence
@@ -306,37 +318,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Check if current page is n8n before activation
+            // Activate extension globally (no need to be on n8n page)
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
                     const tab = tabs[0];
-                    const isN8n = isN8nPage(tab.url);
                     
-                    if (isN8n) {
-                        // Send message to content script to activate
-                        chrome.tabs.sendMessage(tab.id, {
-                            action: 'activateExtension'
-                        }, async (response) => {
-                            console.log('Activation response:', response);
-                            if (response && response.status === 'activated') {
-                                // Save activation state
-                                await chrome.storage.local.set({ [`activated_${tab.id}`]: true });
-                                
-                                // Show activated state
-                                activateSection.classList.add('activated');
-                                statusDisplay.classList.add('active');
-                                sectionDescription.style.display = 'none';
-                                activateBtn.style.display = 'none';
-                                deactivateBtn.classList.add('active');
-                            } else {
-                                // Show error if activation failed
-                                alert('Activation failed. Please make sure you are on an n8n workflow page.');
-                            }
-                        });
-                    } else {
-                        // Show error message - do not activate
-                        alert('Please navigate to an n8n workflow page first');
-                    }
+                    // Send message to content script to activate
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: 'activateExtension'
+                    }, async (response) => {
+                        console.log('Activation response:', response);
+                        if (response && response.status === 'activated') {
+                            // Save global activation state
+                            await chrome.storage.local.set({ globalActivationState: true });
+                            
+                            // Show activated state
+                            activateSection.classList.add('activated');
+                            statusDisplay.classList.add('active');
+                            sectionDescription.style.display = 'none';
+                            activateBtn.style.display = 'none';
+                            deactivateBtn.classList.add('active');
+                        } else {
+                            // Show error if activation failed
+                            alert('Activation failed. Please try again.');
+                        }
+                    });
                 }
             });
         });
@@ -387,19 +393,19 @@ document.addEventListener('DOMContentLoaded', function() {
             activateBtn.style.display = 'block';
             deactivateBtn.classList.remove('active');
             
-            // Remove activation state from storage
-            if (tab) {
-                await chrome.storage.local.remove([`activated_${tab.id}`]);
-            }
+            // Remove global activation state from storage
+            await chrome.storage.local.set({ globalActivationState: false });
             
-            // Send message to content script to deactivate
-            if (tab) {
-                chrome.tabs.sendMessage(tab.id, {
-                    action: 'deactivateExtension'
-                }, (response) => {
-                    console.log('Deactivation response:', response);
+            // Send message to all tabs to deactivate
+            chrome.tabs.query({}, (tabs) => {
+                tabs.forEach(tab => {
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: 'deactivateExtension'
+                    }, (response) => {
+                        console.log('Deactivation response from tab', tab.id, ':', response);
+                    });
                 });
-            }
+            });
         });
     }
 
