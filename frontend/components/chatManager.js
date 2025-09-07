@@ -245,7 +245,7 @@ export class ChatManager {
     const sendButton = document.createElement('button');
     sendButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M1 20h12c2 0 4-2 4-4V2m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
     sendButton.style.cssText = `
