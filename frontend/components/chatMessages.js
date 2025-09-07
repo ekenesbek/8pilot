@@ -423,19 +423,24 @@ export class ChatMessages {
     const bubble = messageElement.querySelector('div');
     if (!bubble) return;
     
+    // Create animated "Thinking" text with individual letters
+    const thinkingText = 'Thinking';
+    const letters = thinkingText.split('').map((letter, index) => 
+      `<span class="thinking-letter" style="animation-delay: ${index * 0.1}s;">${letter}</span>`
+    ).join('');
+    
     bubble.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="color: #a1a1aa; font-size: 14px;">Thinking</span>
-        <div style="display: flex; gap: 3px;">
-          <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
-          <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
-          <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.4s;"></div>
-        </div>
+      <div style="display: flex; align-items: center;">
+        <span id="thinking-text" style="font-size: 14px; display: flex; color: #e2e8f0;">${letters}</span>
+        <span id="thinking-dots" style="color: #e2e8f0; font-size: 14px;">...</span>
       </div>
     `;
     
     // Add typing animation styles if not already added
     this.addTypingAnimationStyles();
+    
+    // Start dots animation
+    this.startDotsAnimation(messageId);
   }
 
   addTypingAnimationStyles() {
@@ -443,18 +448,104 @@ export class ChatMessages {
       const style = document.createElement('style');
       style.id = 'typing-animation-styles';
       style.textContent = `
-        @keyframes typing-bounce {
-          0%, 60%, 100% { 
-            transform: translateY(0); 
-            opacity: 0.4; 
-          }
-          30% { 
-            transform: translateY(-4px); 
-            opacity: 1; 
-          }
+        @keyframes thinking-wave {
+          0% { color: #e2e8f0; }
+          12.5% { color: #4fd1c7; text-shadow: 0 0 10px #4fd1c7, 0 0 20px #4fd1c7; }
+          25% { color: #e2e8f0; }
+          37.5% { color: #4fd1c7; text-shadow: 0 0 10px #4fd1c7, 0 0 20px #4fd1c7; }
+          50% { color: #e2e8f0; }
+          62.5% { color: #4fd1c7; text-shadow: 0 0 10px #4fd1c7, 0 0 20px #4fd1c7; }
+          75% { color: #e2e8f0; }
+          87.5% { color: #4fd1c7; text-shadow: 0 0 10px #4fd1c7, 0 0 20px #4fd1c7; }
+          100% { color: #e2e8f0; }
         }
+        
+        .thinking-letter {
+          animation: thinking-wave 2s ease-in-out infinite;
+        }
+        
+        .thinking-letter:nth-child(1) { animation-delay: 0s; }
+        .thinking-letter:nth-child(2) { animation-delay: 0.1s; }
+        .thinking-letter:nth-child(3) { animation-delay: 0.2s; }
+        .thinking-letter:nth-child(4) { animation-delay: 0.3s; }
+        .thinking-letter:nth-child(5) { animation-delay: 0.4s; }
+        .thinking-letter:nth-child(6) { animation-delay: 0.5s; }
+        .thinking-letter:nth-child(7) { animation-delay: 0.6s; }
+        .thinking-letter:nth-child(8) { animation-delay: 0.7s; }
       `;
       document.head.appendChild(style);
+    }
+  }
+
+  startDotsAnimation(messageId) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+    
+    const dotsElement = messageElement.querySelector('#thinking-dots');
+    if (!dotsElement) return;
+    
+    let dotCount = 3; // Start with 3 dots
+    
+    const animateDots = () => {
+      if (dotCount === 3) {
+        dotsElement.textContent = '...';
+        dotCount = 2;
+      } else if (dotCount === 2) {
+        dotsElement.textContent = '..';
+        dotCount = 1;
+      } else if (dotCount === 1) {
+        dotsElement.textContent = '.';
+        dotCount = 0;
+      } else {
+        dotsElement.textContent = '';
+        dotCount = 3;
+      }
+    };
+    
+    // Start animation
+    this.dotsInterval = setInterval(animateDots, 500);
+  }
+
+  stopDotsAnimation() {
+    if (this.dotsInterval) {
+      clearInterval(this.dotsInterval);
+      this.dotsInterval = null;
+    }
+  }
+
+  startStreamingDotsAnimation(messageId) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+    
+    const dotsElement = messageElement.querySelector('#streaming-dots');
+    if (!dotsElement) return;
+    
+    let dotCount = 3; // Start with 3 dots
+    
+    const animateDots = () => {
+      if (dotCount === 3) {
+        dotsElement.textContent = '...';
+        dotCount = 2;
+      } else if (dotCount === 2) {
+        dotsElement.textContent = '..';
+        dotCount = 1;
+      } else if (dotCount === 1) {
+        dotsElement.textContent = '.';
+        dotCount = 0;
+      } else {
+        dotsElement.textContent = '';
+        dotCount = 3;
+      }
+    };
+    
+    // Start animation
+    this.streamingDotsInterval = setInterval(animateDots, 500);
+  }
+
+  stopStreamingDotsAnimation() {
+    if (this.streamingDotsInterval) {
+      clearInterval(this.streamingDotsInterval);
+      this.streamingDotsInterval = null;
     }
   }
 
@@ -491,6 +582,9 @@ export class ChatMessages {
   hideTypingIndicator(messageId) {
     const messageElement = document.getElementById(messageId);
     if (!messageElement) return;
+    
+    // Stop dots animation
+    this.stopDotsAnimation();
     
     const bubble = messageElement.querySelector('div');
     if (!bubble) return;
@@ -577,7 +671,7 @@ export class ChatMessages {
     `;
     
     // Create message bubble
-    const messageBubble = this.createStreamingBubble();
+    const messageBubble = this.createStreamingBubble(messageId);
     messageContainer.appendChild(messageBubble);
     messagesWrapper.appendChild(messageContainer);
     
@@ -598,7 +692,7 @@ export class ChatMessages {
     return messageId;
   }
 
-  createStreamingBubble() {
+  createStreamingBubble(messageId) {
     const messageBubble = document.createElement('div');
     messageBubble.style.cssText = `
       max-width: 85%;
@@ -627,13 +721,15 @@ export class ChatMessages {
       color: #a1a1aa;
       font-size: 14px;
     `;
+    // Create animated "Thinking" text with individual letters
+    const thinkingText = 'Thinking';
+    const letters = thinkingText.split('').map((letter, index) => 
+      `<span class="thinking-letter" style="animation-delay: ${index * 0.1}s;">${letter}</span>`
+    ).join('');
+    
     streamingIndicator.innerHTML = `
-      <span>AI is typing</span>
-      <div style="display: flex; gap: 3px;">
-        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite;"></div>
-        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.2s;"></div>
-        <div class="typing-dot" style="width: 4px; height: 4px; background: #4fd1c7; border-radius: 50%; animation: typing-bounce 1.4s infinite 0.4s;"></div>
-      </div>
+      <span style="font-size: 14px; display: flex; color: #e2e8f0;">${letters}</span>
+      <span id="streaming-dots" style="color: #e2e8f0; font-size: 14px;">...</span>
     `;
     
     messageBubble.appendChild(streamingIndicator);
@@ -641,12 +737,18 @@ export class ChatMessages {
     // Add interaction handlers
     this.addBubbleInteractionHandlers(messageBubble);
     
+    // Start dots animation for streaming
+    this.startStreamingDotsAnimation(messageId);
+    
     return messageBubble;
   }
 
   updateStreamingMessage(messageId, content) {
     const messageElement = document.getElementById(messageId);
     if (!messageElement) return;
+    
+    // Stop streaming dots animation
+    this.stopStreamingDotsAnimation();
     
     const bubble = messageElement.querySelector('div');
     if (!bubble) return;
@@ -672,6 +774,9 @@ export class ChatMessages {
   finalizeStreamingMessage(messageId, finalContent) {
     const messageElement = document.getElementById(messageId);
     if (!messageElement) return;
+    
+    // Stop streaming dots animation
+    this.stopStreamingDotsAnimation();
     
     // Update with final content
     this.updateStreamingMessage(messageId, finalContent);
