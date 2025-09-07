@@ -27,6 +27,7 @@ export class ChatManager {
     this.workflowExtractor = new WorkflowExtractor();
     this.isInteracting = false;
     this.interactionTimeout = null;
+    this.isGenerationStopped = false;
     
     // Chat session management
     this.currentWorkflowId = null;
@@ -204,18 +205,24 @@ export class ChatManager {
     // Create message input
     const messageInput = this.createMessageInput();
     
-    // Create send button
+    // Create send button (initially hidden)
     const sendButton = this.createSendButton();
+    sendButton.style.display = 'flex';
+    
+    // Create loading button (initially hidden)
+    const loadingButton = this.createLoadingButton();
+    loadingButton.style.display = 'none';
     
     // Create hidden file input
     const fileInput = this.createFileInput();
     
     // Add event listeners
-    this.addInputEventListeners(inputWrapper, messageInput, sendButton, fileInput);
+    this.addInputEventListeners(inputWrapper, messageInput, sendButton, fileInput, loadingButton);
     
     // Add elements to wrapper
     inputWrapper.appendChild(messageInput);
     inputWrapper.appendChild(sendButton);
+    inputWrapper.appendChild(loadingButton);
     inputWrapper.appendChild(fileInput);
     
     return inputWrapper;
@@ -243,6 +250,7 @@ export class ChatManager {
 
   createSendButton() {
     const sendButton = document.createElement('button');
+    sendButton.id = '8pilot-send-button';
     sendButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1 20h12c2 0 4-2 4-4V2m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -263,6 +271,72 @@ export class ChatManager {
     `;
     
     return sendButton;
+  }
+
+  createLoadingButton() {
+    const loadingButton = document.createElement('button');
+    loadingButton.id = '8pilot-loading-button';
+    loadingButton.innerHTML = `
+      <div class="loading-square"></div>
+    `;
+    loadingButton.style.cssText = `
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      transition: all 0.2s ease;
+    `;
+
+    // Add CSS for loading animation
+    const style = document.createElement('style');
+    style.textContent = `
+      .loading-square {
+        width: 16px;
+        height: 16px;
+        background: #4fd1c7;
+        border-radius: 3px;
+        animation: loadingTransform 2s infinite ease-in-out;
+        transition: all 0.3s ease;
+      }
+      
+      @keyframes loadingTransform {
+        0% {
+          border-radius: 3px;
+          transform: rotate(0deg) scale(1);
+        }
+        25% {
+          border-radius: 50%;
+          transform: rotate(90deg) scale(1.1);
+        }
+        50% {
+          border-radius: 3px;
+          transform: rotate(180deg) scale(1);
+        }
+        75% {
+          border-radius: 8px;
+          transform: rotate(270deg) scale(0.9);
+        }
+        100% {
+          border-radius: 3px;
+          transform: rotate(360deg) scale(1);
+        }
+      }
+      
+      .loading-square:hover {
+        background: #ff4444;
+        animation-play-state: paused;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return loadingButton;
   }
 
   createFileInput() {
@@ -481,18 +555,26 @@ export class ChatManager {
     return attachmentsRight;
   }
 
-  addInputEventListeners(inputWrapper, messageInput, sendButton, fileInput) {
+  addInputEventListeners(inputWrapper, messageInput, sendButton, fileInput, loadingButton) {
     // Send button click handler
     sendButton.addEventListener('click', (e) => {
       e.stopPropagation();
       const message = messageInput.value.trim();
       if (message) {
         this.stopPlaceholderCycling();
+        this.startLoading();
         this.sendChatMessage(message);
         messageInput.value = '';
         messageInput.style.opacity = '1';
         messageInput.placeholder = 'Ask me anything about workflow...';
       }
+    });
+
+    // Loading button click handler (stop generation)
+    loadingButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.stopLoading();
+      this.stopGeneration();
     });
     
     // Enter key handler
@@ -502,6 +584,7 @@ export class ChatManager {
         const message = messageInput.value.trim();
         if (message) {
           this.stopPlaceholderCycling();
+          this.startLoading();
           this.sendChatMessage(message);
           messageInput.value = '';
           messageInput.style.opacity = '1';
@@ -882,6 +965,9 @@ export class ChatManager {
   async sendChatMessage(message) {
     console.log('Sending chat message:', message);
     
+    // Reset generation stopped flag
+    this.isGenerationStopped = false;
+    
     this.startInteraction();
     
     // Check API credentials first
@@ -928,6 +1014,11 @@ export class ChatManager {
         this.provider,
         apiKeyData,
         (chunk) => {
+          // Check if generation was stopped
+          if (this.isGenerationStopped) {
+            return;
+          }
+          
           if (chunk.chunk) {
             fullResponse += chunk.chunk;
             this.chatMessages.updateStreamingMessage(streamingMessageId, fullResponse);
@@ -938,12 +1029,18 @@ export class ChatManager {
         }
       );
       
-      // Finalize streaming message
-      this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
-      
-      // Save assistant response to local storage
-      if (this.currentWorkflowId && fullResponse) {
-        this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
+      // Check if generation was stopped before finalizing
+      if (!this.isGenerationStopped) {
+        // Finalize streaming message
+        this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
+        
+        // Save assistant response to local storage
+        if (this.currentWorkflowId && fullResponse) {
+          this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
+        }
+      } else {
+        // If stopped, just finalize with current content
+        this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
       }
       
     } catch (error) {
@@ -957,6 +1054,9 @@ export class ChatManager {
         this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', errorMessage, 'error');
       }
     }
+    
+    // Stop loading state
+    this.stopLoading();
     
     // Clear attachments after sending
     this.fileAttachment.clearAttachments();
@@ -997,5 +1097,40 @@ export class ChatManager {
   hide() {
     this.hideChatWindow();
     this.hideChatMessages();
+  }
+
+  // Loading state management
+  startLoading() {
+    const sendButton = document.getElementById('8pilot-send-button');
+    const loadingButton = document.getElementById('8pilot-loading-button');
+    
+    if (sendButton && loadingButton) {
+      sendButton.style.display = 'none';
+      loadingButton.style.display = 'flex';
+    }
+  }
+
+  stopLoading() {
+    const sendButton = document.getElementById('8pilot-send-button');
+    const loadingButton = document.getElementById('8pilot-loading-button');
+    
+    if (sendButton && loadingButton) {
+      sendButton.style.display = 'flex';
+      loadingButton.style.display = 'none';
+    }
+  }
+
+  stopGeneration() {
+    // Set flag to stop generation
+    this.isGenerationStopped = true;
+    
+    // Stop any ongoing generation
+    if (this.currentGenerationAbortController) {
+      this.currentGenerationAbortController.abort();
+      this.currentGenerationAbortController = null;
+    }
+    
+    // Stop loading state
+    this.stopLoading();
   }
 }

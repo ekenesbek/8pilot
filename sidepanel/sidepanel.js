@@ -1423,6 +1423,7 @@ function setupEventListeners() {
 
   // Chat functionality
   document.getElementById('send-btn').addEventListener('click', sendMessage);
+  document.getElementById('loading-btn').addEventListener('click', stopGeneration);
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -1727,6 +1728,12 @@ async function sendMessage() {
   
   if (!message) return;
   
+  // Reset generation stopped flag
+  window.isGenerationStopped = false;
+  
+  // Start loading state
+  startLoading();
+  
   // Clear input
   input.value = '';
   input.style.height = '60px';
@@ -1803,6 +1810,9 @@ async function sendMessage() {
     
     addMessage('assistant', errorMessage);
   }
+  
+  // Stop loading state
+  stopLoading();
 }
 
 // Call AI API with streaming
@@ -3840,4 +3850,39 @@ function hideN8nConnectedModal() {
   if (modal) {
     modal.classList.add('hidden');
   }
+}
+
+// Loading state management
+function startLoading() {
+  const sendBtn = document.getElementById('send-btn');
+  const loadingBtn = document.getElementById('loading-btn');
+  
+  if (sendBtn && loadingBtn) {
+    sendBtn.style.display = 'none';
+    loadingBtn.style.display = 'flex';
+  }
+}
+
+function stopLoading() {
+  const sendBtn = document.getElementById('send-btn');
+  const loadingBtn = document.getElementById('loading-btn');
+  
+  if (sendBtn && loadingBtn) {
+    sendBtn.style.display = 'flex';
+    loadingBtn.style.display = 'none';
+  }
+}
+
+function stopGeneration() {
+  // Set flag to stop generation
+  window.isGenerationStopped = true;
+  
+  // Stop any ongoing generation
+  if (window.currentGenerationAbortController) {
+    window.currentGenerationAbortController.abort();
+    window.currentGenerationAbortController = null;
+  }
+  
+  // Stop loading state
+  stopLoading();
 }

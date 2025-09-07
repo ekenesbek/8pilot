@@ -35,10 +35,15 @@ class ChatManager {
   setupEventListeners() {
     // Chat functionality
     const sendBtn = document.getElementById('send-btn');
+    const loadingBtn = document.getElementById('loading-btn');
     const chatInput = document.getElementById('chat-input');
     
     if (sendBtn) {
       sendBtn.addEventListener('click', () => this.sendMessage());
+    }
+    
+    if (loadingBtn) {
+      loadingBtn.addEventListener('click', () => this.stopGeneration());
     }
     
     if (chatInput) {
@@ -233,6 +238,12 @@ class ChatManager {
     
     if (!message) return;
     
+    // Reset generation stopped flag
+    window.isGenerationStopped = false;
+    
+    // Start loading state
+    this.startLoading();
+    
     // Clear input
     input.value = '';
     input.style.height = '60px';
@@ -313,6 +324,9 @@ class ChatManager {
       
       this.addMessage('assistant', errorMessage);
     }
+    
+    // Stop loading state
+    this.stopLoading();
   }
 
   // Call AI API with streaming
@@ -1164,6 +1178,41 @@ class ChatManager {
   // Get all workflow chats
   getAllWorkflowChats() {
     return allWorkflowChats;
+  }
+
+  // Loading state management
+  startLoading() {
+    const sendBtn = document.getElementById('send-btn');
+    const loadingBtn = document.getElementById('loading-btn');
+    
+    if (sendBtn && loadingBtn) {
+      sendBtn.style.display = 'none';
+      loadingBtn.style.display = 'flex';
+    }
+  }
+
+  stopLoading() {
+    const sendBtn = document.getElementById('send-btn');
+    const loadingBtn = document.getElementById('loading-btn');
+    
+    if (sendBtn && loadingBtn) {
+      sendBtn.style.display = 'flex';
+      loadingBtn.style.display = 'none';
+    }
+  }
+
+  stopGeneration() {
+    // Set flag to stop generation
+    window.isGenerationStopped = true;
+    
+    // Stop any ongoing generation
+    if (window.currentGenerationAbortController) {
+      window.currentGenerationAbortController.abort();
+      window.currentGenerationAbortController = null;
+    }
+    
+    // Stop loading state
+    this.stopLoading();
   }
 }
 
