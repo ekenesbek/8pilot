@@ -86,9 +86,6 @@ export class ChatManager {
       case 'chat':
         this.toggleChatWindow();
         break;
-      case 'history':
-        chrome.runtime.sendMessage({ action: 'openHistory' });
-        break;
       default:
         console.log('Unknown menu action:', action);
     }

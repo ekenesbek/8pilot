@@ -9,7 +9,7 @@ let modulesLoaded = false;
 let pendingActivation = false;
 
 // Import components with error handling
-let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, BackendApiService, ApiKeyManager, ChatStorageService;
+let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, ChatHistory, StateManager, BackendApiService, ApiKeyManager, ChatStorageService;
 
 // Load modules asynchronously
 (async function loadModules() {
@@ -18,6 +18,7 @@ let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, B
     const activationModule = await import('./components/activationIcon.js');
     const menuModule = await import('./components/menuManager.js');
     const chatModule = await import('./components/chatManager.js');
+    const chatHistoryModule = await import('./components/chatHistory.js');
     const stateModule = await import('./utils/stateManager.js');
     const backendModule = await import('./services/backendApiService.js');
     const apiKeyModule = await import('./components/apiKeyManager.js');
@@ -27,6 +28,7 @@ let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, B
     ActivationIcon = activationModule.ActivationIcon;
     MenuManager = menuModule.MenuManager;
     ChatManager = chatModule.ChatManager;
+    ChatHistory = chatHistoryModule.ChatHistory;
     StateManager = stateModule.StateManager;
     BackendApiService = backendModule.BackendApiService;
     ApiKeyManager = apiKeyModule.ApiKeyManager;
@@ -64,12 +66,14 @@ function initializeExtension() {
     const activationIcon = new ActivationIcon(stateManager);
     const menuManager = new MenuManager(stateManager);
     const chatManager = new ChatManager(stateManager, backendApiService);
+    const chatHistory = new ChatHistory(chatManager, backendApiService);
 
     // Store references for deactivation
     components = {
       activationIcon,
       menuManager,
       chatManager,
+      chatHistory,
       workflowExtractor,
       backendApiService,
       apiKeyManager
@@ -111,6 +115,7 @@ function initializeExtension() {
         activationIcon.hide();
         menuManager.hide();
         chatManager.hide();
+        chatHistory.hide();
         
         sendResponse({ status: 'deactivated' });
       } else if (request.action === 'getWorkflowData') {
@@ -193,17 +198,20 @@ function checkN8nPageStatus() {
     components.activationIcon.hide();
     components.menuManager.hide();
     components.chatManager.hide();
+    components.chatHistory.hide();
   } else if (isN8nPage && !globalActivationState) {
     // Show only activation icon on n8n page when not activated
     components.activationIcon.show();
     components.menuManager.hide();
     components.chatManager.hide();
+    components.chatHistory.hide();
   } else if (!globalActivationState) {
     // Hide all components when extension is deactivated, regardless of page type
     console.log('Extension deactivated, hiding all components');
     components.activationIcon.hide();
     components.menuManager.hide();
     components.chatManager.hide();
+    components.chatHistory.hide();
   }
 }
 
@@ -264,6 +272,7 @@ function setupGlobalActivationListener() {
           components.activationIcon.hide();
           components.menuManager.hide();
           components.chatManager.hide();
+          components.chatHistory.hide();
         } else {
           // If activated, check page status
           checkN8nPageStatus();
@@ -298,6 +307,7 @@ async function loadGlobalActivationState() {
       components.activationIcon.hide();
       components.menuManager.hide();
       components.chatManager.hide();
+      components.chatHistory.hide();
     } else {
       checkN8nPageStatus();
     }
@@ -309,6 +319,7 @@ async function loadGlobalActivationState() {
       components.activationIcon.hide();
       components.menuManager.hide();
       components.chatManager.hide();
+      components.chatHistory.hide();
     }
   }
 }
