@@ -1029,18 +1029,12 @@ export class ChatManager {
         }
       );
       
-      // Check if generation was stopped before finalizing
-      if (!this.isGenerationStopped) {
-        // Finalize streaming message
-        this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
-        
-        // Save assistant response to local storage
-        if (this.currentWorkflowId && fullResponse) {
-          this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
-        }
-      } else {
-        // If stopped, just finalize with current content
-        this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
+      // Always finalize streaming message with current content
+      this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
+      
+      // Save assistant response to local storage (even if stopped)
+      if (this.currentWorkflowId && fullResponse) {
+        this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
       }
       
     } catch (error) {

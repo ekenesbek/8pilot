@@ -1854,6 +1854,11 @@ async function callAI(message) {
       
       try {
         while (true) {
+          // Check if generation was stopped
+          if (window.isGenerationStopped) {
+            break;
+          }
+          
           const { done, value } = await reader.read();
           if (done) break;
           
