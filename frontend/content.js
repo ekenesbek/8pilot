@@ -9,7 +9,7 @@ let modulesLoaded = false;
 let pendingActivation = false;
 
 // Import components with error handling
-let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, BackendApiService, ApiKeyManager;
+let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, BackendApiService, ApiKeyManager, ChatStorageService;
 
 // Load modules asynchronously
 (async function loadModules() {
@@ -21,6 +21,7 @@ let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, B
     const stateModule = await import('./utils/stateManager.js');
     const backendModule = await import('./services/backendApiService.js');
     const apiKeyModule = await import('./components/apiKeyManager.js');
+    const chatStorageModule = await import('./services/chatStorageService.js');
     
     WorkflowExtractor = workflowModule.WorkflowExtractor;
     ActivationIcon = activationModule.ActivationIcon;
@@ -29,6 +30,7 @@ let WorkflowExtractor, ActivationIcon, MenuManager, ChatManager, StateManager, B
     StateManager = stateModule.StateManager;
     BackendApiService = backendModule.BackendApiService;
     ApiKeyManager = apiKeyModule.ApiKeyManager;
+    ChatStorageService = chatStorageModule.ChatStorageService;
     
     console.log('All modules loaded successfully');
     modulesLoaded = true;

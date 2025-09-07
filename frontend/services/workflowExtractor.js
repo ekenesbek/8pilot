@@ -82,18 +82,131 @@ export class WorkflowExtractor {
   }
 
   extractWorkflowId() {
-    // Try to extract workflow ID from URL or page
-    const urlMatch = window.location.href.match(/workflow\/(\d+)/);
-    if (urlMatch) {
-      return urlMatch[1];
+    // Try multiple methods to extract workflow ID
+    
+    // Method 1: URL pattern matching
+    const urlPatterns = [
+      /workflow\/(\d+)/,
+      /workflow\/([a-f0-9-]+)/,
+      /workflow\/([A-Za-z0-9]+)/,  // Add pattern for alphanumeric IDs like BOyvo1YWSwLCbzOf
+      /\/w\/(\d+)/,
+      /\/w\/([a-f0-9-]+)/,
+      /\/w\/([A-Za-z0-9]+)/,       // Add pattern for alphanumeric IDs
+      /workflowId=(\d+)/,
+      /workflowId=([a-f0-9-]+)/,
+      /workflowId=([A-Za-z0-9]+)/  // Add pattern for alphanumeric IDs
+    ];
+    
+    for (const pattern of urlPatterns) {
+      const match = window.location.href.match(pattern);
+      if (match) {
+        const workflowId = match[1];
+        console.log('Workflow ID extracted from URL:', workflowId);
+        return workflowId;
+      }
     }
     
-    // Try to get from page data
-    const workflowElement = document.querySelector('[data-workflow-id]');
-    if (workflowElement) {
-      return workflowElement.getAttribute('data-workflow-id');
+    // Additional check for case-insensitive workflow ID in URL
+    const workflowMatch = window.location.href.match(/workflow\/([A-Za-z0-9]+)/i);
+    if (workflowMatch) {
+      const workflowId = workflowMatch[1];
+      console.log('Workflow ID extracted from URL (case-insensitive):', workflowId);
+      return workflowId;
     }
     
+    // Method 2: Page data attributes
+    const dataSelectors = [
+      '[data-workflow-id]',
+      '[data-workflowid]',
+      '[data-workflow]',
+      '.workflow-id',
+      '.workflowid'
+    ];
+    
+    for (const selector of dataSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const id = element.getAttribute('data-workflow-id') || 
+                  element.getAttribute('data-workflowid') ||
+                  element.getAttribute('data-workflow') ||
+                  element.textContent?.trim();
+        if (id) {
+          console.log('Workflow ID extracted from element:', id);
+          return id;
+        }
+      }
+    }
+    
+    // Method 3: Global variables (n8n often exposes workflow data)
+    if (typeof window.n8n !== 'undefined' && window.n8n.workflow) {
+      const workflowId = window.n8n.workflow.id || window.n8n.workflow.workflowId;
+      if (workflowId) {
+        console.log('Workflow ID extracted from n8n global:', workflowId);
+        return workflowId;
+      }
+    }
+    
+    // Method 4: Check for workflow data in meta tags
+    const metaWorkflowId = document.querySelector('meta[name="workflow-id"]')?.content ||
+                          document.querySelector('meta[property="workflow:id"]')?.content;
+    if (metaWorkflowId) {
+      console.log('Workflow ID extracted from meta tag:', metaWorkflowId);
+      return metaWorkflowId;
+    }
+    
+    // Method 5: Check for workflow data in script tags
+    const scriptTags = document.querySelectorAll('script');
+    for (const script of scriptTags) {
+      if (script.textContent) {
+        const workflowMatch = script.textContent.match(/workflowId["\s]*[:=]["\s]*["']?(\d+)["']?/);
+        if (workflowMatch) {
+          console.log('Workflow ID extracted from script:', workflowMatch[1]);
+          return workflowMatch[1];
+        }
+      }
+    }
+    
+    // Method 6: Check for workflow data in localStorage/sessionStorage
+    try {
+      const storedWorkflowId = localStorage.getItem('n8n-workflow-id') || 
+                              sessionStorage.getItem('n8n-workflow-id') ||
+                              localStorage.getItem('workflow-id') ||
+                              sessionStorage.getItem('workflow-id');
+      if (storedWorkflowId) {
+        console.log('Workflow ID extracted from storage:', storedWorkflowId);
+        return storedWorkflowId;
+      }
+    } catch (error) {
+      console.warn('Error accessing storage for workflow ID:', error);
+    }
+    
+    // Method 7: Generate a unique ID based on URL for new workflows
+    // Only generate if we're on n8n page but couldn't extract a real workflow ID
+    if (this.isN8nPage()) {
+      // Check if this is a new workflow page (no existing workflow ID)
+      const isNewWorkflow = window.location.pathname.includes('/workflow/new') || 
+                           window.location.pathname.includes('/workflow/create') ||
+                           window.location.pathname === '/workflow' ||
+                           window.location.pathname === '/';
+      
+      if (isNewWorkflow) {
+        const urlHash = btoa(window.location.href).substring(0, 8);
+        const timestamp = Date.now().toString(36);
+        const generatedId = `new_${urlHash}_${timestamp}`;
+        console.log('Generated workflow ID for new workflow:', generatedId);
+        return generatedId;
+      } else {
+        // If we're on a workflow page but couldn't extract ID, try to get it from pathname
+        const pathMatch = window.location.pathname.match(/workflow\/([^\/\?]+)/);
+        if (pathMatch) {
+          const workflowId = pathMatch[1];
+          console.log('Workflow ID extracted from pathname:', workflowId);
+          return workflowId;
+        }
+      }
+    }
+    
+    console.log('No workflow ID found');
     return null;
   }
 

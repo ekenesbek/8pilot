@@ -5,6 +5,8 @@ import { FileAttachment } from './fileAttachment.js';
 import { ChatMessages } from './chatMessages.js';
 import { OpenAIService } from '../services/openaiService.js';
 import { ApiKeyManager } from './apiKeyManager.js';
+import { ChatStorageService } from '../services/chatStorageService.js';
+import { WorkflowExtractor } from '../services/workflowExtractor.js';
 
 export class ChatManager {
   constructor(stateManager, backendApiService) {
@@ -21,6 +23,8 @@ export class ChatManager {
     this.chatMessages = new ChatMessages(this);
     this.openaiService = new OpenAIService(this.chatMessages);
     this.apiKeyManager = new ApiKeyManager();
+    this.chatStorage = new ChatStorageService();
+    this.workflowExtractor = new WorkflowExtractor();
     this.isInteracting = false;
     this.interactionTimeout = null;
     
@@ -42,6 +46,9 @@ export class ChatManager {
     window.addEventListener('8pilot-api-credentials-updated', (event) => {
       this.setApiCredentials(event.detail.apiKey, event.detail.provider);
     });
+    
+    // Initialize chat history for current workflow
+    this.initializeChatHistory();
     
     // Listen for storage changes from popup
     chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -535,13 +542,16 @@ export class ChatManager {
     });
     
     // Focus effects - показываем кнопки и чат при фокусе
-    messageInput.addEventListener('focus', () => {
+    messageInput.addEventListener('focus', async () => {
       inputWrapper.style.borderColor = '#4fd1c7';
       inputWrapper.style.boxShadow = '0 4px 20px rgba(79, 209, 199, 0.8)';
       this.startPlaceholderCycling();
       this.showButtons();
       this.showChatMessages();
       this.startInteraction();
+      
+      // Load chat history when focusing on input
+      await this.loadChatHistoryForDisplay();
     });
     
     messageInput.addEventListener('blur', () => {
@@ -553,9 +563,10 @@ export class ChatManager {
       setTimeout(() => {
         if (!this.isInteracting) {
           this.hideButtons();
+          // Hide chat messages after a delay if not interacting
           this.hideChatMessages();
         }
-      }, 150);
+      }, 300);
     });
     
     // Prevent click propagation
@@ -563,6 +574,21 @@ export class ChatManager {
       e.stopPropagation();
       this.startInteraction();
     });
+
+    // Add click outside handler to hide chat messages
+    document.addEventListener('click', (e) => {
+      const chatContainer = document.getElementById('8pilot-chat-container');
+      const messagesContainer = document.getElementById('8pilot-chat-messages');
+      
+      if (chatContainer && !chatContainer.contains(e.target) && 
+          messagesContainer && !messagesContainer.contains(e.target)) {
+        this.hideChatMessages();
+        this.hideButtons();
+      }
+    });
+
+    // Add hover handlers for chat messages container
+    this.setupChatMessagesHoverHandlers();
   }
 
   // Placeholder cycling methods
@@ -685,10 +711,25 @@ export class ChatManager {
   // Workflow and session management
   async updateWorkflowContext() {
     try {
-      // Get current workflow ID from content script
-      const response = await chrome.runtime.sendMessage({ action: 'getWorkflowId' });
-      if (response.status === 'success' && response.data.workflowId) {
-        this.currentWorkflowId = response.data.workflowId;
+      // First try to get workflow ID from content script
+      let workflowId = null;
+      try {
+        const response = await chrome.runtime.sendMessage({ action: 'getWorkflowId' });
+        if (response.status === 'success' && response.data.workflowId) {
+          workflowId = response.data.workflowId;
+        }
+      } catch (error) {
+        console.log('Content script not available, using local extraction');
+      }
+      
+      // If content script didn't provide workflow ID, try local extraction
+      if (!workflowId) {
+        workflowId = this.workflowExtractor.extractWorkflowId();
+      }
+      
+      if (workflowId) {
+        this.currentWorkflowId = workflowId;
+        this.chatStorage.setCurrentWorkflowId(workflowId);
         console.log('Updated workflow ID:', this.currentWorkflowId);
         
         // Load existing chat history for this workflow
@@ -703,27 +744,93 @@ export class ChatManager {
   }
 
   async loadChatHistory() {
-    if (!this.currentWorkflowId || !this.backendApiService) return;
+    if (!this.currentWorkflowId) return;
     
     try {
-      const history = await this.backendApiService.getChatHistory(this.currentWorkflowId);
-      if (history && history.sessions && history.sessions.length > 0) {
-        // Load the latest session
-        const latestSession = history.sessions[0];
-        this.currentSessionId = latestSession.session_id;
-        
-        // Clear current messages and load history
+      // Load from local storage first (for users without registration)
+      const localChat = this.chatStorage.getChat(this.currentWorkflowId);
+      if (localChat && localChat.messages.length > 0) {
+        // Clear current messages and load from local storage
         this.chatMessages.clearMessages();
         
-        // Add messages from history
-        for (const message of latestSession.messages) {
+        // Add messages from local storage
+        for (const message of localChat.messages) {
           this.chatMessages.addMessage(message.role, message.content, false);
         }
         
-        console.log('Loaded chat history for workflow:', this.currentWorkflowId);
+        console.log('Loaded local chat history for workflow:', this.currentWorkflowId, localChat.messages.length, 'messages');
+        return;
+      }
+      
+      // If no local chat, try backend API (for registered users)
+      if (this.backendApiService) {
+        const history = await this.backendApiService.getChatHistory(this.currentWorkflowId);
+        if (history && history.sessions && history.sessions.length > 0) {
+          // Load the latest session
+          const latestSession = history.sessions[0];
+          this.currentSessionId = latestSession.session_id;
+          
+          // Clear current messages and load history
+          this.chatMessages.clearMessages();
+          
+          // Add messages from history
+          for (const message of latestSession.messages) {
+            this.chatMessages.addMessage(message.role, message.content, false);
+          }
+          
+          console.log('Loaded backend chat history for workflow:', this.currentWorkflowId);
+        }
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
+    }
+  }
+
+  // Initialize chat history for current workflow
+  async initializeChatHistory() {
+    try {
+      // Update workflow context first
+      await this.updateWorkflowContext();
+      
+      // Load and display chat history if we have a workflow ID
+      if (this.currentWorkflowId) {
+        await this.chatMessages.loadAndDisplayChatHistory(this.currentWorkflowId);
+        console.log('Initialized chat history for workflow:', this.currentWorkflowId);
+      }
+    } catch (error) {
+      console.error('Error initializing chat history:', error);
+    }
+  }
+
+  // Setup hover handlers for chat messages container
+  setupChatMessagesHoverHandlers() {
+    // Use event delegation for dynamically created elements
+    document.addEventListener('mouseenter', (e) => {
+      const messagesContainer = document.getElementById('8pilot-chat-messages');
+      if (messagesContainer && messagesContainer.contains(e.target)) {
+        this.startInteraction();
+      }
+    });
+
+    document.addEventListener('mouseleave', (e) => {
+      const messagesContainer = document.getElementById('8pilot-chat-messages');
+      if (messagesContainer && messagesContainer.contains(e.target)) {
+        this.endInteraction();
+      }
+    });
+  }
+
+  // Load chat history specifically for display when focusing on input
+  async loadChatHistoryForDisplay() {
+    // Update workflow context first
+    await this.updateWorkflowContext();
+    
+    // Load and display chat history if we have a workflow ID
+    if (this.currentWorkflowId) {
+      await this.chatMessages.loadAndDisplayChatHistory(this.currentWorkflowId);
+    } else {
+      // Show empty state if no workflow ID
+      this.chatMessages.showEmptyState('unknown');
     }
   }
 
@@ -795,9 +902,13 @@ export class ChatManager {
     // Add user message to chat
     this.chatMessages.addMessage('user', message);
     
-    // Add loading message
-    const loadingMessageId = this.chatMessages.addMessage('assistant', '');
-    this.chatMessages.showTypingIndicator(loadingMessageId);
+    // Save user message to local storage
+    if (this.currentWorkflowId) {
+      this.chatStorage.addMessage(this.currentWorkflowId, 'user', message);
+    }
+    
+    // Create streaming message element
+    const streamingMessageId = this.chatMessages.addStreamingMessage();
     
     try {
       // Prepare API key based on provider
@@ -808,26 +919,43 @@ export class ChatManager {
         apiKeyData.anthropic_api_key = this.apiKey;
       }
       
-      // Send to backend API
-      const response = await this.backendApiService.sendMessage(
+      // Use streaming API
+      let fullResponse = '';
+      await this.backendApiService.streamMessage(
         message,
         this.currentWorkflowId || 'unknown',
         this.currentSessionId,
         this.provider,
-        apiKeyData
+        apiKeyData,
+        (chunk) => {
+          if (chunk.chunk) {
+            fullResponse += chunk.chunk;
+            this.chatMessages.updateStreamingMessage(streamingMessageId, fullResponse);
+          }
+          if (chunk.session_id) {
+            this.currentSessionId = chunk.session_id;
+          }
+        }
       );
       
-      // Update session ID
-      this.currentSessionId = response.session_id;
+      // Finalize streaming message
+      this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
       
-      // Update the loading message with the response
-      this.chatMessages.updateMessage(loadingMessageId, response.message);
-      this.chatMessages.hideTypingIndicator(loadingMessageId);
+      // Save assistant response to local storage
+      if (this.currentWorkflowId && fullResponse) {
+        this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
+      }
       
     } catch (error) {
       console.error('Error sending message to backend:', error);
-      this.chatMessages.updateMessage(loadingMessageId, `Error: ${error.message}`);
-      this.chatMessages.hideTypingIndicator(loadingMessageId);
+      const errorMessage = `Error: ${error.message}`;
+      this.chatMessages.updateStreamingMessage(streamingMessageId, errorMessage);
+      this.chatMessages.finalizeStreamingMessage(streamingMessageId, errorMessage);
+      
+      // Save error message to local storage
+      if (this.currentWorkflowId) {
+        this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', errorMessage, 'error');
+      }
     }
     
     // Clear attachments after sending

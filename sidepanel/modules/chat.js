@@ -1,9 +1,15 @@
 // sidepanel/modules/chat.js - Chat Management Module
 
+// Import ChatStorageService
+import { ChatStorageService } from '../../frontend/services/chatStorageService.js';
+import { WorkflowExtractor } from '../../frontend/services/workflowExtractor.js';
+
 // Chat storage - workflow-specific
 let currentWorkflowId = null;
 let allWorkflowChats = {};
 let chatMemory = [];
+let chatStorage = null;
+let workflowExtractor = null;
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -18,6 +24,10 @@ class ChatManager {
   }
 
   init() {
+    // Initialize services
+    chatStorage = new ChatStorageService();
+    workflowExtractor = new WorkflowExtractor();
+    
     this.loadChatStorage();
     this.setupEventListeners();
   }
@@ -91,22 +101,19 @@ class ChatManager {
     if (!workflowId) return;
     
     currentWorkflowId = workflowId;
+    chatStorage.setCurrentWorkflowId(workflowId);
     
-    if (allWorkflowChats[workflowId]) {
-      chatMemory = allWorkflowChats[workflowId].messages || [];
+    // Load from ChatStorageService
+    const chat = chatStorage.getChat(workflowId);
+    if (chat && chat.messages.length > 0) {
+      chatMemory = chat.messages || [];
       console.log(`Loaded ${chatMemory.length} messages for workflow:`, workflowId);
       
       // Show notification about loaded chat
-      const workflowName = allWorkflowChats[workflowId].workflowName || workflowId;
+      const workflowName = chat.workflowName || workflowId;
       this.showToast(`Loaded chat for: ${workflowName}`, 'info');
     } else {
       chatMemory = [];
-      allWorkflowChats[workflowId] = {
-        messages: [],
-        workflowName: workflowId === 'new_workflow' ? 'New Workflow' : 'Unknown Workflow',
-        lastActivity: Date.now(),
-        createdAt: Date.now()
-      };
       console.log('Created new chat for workflow:', workflowId);
       
       // Show notification about new chat
@@ -121,6 +128,18 @@ class ChatManager {
   saveCurrentChat() {
     if (!currentWorkflowId) return;
     
+    // Save to ChatStorageService
+    if (chatStorage) {
+      // Update messages in chat storage
+      const chat = chatStorage.getChat(currentWorkflowId);
+      chat.messages = chatMemory;
+      chat.lastActivity = Date.now();
+      
+      // Save to localStorage
+      chatStorage.saveToStorage();
+    }
+    
+    // Also maintain legacy storage for compatibility
     allWorkflowChats[currentWorkflowId] = {
       ...allWorkflowChats[currentWorkflowId],
       messages: chatMemory,
@@ -144,18 +163,67 @@ class ChatManager {
     // Clear current messages
     messagesArea.innerHTML = '';
     
+    // Add workflow header
+    this.addWorkflowHeader(currentWorkflowId);
+    
     // Restore messages from memory
     chatMemory.forEach(message => {
       this.addMessageToUI(message.role === 'user' ? 'user' : 'assistant', message.content, false);
     });
     
-    // Add welcome message if no history
-    if (chatMemory.length === 0) {
-      this.addWelcomeMessage();
-    }
+    // Don't add welcome message - keep chat clean
+    // if (chatMemory.length === 0) {
+    //   this.addWelcomeMessage();
+    // }
     
     // Scroll to bottom
     messagesArea.scrollTop = messagesArea.scrollHeight;
+  }
+
+  // Add workflow header
+  addWorkflowHeader(workflowId) {
+    const messagesArea = document.getElementById('chat-messages');
+    if (!messagesArea || !workflowId) return;
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'workflow-header';
+    headerDiv.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      background: rgba(79, 209, 199, 0.1);
+      border: 1px solid rgba(79, 209, 199, 0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #4fd1c7;
+    `;
+
+    const workflowName = this.getWorkflowDisplayName(workflowId);
+    headerDiv.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Chat for: ${workflowName}</span>
+    `;
+
+    messagesArea.appendChild(headerDiv);
+  }
+
+  // Get workflow display name
+  getWorkflowDisplayName(workflowId) {
+    if (!workflowId) return 'Unknown Workflow';
+    
+    if (workflowId.startsWith('new_')) {
+      return 'New Workflow';
+    }
+    
+    if (workflowId === 'default' || workflowId === 'unknown') {
+      return 'Current Workflow';
+    }
+    
+    return `Workflow ${workflowId}`;
   }
 
   // Send message with streaming
@@ -404,16 +472,23 @@ class ChatManager {
   addMessage(role, content, messageType = 'normal', saveToHistory = true) {
     this.addMessageToUI(role, content, messageType, saveToHistory);
     
-    if (saveToHistory && window.settings?.saveChatHistory) {
-      // Add to current chat
-      chatMemory.push({
+    if (saveToHistory) {
+      // Add to current chat memory
+      const message = {
         role: role,
         content: content,
         type: messageType,
         timestamp: Date.now()
-      });
+      };
       
-      // Update workflow chat
+      chatMemory.push(message);
+      
+      // Save to ChatStorageService
+      if (currentWorkflowId && chatStorage) {
+        chatStorage.addMessage(currentWorkflowId, role, content, messageType);
+      }
+      
+      // Update workflow chat (legacy)
       if (currentWorkflowId && allWorkflowChats[currentWorkflowId]) {
         allWorkflowChats[currentWorkflowId].messages = chatMemory;
         allWorkflowChats[currentWorkflowId].lastActivity = Date.now();
