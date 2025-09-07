@@ -169,28 +169,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Handle deactivation from popup
   if (request.action === 'deactivateExtension') {
-    console.log('Deactivate request received');
+    console.log('Deactivate request received - handled by popup directly');
     
-    // Get current active tab
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        const tab = tabs[0];
-        
-        // Send deactivation message to content script
-        chrome.tabs.sendMessage(tab.id, { action: 'deactivateExtension' }, (response) => {
-          console.log('Content script deactivation response:', response);
-        });
-        
-        // Remove activation state from storage
-        chrome.storage.local.remove([`activated_${tab.id}`]);
-        
-        sendResponse({ status: 'deactivated', message: 'Extension deactivated successfully' });
-      } else {
-        sendResponse({ status: 'error', message: 'No active tab found' });
-      }
-    });
-    
-    return true; // Keep message channel open for async response
+    // The popup handles sending messages to all tabs directly
+    // We just need to acknowledge the request
+    sendResponse({ status: 'deactivated', message: 'Extension deactivated successfully' });
+    return true;
   }
 
   // Handle workflow data requests from side panel

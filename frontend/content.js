@@ -192,10 +192,18 @@ function checkN8nPageStatus() {
     console.log('Left n8n page, hiding UI');
     components.activationIcon.hide();
     components.menuManager.hide();
+    components.chatManager.hide();
   } else if (isN8nPage && !globalActivationState) {
     // Show only activation icon on n8n page when not activated
     components.activationIcon.show();
     components.menuManager.hide();
+    components.chatManager.hide();
+  } else if (!globalActivationState) {
+    // Hide all components when extension is deactivated, regardless of page type
+    console.log('Extension deactivated, hiding all components');
+    components.activationIcon.hide();
+    components.menuManager.hide();
+    components.chatManager.hide();
   }
 }
 
@@ -247,8 +255,19 @@ function setupGlobalActivationListener() {
     if (namespace === 'local' && changes.globalActivationState) {
       const newState = changes.globalActivationState.newValue;
       if (newState !== globalActivationState) {
+        console.log('Global activation state changed:', { from: globalActivationState, to: newState });
         globalActivationState = newState;
-        checkN8nPageStatus();
+        
+        // If deactivated, immediately hide all components
+        if (!newState && components) {
+          console.log('Extension deactivated via storage change, hiding all components');
+          components.activationIcon.hide();
+          components.menuManager.hide();
+          components.chatManager.hide();
+        } else {
+          // If activated, check page status
+          checkN8nPageStatus();
+        }
       }
     }
   });
@@ -271,9 +290,26 @@ async function loadGlobalActivationState() {
   try {
     const result = await chrome.storage.local.get(['globalActivationState']);
     globalActivationState = result.globalActivationState || false;
-    checkN8nPageStatus();
+    console.log('Loaded global activation state:', globalActivationState);
+    
+    // If deactivated, ensure all components are hidden
+    if (!globalActivationState && components) {
+      console.log('Extension is deactivated, hiding all components on load');
+      components.activationIcon.hide();
+      components.menuManager.hide();
+      components.chatManager.hide();
+    } else {
+      checkN8nPageStatus();
+    }
   } catch (error) {
     console.error('Failed to load global activation state:', error);
+    // Default to deactivated state on error
+    globalActivationState = false;
+    if (components) {
+      components.activationIcon.hide();
+      components.menuManager.hide();
+      components.chatManager.hide();
+    }
   }
 }
 
