@@ -156,6 +156,7 @@ export class WorkflowJsonBox {
 
   createContent(jsonContent) {
     const content = document.createElement('div');
+    content.id = this.jsonContentId;
     content.className = 'json-box-content';
     content.style.cssText = `
       padding: 16px;
@@ -298,6 +299,9 @@ export class WorkflowJsonBox {
       const parsed = JSON.parse(jsonString);
       const formatted = JSON.stringify(parsed, null, 2);
       
+      // Store the original formatted JSON for copying
+      this.originalJsonContent = formatted;
+      
       // Basic syntax highlighting
       return formatted
         .replace(/(".*?")\s*:/g, '<span style="color: #4fd1c7;">$1</span>:')
@@ -307,6 +311,7 @@ export class WorkflowJsonBox {
         .replace(/([{}[\]])/g, '<span style="color: #a1a1aa;">$1</span>');
     } catch (error) {
       // If JSON is invalid, return as plain text
+      this.originalJsonContent = jsonString;
       return jsonString;
     }
   }
@@ -372,10 +377,15 @@ export class WorkflowJsonBox {
   }
 
   copyToClipboard() {
-    const content = document.getElementById(this.jsonContentId);
-    if (!content) return;
+    // Use the stored original JSON content for copying
+    const jsonText = this.originalJsonContent;
     
-    const jsonText = content.textContent || content.innerText;
+    if (!jsonText || jsonText.trim() === '') {
+      console.warn('No JSON content to copy');
+      return;
+    }
+    
+    console.log('Copying JSON content:', jsonText.substring(0, 100) + '...');
     
     // Show loading state
     const copyButton = document.querySelector('.copy-button');
@@ -396,6 +406,7 @@ export class WorkflowJsonBox {
     // Try modern clipboard API first
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(jsonText).then(() => {
+        console.log('JSON copied successfully via Clipboard API');
         this.showCopySuccess(copyButton);
       }).catch(err => {
         console.error('Clipboard API failed:', err);
@@ -410,6 +421,7 @@ export class WorkflowJsonBox {
   // Fallback copy method for older browsers
   fallbackCopyToClipboard(text, copyButton) {
     try {
+      console.log('Using fallback copy method');
       // Create a temporary textarea element
       const textArea = document.createElement('textarea');
       textArea.value = text;
@@ -425,8 +437,10 @@ export class WorkflowJsonBox {
       document.body.removeChild(textArea);
       
       if (successful) {
+        console.log('JSON copied successfully via fallback method');
         this.showCopySuccess(copyButton);
       } else {
+        console.error('Fallback copy command failed');
         this.showCopyError(copyButton);
       }
     } catch (err) {
