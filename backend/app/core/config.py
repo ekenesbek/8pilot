@@ -21,7 +21,10 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:8080",
         "chrome-extension://*",
-        "moz-extension://*"
+        "moz-extension://*",
+        "http://149.137.233.40:5678",  # n8n server
+        "https://149.137.233.40:5678",
+        "*"  # Allow all origins for development
     ]
     allowed_hosts: List[str] = ["*"]
     

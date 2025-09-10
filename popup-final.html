@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8pilot Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e7;
+            width: 500px;
+            min-height: 500px;
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .container {
+            padding: 20px;
+            background: #0a0a0a;
+        }
+
+        /* Header Logo */
+        .header {
+            text-align: center;
+            margin-bottom: 5px;
+            padding: 20px 0 10px 0;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            margin-right: 10px;
+            position: relative;
+            background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(79, 209, 199, 0.3);
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #71717a;
+            margin-bottom: 15px;
+        }
+
+        /* Activate Section */
+        .activate-section {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 5px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .activate-section:not(.activated) {
+            border: 1px solid #4fd1c7;
+        }
+
+        .activate-section.activated {
+            border: 1px solid #27272a;
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 12px;
+        }
+
+        .section-description {
+            color: #a1a1aa;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .activate-btn {
+            background: #4fd1c7;
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 200px;
+            margin: 0 auto 15px auto;
+            display: block;
+        }
+
+        .activate-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
+        }
+
+        /* Activated State */
+        .activate-section.activated {
+            background: #111111;
+        }
+
+        .status-display {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-display.active {
+            display: flex;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            background: #4fd1c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0a0a0a;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .status-text {
+            color: #4fd1c7;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .deactivate-btn {
+            background: #27272a;
+            border: 2px solid #000000;
+            border-radius: 8px;
+            color: #e4e4e7;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 12px 24px;
+            margin: 20px auto 15px;
+            width: fit-content;
+            min-width: 120px;
+        }
+
+        .deactivate-btn.active {
+            display: flex;
+        }
+
+        .deactivate-btn:hover {
+            background: #4fd1c7;
+            color: #0a0a0a;
+            border-color: #4fd1c7;
+            transform: translateY(-1px);
+        }
+
+        .auto-note {
+            font-size: 12px;
+            color: #71717a;
+            margin-bottom: 10px;
+        }
+
+        .activate-section.activated .auto-note {
+            display: none;
+        }
+
+        .hosted-link {
+            color: #4fd1c7;
+            text-decoration: none;
+            font-weight: 400;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .hosted-link:hover {
+            color: #06b6d4;
+            text-decoration: underline;
+        }
+
+        /* Settings Section */
+        .settings-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 10px;
+            margin-top: 0px;
+        }
+
+        /* Navigation Tabs */
+        .nav-container {
+            margin: 25px 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #27272a;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+            color: #71717a;
+        }
+
+        .nav-tab.active {
+            background: #0a0a0a;
+            color: #e4e4e7;
+        }
+
+        .nav-tab:not(.active):hover {
+            color: #e4e4e7;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Content Areas */
+        .content {
+            min-height: 300px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* API Tab Content */
+        .api-form {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .api-form::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(90deg, #4fd1c7, #06b6d4);
+            border-radius: 14px;
+            z-index: -1;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group.full-width {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 8px;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            background: #0a0a0a;
+            color: #e4e4e7;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            appearance: none;
+            position: relative;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: #4fd1c7;
+            box-shadow: 0 0 0 3px rgba(79, 209, 199, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #71717a;
+        }
+
+        .help-links {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .help-link {
+            color: #4fd1c7;
+            text-decoration: none;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .help-link:hover {
+            text-decoration: underline;
+            color: #06b6d4;
+        }
+
+        .help-text {
+            color: #a1a1aa;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .reasoning-section {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .reasoning-section::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(90deg, #4fd1c7, #06b6d4);
+            border-radius: 14px;
+            z-index: -1;
+        }
+
+        .reasoning-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .reasoning-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e4e4e7;
+        }
+
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #71717a;
+            font-size: 12px;
+            cursor: help;
+        }
+
+        .restore-btn {
+            background: transparent;
+            color: #e4e4e7;
+            border: 1px solid #27272a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            width: fit-content;
+        }
+
+        .restore-btn:hover {
+            background: #27272a;
+            border-color: #4fd1c7;
+        }
+
+        /* Account Tab */
+        .account-unified-block {
+            background: #111111;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-unified-block::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #4fd1c7, #06b6d4);
+            border-radius: 14px;
+            z-index: -1;
+        }
+
+        .unlock-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 15px;
+        }
+
+        .unlock-description {
+            color: #a1a1aa;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        /* Billing Toggle */
+        .billing-toggle {
+            display: flex;
+            background: #27272a;
+            border-radius: 25px;
+            padding: 4px;
+            margin: 0 auto 25px;
+            width: fit-content;
+        }
+
+        .toggle-option {
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+            color: #71717a;
+        }
+
+        .toggle-option.active {
+            background: #0a0a0a;
+            color: #e4e4e7;
+        }
+
+        /* Plan Cards */
+        .plans-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .plan-card {
+            background: #111111;
+            border: 2px solid #27272a;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .plan-card.selected {
+            border-color: #4fd1c7;
+            box-shadow: 0 0 20px rgba(79, 209, 199, 0.2);
+        }
+
+        .plan-card.popular {
+            position: relative;
+        }
+
+        .plan-card.popular::before {
+            content: "Popular";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #4fd1c7;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .plan-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e4e4e7;
+        }
+
+        .plan-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #27272a;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .plan-card.selected .plan-radio {
+            border-color: #4fd1c7;
+        }
+
+        .plan-card.selected .plan-radio::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: #4fd1c7;
+            border-radius: 50%;
+        }
+
+        .plan-description {
+            color: #a1a1aa;
+            font-size: 13px;
+        }
+
+        .plan-price {
+            color: #e4e4e7;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* Account Links */
+        .account-links {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #27272a;
+        }
+
+        .account-links p {
+            font-size: 14px;
+            color: #a1a1aa;
+            margin-bottom: 10px;
+        }
+
+        .account-links a {
+            color: #4fd1c7;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .account-links a:hover {
+            text-decoration: underline;
+        }
+
+        .upgrade-btn {
+            background: #4fd1c7;
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
+        }
+
+        /* Support Tab */
+        .support-item {
+            background: #111111;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .support-item:hover {
+            border-color: #4fd1c7;
+            box-shadow: 0 4px 15px rgba(79, 209, 199, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .support-item h4 {
+            font-size: 16px;
+            color: #4fd1c7;
+            margin-bottom: 5px;
+        }
+
+        .support-item p {
+            font-size: 14px;
+            color: #a1a1aa;
+            line-height: 1.4;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .changelog-link {
+            color: #4fd1c7;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .changelog-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Scrollbar */
+        body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: #111111;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 3px;
+        }
+
+        body::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 50C20 35 35 20 50 20C65 20 80 35 80 50C80 65 65 80 50 80C35 80 20 65 20 50Z" fill="white" opacity="0.2"/>
+                        <path d="M15 50C15 30 30 15 50 15C70 15 85 30 85 50" stroke="white" stroke-width="4" fill="none"/>
+                        <path d="M85 50C85 70 70 85 50 85C30 85 15 70 15 50" stroke="white" stroke-width="4" fill="none"/>
+                        <path d="M70 30L85 45L70 60" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+                <div class="logo-text">8pilot</div>
+            </div>
+            <div class="subtitle">Activate & Configure</div>
+            
+            <!-- Activate Section moved here -->
+            <div class="activate-section" id="activateSection">
+                <div class="status-display" id="statusDisplay">
+                    <div class="status-icon">✓</div>
+                    <div class="status-text">8pilot is activated</div>
+                </div>
+                <div class="section-description" id="sectionDescription">
+                    Activate the extension to enable AI assistance on n8n workflow pages:
+                </div>
+                <button class="activate-btn" id="activateBtn">
+                    Activate
+                </button>
+                
+                <!-- Deactivate Button -->
+                <button class="deactivate-btn" id="deactivateBtn">Deactivate</button>
+                
+                <div class="auto-note">n8nChat activates automatically for n8n hosted workflows <a href="https://n8n.io/?ps_partner_key=NWJjYmYyYmI3ODg3&ps_xid=mIyHZrXzAHSklW&gsxid=mIyHZrXzAHSklW&gspk=NWJjYmYyYmI3ODg3" target="_blank" class="hosted-link">n8n hosted ↗</a></div>
+            </div>
+        </div>
+
+        <!-- Settings Title -->
+        <div class="settings-title">Settings</div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-container">
+            <div class="nav-tabs">
+                <div class="nav-tab" data-tab="account">Account</div>
+                <div class="nav-tab active" data-tab="api">API</div>
+                <div class="nav-tab" data-tab="support">Support</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Account Tab -->
+            <div class="tab-content" id="account">
+                <div class="account-unified-block">
+                    <div class="unlock-title">Unlock More Features</div>
+                    <div class="unlock-description">
+                        Go ad-free and enhance your workflow automation with premium capabilities.
+                    </div>
+                    
+                    <div class="billing-toggle">
+                        <div class="toggle-option active">Monthly</div>
+                        <div class="toggle-option">Yearly</div>
+                    </div>
+
+                    <div class="plans-container">
+                        <div class="plan-card selected">
+                            <div class="plan-header">
+                                <div class="plan-name">Free</div>
+                                <div class="plan-radio"></div>
+                            </div>
+                            <div class="plan-description">Occasionally displays ads</div>
+                        </div>
+
+                        <div class="plan-card popular">
+                            <div class="plan-header">
+                                <div class="plan-name">Ad-Free</div>
+                                <div class="plan-radio"></div>
+                            </div>
+                            <div class="plan-description">Remove all advertisements</div>
+                            <div class="plan-price" data-monthly="$10/month" data-yearly="$100/year <span style='text-decoration: line-through; color: #71717a; font-size: 12px;'>$120</span>">$10/month</div>
+                        </div>
+
+                        <div class="plan-card">
+                            <div class="plan-header">
+                                <div class="plan-name">Premium</div>
+                                <div class="plan-radio"></div>
+                            </div>
+                            <div class="plan-description">Early Access to new features</div>
+                            <div class="plan-price" data-monthly="$20/month" data-yearly="$200/year <span style='text-decoration: line-through; color: #71717a; font-size: 12px;'>$240</span>">$20/month</div>
+                        </div>
+                    </div>
+
+                    <button class="upgrade-btn">Select an Upgrade</button>
+
+                    <div class="account-links">
+                        <p>Already have an account? <a href="#" id="signInLink">Sign In</a></p>
+                        <p>Manage your subscription with <a href="#" id="stripeLink">Stripe</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Tab -->
+            <div class="tab-content active" id="api">
+                <div class="api-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Provider</label>
+                            <select class="form-select" id="provider">
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Model</label>
+                            <select class="form-select" id="model">
+                                <option value="gpt-4o-mini">o4-mini</option>
+                                <option value="gpt-4o">gpt-4o</option>
+                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label class="form-label" id="apiKeyLabel">OpenAI API Key</label>
+                        <input type="password" class="form-input" id="apiKey" placeholder="Enter your API key">
+                        <div class="help-links" id="helpLinks">
+                            <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get OpenAI API Key ↗</a>
+                            <div class="help-text">You must have valid <a href="https://platform.openai.com/settings/organization/billing/payment-methods" target="_blank" class="help-link">billing information ↗</a> setup with OpenAI</div>
+                            <a href="https://www.youtube.com/watch?v=w6LbUiVMl8g" target="_blank" class="help-link">Not working? Watch setup tutorial ↗</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reasoning-section">
+                    <div class="reasoning-header">
+                        <div class="reasoning-title">Reasoning Level</div>
+                        <div class="info-icon">?</div>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <select class="form-select" id="reasoning" style="flex: 1;">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <button class="restore-btn" style="margin: 0;">Restore Defaults</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Tab -->
+            <div class="tab-content" id="support">
+                <div class="support-item">
+                    <h4>Documentation</h4>
+                    <p>Learn how to use 8pilot with comprehensive guides and tutorials</p>
+                </div>
+
+                <div class="support-item">
+                    <h4>Community</h4>
+                    <p>Join our Discord server to connect with other users and get help</p>
+                </div>
+
+                <div class="support-item">
+                    <h4>Report Issues</h4>
+                    <p>Found a bug? Let us know on GitHub and help improve 8pilot</p>
+                </div>
+
+                <div class="support-item">
+                    <h4>Contact Support</h4>
+                    <p>Need direct help? Reach out to our support team via Telegram</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <a href="#" class="changelog-link">Changelog ↗</a>
+        </div>
+    </div>
+
+    <script src="popup-final.js"></script>
+</body>
+</html>

@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import logging
 from contextlib import asynccontextmanager
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 from app.core.config import settings
 from app.api.v1.api import api_router
@@ -23,14 +25,35 @@ from app.models.user import User
 setup_logging()
 logger = logging.getLogger(__name__)
 
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Handle preflight requests
+        if request.method == "OPTIONS":
+            response = Response()
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Max-Age"] = "600"
+            return response
+        
+        # Process the request
+        response = await call_next(request)
+        
+        # Add CORS headers to all responses
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        
+        return response
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("Starting 8pilot backend...")
-    # Create database tables
-    create_tables()
-    logger.info("Database tables created/verified")
+    # Skip database tables creation for in-memory mode
+    # create_tables()
+    logger.info("Using in-memory storage mode")
     yield
     # Shutdown
     logger.info("Shutting down 8pilot backend...")
@@ -47,14 +70,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
-    # Add CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # Add custom CORS middleware
+    app.add_middleware(CustomCORSMiddleware)
     
     # Add trusted host middleware
     app.add_middleware(
