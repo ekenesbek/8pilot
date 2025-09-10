@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to check if URL is n8n page (copied from sidepanel logic)
+    // Function to check if URL is n8n page - using extension.js logic
     function isN8nPage(url) {
         if (!url) return false;
         
