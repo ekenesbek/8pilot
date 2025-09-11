@@ -28,6 +28,7 @@ export class ChatManager {
     this.isInteracting = false;
     this.interactionTimeout = null;
     this.isGenerationStopped = false;
+    this.isStreaming = false;
     
     // Chat session management
     this.currentWorkflowId = null;
@@ -422,6 +423,12 @@ export class ChatManager {
   }
 
   handleOutsideClick() {
+    // Не закрываем чат во время стриминга ответа от LLM
+    if (this.isStreaming) {
+      console.log('Chat not closed during streaming');
+      return;
+    }
+    
     this.hideButtons();
     this.hideChatMessages();
     if (this.plusMenu && this.plusMenu.isVisible) {
@@ -613,7 +620,7 @@ export class ChatManager {
       
       if (messageInput !== document.activeElement) {
         setTimeout(() => {
-          if (!this.isInteracting) {
+          if (!this.isInteracting && !this.isStreaming) {
             this.hideButtons();
             this.hideChatMessages();
           }
@@ -641,7 +648,7 @@ export class ChatManager {
       this.endInteraction();
       
       setTimeout(() => {
-        if (!this.isInteracting) {
+        if (!this.isInteracting && !this.isStreaming) {
           this.hideButtons();
           // Hide chat messages after a delay if not interacting
           this.hideChatMessages();
@@ -662,8 +669,11 @@ export class ChatManager {
       
       if (chatContainer && !chatContainer.contains(e.target) && 
           messagesContainer && !messagesContainer.contains(e.target)) {
-        this.hideChatMessages();
-        this.hideButtons();
+        // Не закрываем чат во время стриминга
+        if (!this.isStreaming) {
+          this.hideChatMessages();
+          this.hideButtons();
+        }
       }
     });
 
@@ -965,11 +975,15 @@ export class ChatManager {
     // Reset generation stopped flag
     this.isGenerationStopped = false;
     
+    // Set streaming flag to prevent chat closure
+    this.isStreaming = true;
+    
     this.startInteraction();
     
     // Check API credentials first
     const hasCredentials = await this.checkApiCredentials();
     if (!hasCredentials) {
+      this.isStreaming = false;
       return;
     }
     
@@ -1044,16 +1058,28 @@ export class ChatManager {
       if (this.currentWorkflowId) {
         this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', errorMessage, 'error');
       }
+      
+      // Clear streaming flag on error
+      this.isStreaming = false;
     }
     
     // Stop loading state
     this.stopLoading();
+    
+    // Clear streaming flag
+    this.isStreaming = false;
     
     // Clear attachments after sending
     this.fileAttachment.clearAttachments();
   }
 
   hideChatWindow() {
+    // Не закрываем чат во время стриминга ответа от LLM
+    if (this.isStreaming) {
+      console.log('Chat window not closed during streaming');
+      return;
+    }
+    
     const chatContainer = document.getElementById(this.chatContainerId);
     if (chatContainer) {
       this.stopPlaceholderCycling();
@@ -1075,6 +1101,12 @@ export class ChatManager {
   }
 
   hideChatMessages() {
+    // Не закрываем сообщения чата во время стриминга ответа от LLM
+    if (this.isStreaming) {
+      console.log('Chat messages not closed during streaming');
+      return;
+    }
+    
     this.chatMessages.hide();
     this.stateManager.set('isChatMessagesVisible', false);
   }
@@ -1114,6 +1146,9 @@ export class ChatManager {
   stopGeneration() {
     // Set flag to stop generation
     this.isGenerationStopped = true;
+    
+    // Clear streaming flag when stopping generation
+    this.isStreaming = false;
     
     // Stop any ongoing generation
     if (this.currentGenerationAbortController) {
