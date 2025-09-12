@@ -16,8 +16,6 @@
     },
     "default_popup": "popup-final.html"
   },
-
-
   "permissions": [
     "storage",
     "activeTab",
@@ -50,7 +48,8 @@
         "frontend/content.js",
         "frontend/components/*.js",
         "frontend/services/*.js",
-        "frontend/utils/*.js"
+        "frontend/utils/*.js",
+        "page-8pilot-inject.js"
       ],
       "matches": ["<all_urls>"]
     }
