@@ -7,6 +7,7 @@ import { OpenAIService } from '../services/openaiService.js';
 import { ApiKeyManager } from './apiKeyManager.js';
 import { ChatStorageService } from '../services/chatStorageService.js';
 import { WorkflowExtractor } from '../services/workflowExtractor.js';
+import { WorkflowApplicator } from './workflowApplicator.js';
 
 export class ChatManager {
   constructor(stateManager, backendApiService) {
@@ -25,6 +26,7 @@ export class ChatManager {
     this.apiKeyManager = new ApiKeyManager();
     this.chatStorage = new ChatStorageService();
     this.workflowExtractor = new WorkflowExtractor();
+    this.workflowApplicator = new WorkflowApplicator(this);
     this.isInteracting = false;
     this.interactionTimeout = null;
     this.isGenerationStopped = false;
@@ -400,7 +402,7 @@ export class ChatManager {
     document.addEventListener('click', (e) => {
       const chatContainer = document.getElementById(this.chatContainerId);
       const messagesContainer = document.getElementById(this.chatMessages.messagesContainerId);
-      const plusMenu = document.querySelector('.8pilot-plus-menu'); // если есть меню плюса
+      const plusMenu = document.getElementById('8pilot-plus-menu');
       
       let clickedInsideChat = false;
       
@@ -1043,6 +1045,9 @@ export class ChatManager {
       // Always finalize streaming message with current content
       this.chatMessages.finalizeStreamingMessage(streamingMessageId, fullResponse);
       
+      // CRITICAL: Process workflow after streaming is complete
+      await this.processWorkflowResponse(fullResponse);
+      
       // Save assistant response to local storage (even if stopped)
       if (this.currentWorkflowId && fullResponse) {
         this.chatStorage.addMessage(this.currentWorkflowId, 'assistant', fullResponse);
@@ -1120,6 +1125,103 @@ export class ChatManager {
   hide() {
     this.hideChatWindow();
     this.hideChatMessages();
+  }
+
+  async processWorkflowResponse(response) {
+    try {
+      console.log('Processing workflow response...');
+      
+      // Check if response contains JSON workflow
+      const workflowJson = this.extractWorkflowJson(response);
+      if (workflowJson) {
+        console.log('Workflow JSON detected in response');
+        
+        // Extract workflow name from response if possible
+        const workflowName = this.extractWorkflowName(response) || 'Generated Workflow';
+        
+        // Automatically apply the workflow to canvas
+        const applied = await this.workflowApplicator.applyWorkflowFromJson(workflowJson, workflowName);
+        
+        if (applied) {
+          console.log('Workflow automatically applied to canvas');
+        } else {
+          console.log('Failed to apply workflow automatically');
+          // Optionally show the JSON box as fallback
+          if (this.workflowJsonBox) {
+            this.workflowJsonBox.show(workflowName, workflowJson);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing workflow response:', error);
+    }
+  }
+
+  extractWorkflowJson(response) {
+    try {
+      // Look for JSON code blocks first
+      const jsonBlockRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```/gi;
+      let match = jsonBlockRegex.exec(response);
+      
+      if (match) {
+        const jsonContent = match[1].trim();
+        // Validate it's a workflow by checking for nodes
+        const parsed = JSON.parse(jsonContent);
+        if (parsed.nodes && Array.isArray(parsed.nodes)) {
+          return jsonContent;
+        }
+      }
+      
+      // Look for bare JSON objects that might be workflows
+      const jsonRegex = /\{[\s\S]*"nodes"\s*:\s*\[[\s\S]*?\][\s\S]*?\}/gi;
+      match = jsonRegex.exec(response);
+      
+      if (match) {
+        const jsonContent = match[0].trim();
+        // Validate JSON
+        JSON.parse(jsonContent);
+        return jsonContent;
+      }
+      
+      return null;
+    } catch (error) {
+      console.log('No valid workflow JSON found in response');
+      return null;
+    }
+  }
+
+  extractWorkflowName(response) {
+    try {
+      // Look for workflow name in various formats
+      const patterns = [
+        /"name"\s*:\s*"([^"]+)"/i,
+        /workflow\s+(?:name|title):\s*([^\n\r]+)/i,
+        /creating\s+(?:a\s+)?(?:workflow\s+)?(?:called\s+|named\s+)?["']?([^"'\n\r]+)["']?/i,
+        /this\s+(?:workflow\s+)?(?:is\s+)?(?:called\s+|named\s+)?["']?([^"'\n\r]+)["']?/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = response.match(pattern);
+        if (match && match[1]) {
+          return match[1].trim();
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  setAutoApplyWorkflows(enabled) {
+    this.autoApplyWorkflows = enabled;
+    console.log('Auto-apply workflows:', enabled);
+  }
+
+  setWorkflowApplicatorDebugMode(enabled) {
+    if (this.workflowApplicator) {
+      this.workflowApplicator.setDebugMode(enabled);
+    }
   }
 
   // Loading state management

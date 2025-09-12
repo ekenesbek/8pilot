@@ -13,7 +13,7 @@ export class WorkflowJsonBox {
     
     const jsonBox = document.createElement('div');
     jsonBox.id = this.jsonBoxId;
-    jsonBox.className = 'workflow-json-box';
+    jsonBox.className = 'workflow-json-box'; 
     
     // Get current chat container position for positioning
     const chatContainer = document.getElementById('8pilot-chat-container');
