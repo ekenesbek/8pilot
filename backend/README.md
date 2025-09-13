@@ -32,8 +32,7 @@ backend/
 │   │   ├── chat_service.py  # Управление чатом
 │   │   ├── workflow_service.py # Управление workflow
 │   │   ├── n8n_service.py   # n8n интеграция
-│   │   ├── settings_service.py # Управление настройками
-│   │   └── sidepanel_service.py # Sidepanel функциональность
+│   │   └── settings_service.py # Управление настройками
 │   └── main.py              # Точка входа
 ├── requirements.txt          # Python зависимости
 ├── Dockerfile               # Docker контейнер
@@ -84,12 +83,23 @@ backend/
 
 2. **Запустите с Docker Compose**
    ```bash
+   # Сборка без кэша (рекомендуется)
+   docker-compose build --no-cache
+   
+   # Запуск в фоновом режиме
    docker-compose up -d
    ```
 
-3. **Проверьте статус**
+3. **Проверьте статус и логи**
    ```bash
+   # Статус контейнеров
    docker-compose ps
+   
+   # Просмотр логов backend
+   docker-compose logs -f backend
+   
+   # Просмотр всех логов
+   docker-compose logs -f
    ```
 
 ## 🔧 Конфигурация
@@ -131,10 +141,11 @@ backend/
 - `GET /api/v1/settings/n8n-instances` - n8n instances
 - `POST /api/v1/settings/n8n-instances` - Создать n8n instance
 
-### Sidepanel API
-- `GET /api/v1/sidepanel/status` - Статус sidepanel
-- `GET /api/v1/sidepanel/workflow/current` - Текущий workflow
-- `GET /api/v1/sidepanel/templates/suggestions` - Предложения шаблонов
+### Auth API
+- `POST /api/v1/auth/login` - Вход в систему
+- `POST /api/v1/auth/register` - Регистрация
+- `POST /api/v1/auth/logout` - Выход из системы
+- `GET /api/v1/auth/me` - Информация о текущем пользователе
 
 ## 🔌 Интеграция с n8n
 
@@ -220,20 +231,38 @@ docker run -d -p 8000:8000 --env-file .env 8pilot-backend
 
 ### Частые проблемы
 
-1. **Port already in use**
+1. **ModuleNotFoundError: No module named 'app.models.sidepanel'**
+   ```bash
+   # Проблема исправлена в последней версии
+   # Удалены ссылки на несуществующий sidepanel модуль
+   ```
+
+2. **Port already in use**
    ```bash
    lsof -i :8000
    kill -9 <PID>
    ```
 
-2. **Redis connection failed**
+3. **Docker build issues**
    ```bash
-   docker-compose restart redis
+   # Очистите кэш и пересоберите
+   docker-compose build --no-cache
+   docker-compose up -d
    ```
 
-3. **API key errors**
+4. **Backend не запускается**
+   ```bash
+   # Проверьте логи
+   docker-compose logs -f backend
+   
+   # Проверьте .env файл
+   cat .env
+   ```
+
+5. **API key errors**
    - Проверьте .env файл
    - Убедитесь в правильности API ключей
+   - Убедитесь что .env файл находится в правильной директории
 
 ## 📞 Поддержка
 
