@@ -329,6 +329,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 apiKeyInput.dataset.hasKey = 'false';
                 apiKeyInput.dataset.originalLength = '0';
                 updateActivateButtonState(false);
+                
+                // Check if extension is activated but no API key for this provider
+                chrome.storage.local.get(['globalActivationState'], function(activationResult) {
+                    if (activationResult.globalActivationState) {
+                        console.log('Extension is activated but no API key for provider:', provider, 'deactivating');
+                        
+                        // Hide activated state
+                        activateSection.classList.remove('activated');
+                        statusDisplay.classList.remove('active');
+                        sectionDescription.style.display = 'block';
+                        activateBtn.style.display = 'block';
+                        deactivateBtn.classList.remove('active');
+                        
+                        // Remove global activation state from storage
+                        chrome.storage.local.set({ globalActivationState: false });
+                        
+                        // Send message to all tabs to deactivate
+                        chrome.tabs.query({}, (tabs) => {
+                            tabs.forEach(tab => {
+                                chrome.tabs.sendMessage(tab.id, {
+                                    action: 'deactivateExtension'
+                                }, (response) => {
+                                    console.log('Deactivation response from tab', tab.id, ':', response);
+                                });
+                            });
+                        });
+                    }
+                });
             }
         });
     }
@@ -404,6 +432,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     apiKeyInput.dataset.hasKey = 'false';
                     apiKeyInput.dataset.originalLength = '0';
                     updateActivateButtonState(false);
+                    
+                    // Check if extension is activated and deactivate it
+                    chrome.storage.local.get(['globalActivationState'], function(result) {
+                        if (result.globalActivationState) {
+                            console.log('Extension is activated, deactivating due to API key removal');
+                            
+                            // Hide activated state
+                            activateSection.classList.remove('activated');
+                            statusDisplay.classList.remove('active');
+                            sectionDescription.style.display = 'block';
+                            activateBtn.style.display = 'block';
+                            deactivateBtn.classList.remove('active');
+                            
+                            // Remove global activation state from storage
+                            chrome.storage.local.set({ globalActivationState: false });
+                            
+                            // Send message to all tabs to deactivate
+                            chrome.tabs.query({}, (tabs) => {
+                                tabs.forEach(tab => {
+                                    chrome.tabs.sendMessage(tab.id, {
+                                        action: 'deactivateExtension'
+                                    }, (response) => {
+                                        console.log('Deactivation response from tab', tab.id, ':', response);
+                                    });
+                                });
+                            });
+                        }
+                    });
                     
                     // Notify content scripts about API key removal
                     chrome.tabs.query({}, (tabs) => {
