@@ -535,6 +535,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Community Discord link
+    const communityItem = document.getElementById('communityItem');
+    if (communityItem) {
+        communityItem.addEventListener('click', function() {
+            chrome.tabs.create({ url: 'https://discord.gg/WzY2XEzYQp' });
+        });
+    }
+
     // Alternative tab switching (backup)
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('nav-tab')) {
