@@ -819,9 +819,14 @@
                         <div class="form-group">
                             <label class="form-label">Model</label>
                             <select class="form-select" id="model">
-                                <option value="gpt-4o-mini">o4-mini</option>
-                                <option value="gpt-4o">gpt-4o</option>
-                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                                <!-- OpenAI models -->
+                                <option value="gpt-4o" data-provider="openai">GPT-4o</option>
+                                <option value="gpt-5" data-provider="openai">GPT-5</option>
+                                <option value="gpt-4.1" data-provider="openai">GPT-4.1</option>
+                                <!-- Anthropic models -->
+                                <option value="claude-3-7-sonnet-20250219" data-provider="anthropic">Claude 3.7 Sonnet</option>
+                                <option value="claude-sonnet-4-20250514" data-provider="anthropic">Claude 4 Sonnet</option>
+                                <option value="claude-3-5-haiku-20241022" data-provider="anthropic">Claude 3.5 Haiku</option>
                             </select>
                         </div>
                     </div>

@@ -39,6 +39,7 @@ class ChatRequest(BaseModel):
     workflow_id: Optional[str] = None
     session_id: Optional[str] = None
     provider: Literal["openai", "anthropic"] = "openai"
+    model: Optional[str] = None  # AI model to use
     context: Optional[dict] = {}
     
     # AI API credentials passed from frontend (no registration required)

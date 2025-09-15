@@ -82,6 +82,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.reasoning && reasoningSelect) {
                 reasoningSelect.value = result.reasoning;
             }
+            
+            // Initialize model options and UI after loading settings
+            setTimeout(() => {
+                const provider = providerSelect ? providerSelect.value : 'openai';
+                updateModelOptions(provider);
+                updateProviderUI();
+            }, 100);
         });
         
         // Check global activation state
@@ -222,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveSettings() {
         const settings = {
             provider: providerSelect ? providerSelect.value : 'openai',
-            model: modelSelect ? modelSelect.value : 'gpt-4o-mini',
+            model: modelSelect ? modelSelect.value : 'gpt-4o',
             reasoning: reasoningSelect ? reasoningSelect.value : 'medium'
         };
         
@@ -250,13 +257,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const apiKeyInput = document.getElementById('apiKey');
         const helpLinks = document.getElementById('helpLinks');
         
+        // Update model options based on provider
+        updateModelOptions(provider);
+        
         if (provider === 'anthropic') {
             if (apiKeyLabel) apiKeyLabel.textContent = 'Anthropic API Key';
             if (apiKeyInput) apiKeyInput.placeholder = 'Enter your Anthropic API key (sk-ant-...)';
             if (helpLinks) {
                 helpLinks.innerHTML = `
-                    <a href="https://console.anthropic.com/" target="_blank" class="help-link">Get Anthropic API Key ↗</a>
-                    <div class="help-text">You must have valid billing setup with Anthropic</div>
+                    <a href="https://console.anthropic.com/settings/keys" target="_blank" class="help-link">Get Anthropic API Key ↗</a>
+                    <div class="help-text">You must have valid <a href="https://console.anthropic.com/settings/billing" target="_blank" class="help-link">billing setup ↗</a> with Anthropic</div>
                     <a href="https://docs.anthropic.com/claude/reference/getting-started-with-the-api" target="_blank" class="help-link">Setup Guide ↗</a>
                 `;
             }
@@ -273,8 +283,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Initialize provider UI
-    updateProviderUI();
+    // Update model options based on selected provider
+    function updateModelOptions(provider) {
+        if (!modelSelect) return;
+        
+        // Get all model options
+        const allOptions = Array.from(modelSelect.querySelectorAll('option'));
+        
+        // Hide all options first
+        allOptions.forEach(option => {
+            option.style.display = 'none';
+        });
+        
+        // Show only options for selected provider
+        const providerOptions = allOptions.filter(option => 
+            option.dataset.provider === provider
+        );
+        
+        providerOptions.forEach(option => {
+            option.style.display = 'block';
+        });
+        
+        // Set default model for provider
+        let defaultModel;
+        if (provider === 'openai') {
+            defaultModel = 'gpt-4o';
+        } else if (provider === 'anthropic') {
+            defaultModel = 'claude-3-7-sonnet-20250219';
+        }
+        
+        // Set default model if current selection is not available for this provider
+        const currentModel = modelSelect.value;
+        const isCurrentModelAvailable = providerOptions.some(option => option.value === currentModel);
+        
+        if (!isCurrentModelAvailable && defaultModel) {
+            modelSelect.value = defaultModel;
+            saveSettings();
+        }
+    }
+    
+    // Provider UI will be initialized after settings are loaded
     
     if (modelSelect) {
         modelSelect.addEventListener('change', saveSettings);
@@ -292,8 +340,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reset to defaults
             if (providerSelect) providerSelect.value = 'openai';
-            if (modelSelect) modelSelect.value = 'gpt-4o-mini';
+            if (modelSelect) modelSelect.value = 'gpt-4o';
             if (reasoningSelect) reasoningSelect.value = 'medium';
+            
+            // Update UI to reflect changes
+            updateProviderUI();
             
             // Save defaults
             saveSettings();
