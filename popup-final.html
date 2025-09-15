@@ -356,6 +356,43 @@
             color: #71717a;
         }
 
+        /* API Key Container */
+        .api-key-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .api-key-container .form-input {
+            padding-right: 40px;
+        }
+
+        .clear-api-key-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #71717a;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .clear-api-key-btn:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
         .help-links {
             margin-top: 10px;
             display: flex;
@@ -833,7 +870,10 @@
                     
                     <div class="form-group full-width">
                         <label class="form-label" id="apiKeyLabel">OpenAI API Key</label>
-                        <input type="password" class="form-input" id="apiKey" placeholder="Enter your API key">
+                        <div class="api-key-container">
+                            <input type="password" class="form-input" id="apiKey" placeholder="Enter your API key">
+                            <button type="button" class="clear-api-key-btn" id="clearApiKeyBtn" style="display: none;">×</button>
+                        </div>
                         <div class="help-links" id="helpLinks">
                             <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get OpenAI API Key ↗</a>
                             <div class="help-text">You must have valid <a href="https://platform.openai.com/settings/organization/billing/payment-methods" target="_blank" class="help-link">billing information ↗</a> setup with OpenAI</div>

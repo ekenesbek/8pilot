@@ -930,10 +930,13 @@ export class ChatManager {
   async loadApiCredentials() {
     try {
       // Load from chrome storage sync (popup format)
-      const result = await chrome.storage.sync.get(['openaiApiKey', 'provider', 'model']);
-      if (result.openaiApiKey) {
-        this.setApiCredentials(result.openaiApiKey, result.provider || 'openai', result.model || 'gpt-4o');
-        console.log('API credentials loaded from popup:', { provider: result.provider || 'openai', model: result.model || 'gpt-4o', hasKey: !!result.openaiApiKey });
+      const result = await chrome.storage.sync.get(['openaiApiKey', 'anthropicApiKey', 'provider', 'model']);
+      const provider = result.provider || 'openai';
+      const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+      
+      if (result[apiKeyField]) {
+        this.setApiCredentials(result[apiKeyField], provider, result.model || 'gpt-4o');
+        console.log('API credentials loaded from popup:', { provider, model: result.model || 'gpt-4o', hasKey: !!result[apiKeyField] });
       } else {
         console.log('No API credentials found in popup storage');
       }
@@ -951,8 +954,10 @@ export class ChatManager {
 
   async checkApiCredentials() {
     try {
-      const result = await chrome.storage.sync.get(['openaiApiKey', 'provider', 'model']);
-      const hasCredentials = result.openaiApiKey && result.openaiApiKey.trim() !== '';
+      const result = await chrome.storage.sync.get(['openaiApiKey', 'anthropicApiKey', 'provider', 'model']);
+      const provider = result.provider || 'openai';
+      const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+      const hasCredentials = result[apiKeyField] && result[apiKeyField].trim() !== '';
       
       if (!hasCredentials) {
         this.chatMessages.addMessage('assistant', 'Please configure your API key in the extension popup first. Click on the 8pilot icon in your browser toolbar to open settings.', false);
@@ -960,8 +965,8 @@ export class ChatManager {
       }
       
       // Update current credentials if they changed
-      if (result.openaiApiKey !== this.apiKey || result.provider !== this.provider || result.model !== this.model) {
-        this.setApiCredentials(result.openaiApiKey, result.provider || 'openai', result.model || 'gpt-4o');
+      if (result[apiKeyField] !== this.apiKey || result.provider !== this.provider || result.model !== this.model) {
+        this.setApiCredentials(result[apiKeyField], provider, result.model || 'gpt-4o');
       }
       
       return true;

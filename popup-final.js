@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusDisplay = document.getElementById('statusDisplay');
     const sectionDescription = document.getElementById('sectionDescription');
     const deactivateBtn = document.getElementById('deactivateBtn');
+    const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
     
     // Load saved settings on startup
     loadSavedSettings();
@@ -56,21 +57,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // API Key and settings management
     function loadSavedSettings() {
-        chrome.storage.sync.get(['openaiApiKey', 'provider', 'model', 'reasoning'], function(result) {
+        chrome.storage.sync.get(['openaiApiKey', 'anthropicApiKey', 'provider', 'model', 'reasoning'], function(result) {
             console.log('Loaded settings:', result);
             
-            // Load API key (masked if exists)
-            if (result.openaiApiKey) {
-                apiKeyInput.value = '••••••••••••••••';
-                apiKeyInput.dataset.hasKey = 'true';
-                updateActivateButtonState(true);
-            } else {
-                updateActivateButtonState(false);
+            // Load provider first
+            const provider = result.provider || 'openai';
+            if (providerSelect) {
+                providerSelect.value = provider;
             }
             
-            // Load provider
-            if (result.provider && providerSelect) {
-                providerSelect.value = result.provider;
+            // Load API key based on provider
+            const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+            if (result[apiKeyField]) {
+                // Show dots equal to API key length
+                const maskedKey = '•'.repeat(result[apiKeyField].length);
+                apiKeyInput.value = maskedKey;
+                apiKeyInput.dataset.hasKey = 'true';
+                apiKeyInput.dataset.originalLength = result[apiKeyField].length;
+                updateActivateButtonState(true);
+            } else {
+                apiKeyInput.value = '';
+                apiKeyInput.dataset.hasKey = 'false';
+                apiKeyInput.dataset.originalLength = '0';
+                updateActivateButtonState(false);
             }
             
             // Load model
@@ -85,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Initialize model options and UI after loading settings
             setTimeout(() => {
-                const provider = providerSelect ? providerSelect.value : 'openai';
                 updateModelOptions(provider);
                 updateProviderUI();
             }, 100);
@@ -119,22 +127,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 activateBtn.title = 'Please enter an API key first';
             }
         }
+        
+        // Update clear API key button visibility
+        if (clearApiKeyBtn) {
+            if (hasApiKey) {
+                clearApiKeyBtn.style.display = 'flex';
+            } else {
+                clearApiKeyBtn.style.display = 'none';
+            }
+        }
     }
     
     // API Key input handling
     if (apiKeyInput) {
         apiKeyInput.addEventListener('focus', function() {
             // Clear masked value when focusing
-            if (this.value === '••••••••••••••••') {
+            if (this.dataset.hasKey === 'true') {
                 this.value = '';
             }
         });
         
         apiKeyInput.addEventListener('blur', function() {
             const apiKey = this.value.trim();
-            if (apiKey && apiKey !== '••••••••••••••••') {
+            const provider = providerSelect ? providerSelect.value : 'openai';
+            
+            if (apiKey && this.dataset.hasKey !== 'true') {
                 // Validate API key format based on provider
-                const provider = providerSelect ? providerSelect.value : 'openai';
                 let isValid = false;
                 
                 if (provider === 'openai' && apiKey.startsWith('sk-')) {
@@ -144,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 if (isValid) {
-                    // Save API key
-                    saveApiKey(apiKey);
+                    // Save API key for current provider
+                    saveApiKey(apiKey, provider);
                 } else {
                     const expectedFormat = provider === 'openai' ? 'sk-' : 'sk-ant-';
                     alert(`Invalid API key format. ${provider === 'openai' ? 'OpenAI' : 'Anthropic'} API keys should start with "${expectedFormat}"`);
@@ -153,11 +171,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateActivateButtonState(false);
                 }
             } else if (!apiKey) {
-                // If empty, check if we had a saved key
-                chrome.storage.sync.get(['openaiApiKey'], function(result) {
-                    if (result.openaiApiKey) {
-                        apiKeyInput.value = '••••••••••••••••';
+                // If empty, check if we had a saved key for current provider
+                const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+                chrome.storage.sync.get([apiKeyField], function(result) {
+                    if (result[apiKeyField]) {
+                        // Show dots equal to API key length
+                        const maskedKey = '•'.repeat(result[apiKeyField].length);
+                        apiKeyInput.value = maskedKey;
                         apiKeyInput.dataset.hasKey = 'true';
+                        apiKeyInput.dataset.originalLength = result[apiKeyField].length;
                         updateActivateButtonState(true);
                     } else {
                         updateActivateButtonState(false);
@@ -168,9 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         apiKeyInput.addEventListener('input', function() {
             const apiKey = this.value.trim();
-            if (apiKey && apiKey !== '••••••••••••••••') {
+            if (apiKey && this.dataset.hasKey !== 'true') {
                 updateActivateButtonState(true);
-            } else {
+            } else if (!apiKey) {
                 updateActivateButtonState(false);
             }
         });
@@ -184,23 +206,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Save API key function
-    function saveApiKey(apiKey) {
-        console.log('Saving API key...');
-        const provider = providerSelect ? providerSelect.value : 'openai';
+    function saveApiKey(apiKey, provider) {
+        console.log('Saving API key for provider:', provider);
         
-        chrome.storage.sync.set({ 
-            openaiApiKey: apiKey,
+        // Prepare data to save
+        const dataToSave = {
             provider: provider
-        }, function() {
+        };
+        
+        // Save API key for specific provider
+        if (provider === 'anthropic') {
+            dataToSave.anthropicApiKey = apiKey;
+        } else {
+            dataToSave.openaiApiKey = apiKey;
+        }
+        
+        chrome.storage.sync.set(dataToSave, function() {
             if (chrome.runtime.lastError) {
                 console.error('Failed to save API key:', chrome.runtime.lastError);
                 alert('Failed to save API key');
                 updateActivateButtonState(false);
             } else {
-                console.log('API key saved successfully');
-                // Mask the input after saving
-                apiKeyInput.value = '••••••••••••••••';
+                console.log('API key saved successfully for provider:', provider);
+                // Mask the input after saving with correct number of dots
+                const maskedKey = '•'.repeat(apiKey.length);
+                apiKeyInput.value = maskedKey;
                 apiKeyInput.dataset.hasKey = 'true';
+                apiKeyInput.dataset.originalLength = apiKey.length;
                 updateActivateButtonState(true);
                 
                 // Notify content scripts about API key update
@@ -281,6 +313,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
         }
+        
+        // Load saved API key for this provider
+        chrome.storage.sync.get(['openaiApiKey', 'anthropicApiKey'], function(result) {
+            const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+            if (result[apiKeyField]) {
+                // Show dots equal to API key length
+                const maskedKey = '•'.repeat(result[apiKeyField].length);
+                apiKeyInput.value = maskedKey;
+                apiKeyInput.dataset.hasKey = 'true';
+                apiKeyInput.dataset.originalLength = result[apiKeyField].length;
+                updateActivateButtonState(true);
+            } else {
+                apiKeyInput.value = '';
+                apiKeyInput.dataset.hasKey = 'false';
+                apiKeyInput.dataset.originalLength = '0';
+                updateActivateButtonState(false);
+            }
+        });
     }
     
     // Update model options based on selected provider
@@ -330,6 +380,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (reasoningSelect) {
         reasoningSelect.addEventListener('change', saveSettings);
+    }
+    
+    // Clear API key button
+    if (clearApiKeyBtn) {
+        clearApiKeyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const provider = providerSelect ? providerSelect.value : 'openai';
+            const apiKeyField = provider === 'anthropic' ? 'anthropicApiKey' : 'openaiApiKey';
+            
+            // Clear API key from storage
+            chrome.storage.sync.remove([apiKeyField], function() {
+                if (chrome.runtime.lastError) {
+                    console.error('Failed to clear API key:', chrome.runtime.lastError);
+                    alert('Failed to clear API key');
+                } else {
+                    console.log('API key cleared for provider:', provider);
+                    
+                    // Clear input field
+                    apiKeyInput.value = '';
+                    apiKeyInput.dataset.hasKey = 'false';
+                    apiKeyInput.dataset.originalLength = '0';
+                    updateActivateButtonState(false);
+                    
+                    // Notify content scripts about API key removal
+                    chrome.tabs.query({}, (tabs) => {
+                        tabs.forEach(tab => {
+                            chrome.tabs.sendMessage(tab.id, {
+                                action: 'apiCredentialsUpdated',
+                                data: { apiKey: null, provider }
+                            }, (response) => {
+                                // Ignore errors for tabs without content script
+                            });
+                        });
+                    });
+                }
+            });
+        });
     }
     
     // Restore defaults button
@@ -424,7 +513,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check if button is disabled
             if (this.disabled) {
-                alert('Please enter your OpenAI API key first in the API tab');
+                const provider = providerSelect ? providerSelect.value : 'openai';
+                const providerName = provider === 'anthropic' ? 'Anthropic' : 'OpenAI';
+                alert(`Please enter your ${providerName} API key first`);
                 // Switch to API tab
                 document.querySelector('.nav-tab[data-tab="api"]').click();
                 return;
