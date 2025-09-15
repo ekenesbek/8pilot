@@ -6,6 +6,7 @@ export class ChatHistory {
     this.chatStorage = chatManager.chatStorage;
     this.historyContainerId = '8pilot-chat-history';
     this.isVisible = false;
+    this.currentContextMenu = null;
     
     // Listen for menu actions
     window.addEventListener('8pilot-menu-action', (event) => {
@@ -40,10 +41,18 @@ export class ChatHistory {
     await this.loadChatHistory();
     this.animateIn();
     this.isVisible = true;
+    
+    // Update selection after showing history
+    setTimeout(() => {
+      this.updateChatSelection();
+    }, 100);
   }
 
   hideHistory() {
     if (!this.isVisible) return;
+    
+    // Close any open context menu
+    this.closeContextMenu();
     
     const container = document.getElementById(this.historyContainerId);
     if (container) {
@@ -305,6 +314,13 @@ export class ChatHistory {
 
   createChatItem(chat, index) {
     const item = document.createElement('div');
+    
+    // Check if this is the current active chat
+    const isCurrentChat = this.isCurrentActiveChat(chat);
+    
+    // Add data attribute for selection updates
+    item.setAttribute('data-workflow-id', chat.workflowId);
+    
     item.style.cssText = `
       display: flex;
       align-items: center;
@@ -313,15 +329,20 @@ export class ChatHistory {
       transition: all 0.2s ease;
       border-bottom: 1px solid #2a2a2a;
       position: relative;
+      ${isCurrentChat ? 'background: linear-gradient(135deg, #1a3a5c, #2a4a6c);' : ''}
     `;
 
     // Add hover effects
     item.addEventListener('mouseenter', () => {
-      item.style.background = '#2a2a2a';
+      if (!isCurrentChat) {
+        item.style.background = '#2a2a2a';
+      }
     });
 
     item.addEventListener('mouseleave', () => {
-      item.style.background = 'transparent';
+      if (!isCurrentChat) {
+        item.style.background = 'transparent';
+      }
     });
 
     // Get last message preview
@@ -347,17 +368,40 @@ export class ChatHistory {
         <div style="
           width: 40px;
           height: 40px;
-          background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+          background: ${isCurrentChat ? 'linear-gradient(135deg, #4fd1c7, #06b6d4)' : 'linear-gradient(135deg, #4fd1c7, #06b6d4)'};
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-right: 12px;
           flex-shrink: 0;
+          position: relative;
         ">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          ${isCurrentChat ? `
+            <div class="current-indicator" style="
+              position: absolute;
+              top: -2px;
+              right: -2px;
+              width: 12px;
+              height: 12px;
+              background: #4fd1c7;
+              border: 2px solid #1a1a1a;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <div style="
+                width: 4px;
+                height: 4px;
+                background: #1a1a1a;
+                border-radius: 50%;
+              "></div>
+            </div>
+          ` : ''}
         </div>
         <div style="
           flex: 1;
@@ -416,12 +460,46 @@ export class ChatHistory {
           </div>
         </div>
       </div>
+      <div class="chat-menu-container" style="
+        position: relative;
+        margin-left: 8px;
+      ">
+        <button class="chat-menu-button" style="
+          background: none;
+          border: none;
+          color: #9ca3af;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          width: 24px;
+          height: 24px;
+        " data-workflow-id="${chat.workflowId}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="5" r="2" fill="currentColor"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            <circle cx="12" cy="19" r="2" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
     `;
 
-    // Add click handler
-    item.addEventListener('click', () => {
-      this.openChat(chat);
+    // Add click handler for chat item (but not for menu button)
+    item.addEventListener('click', (e) => {
+      // Don't open chat if clicking on menu button
+      if (!e.target.closest('.chat-menu-button')) {
+        this.openChat(chat);
+      }
     });
+
+    // Add menu button event handlers
+    const menuButton = item.querySelector('.chat-menu-button');
+    if (menuButton) {
+      this.addMenuButtonHandlers(menuButton, chat);
+    }
 
     return item;
   }
@@ -445,6 +523,9 @@ export class ChatHistory {
         
         // Load chat history
         this.chatManager.loadChatHistory();
+        
+        // Update selection in history if it's still visible
+        this.updateChatSelection();
       }, 1000);
 
     } catch (error) {
@@ -614,5 +695,208 @@ export class ChatHistory {
   // Method to hide history when extension is deactivated
   hide() {
     this.hideHistory();
+  }
+
+  // Check if this chat is the current active chat
+  isCurrentActiveChat(chat) {
+    const currentWorkflowId = this.chatStorage.getCurrentWorkflowId();
+    return currentWorkflowId && chat.workflowId === currentWorkflowId;
+  }
+
+  // Update chat selection in the history list
+  updateChatSelection() {
+    if (!this.isVisible) return;
+    
+    const content = document.getElementById('8pilot-history-content');
+    if (!content) return;
+    
+    const chatItems = content.querySelectorAll('[data-workflow-id]');
+    const currentWorkflowId = this.chatStorage.getCurrentWorkflowId();
+    
+    chatItems.forEach(item => {
+      const workflowId = item.getAttribute('data-workflow-id');
+      const isCurrent = currentWorkflowId && workflowId === currentWorkflowId;
+      
+      // Update background
+      if (isCurrent) {
+        item.style.background = 'linear-gradient(135deg, #1a3a5c, #2a4a6c)';
+      } else {
+        item.style.background = 'transparent';
+      }
+      
+      // Update title text (no text changes needed, just visual indicators)
+      const titleElement = item.querySelector('h4');
+      if (titleElement) {
+        // Remove any existing (Current) text if present
+        const workflowName = titleElement.textContent.replace(' (Current)', '').trim();
+        titleElement.textContent = workflowName;
+      }
+      
+      // Update indicator dot
+      const indicatorDot = item.querySelector('.current-indicator');
+      if (indicatorDot) {
+        indicatorDot.style.display = isCurrent ? 'flex' : 'none';
+      }
+    });
+  }
+
+  // Add menu button event handlers
+  addMenuButtonHandlers(menuButton, chat) {
+    // Hover effects
+    menuButton.addEventListener('mouseenter', () => {
+      menuButton.style.color = '#ffffff';
+      menuButton.style.background = '#333';
+    });
+
+    menuButton.addEventListener('mouseleave', () => {
+      menuButton.style.color = '#9ca3af';
+      menuButton.style.background = 'none';
+    });
+
+    // Click handler
+    menuButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleContextMenu(menuButton, chat);
+    });
+  }
+
+  // Toggle context menu
+  toggleContextMenu(menuButton, chat) {
+    // Close any existing menu
+    this.closeContextMenu();
+
+    // Create context menu
+    const contextMenu = this.createContextMenu(chat);
+    
+    // Position menu directly under the button, shifted left
+    contextMenu.style.position = 'absolute';
+    contextMenu.style.left = '-80px';
+    contextMenu.style.top = '100%';
+    contextMenu.style.marginTop = '4px';
+    
+    // Add to container
+    menuButton.parentNode.appendChild(contextMenu);
+    
+    // Store reference for closing
+    this.currentContextMenu = contextMenu;
+    
+    // Add click outside handler
+    setTimeout(() => {
+      document.addEventListener('click', this.handleOutsideMenuClick.bind(this));
+    }, 10);
+  }
+
+  // Create context menu
+  createContextMenu(chat) {
+    const menu = document.createElement('div');
+    menu.className = 'chat-context-menu';
+    menu.style.cssText = `
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      padding: 4px 0;
+      min-width: 120px;
+      z-index: 10004;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    `;
+
+    // Delete button
+    const deleteButton = document.createElement('button');
+    deleteButton.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Delete
+    `;
+    deleteButton.style.cssText = `
+      width: 100%;
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 8px 12px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    `;
+
+    // Hover effects for delete button
+    deleteButton.addEventListener('mouseenter', () => {
+      deleteButton.style.background = '#ef4444';
+      deleteButton.style.color = '#ffffff';
+    });
+
+    deleteButton.addEventListener('mouseleave', () => {
+      deleteButton.style.background = 'none';
+      deleteButton.style.color = '#ef4444';
+    });
+
+    // Delete functionality
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.deleteChat(chat);
+      this.closeContextMenu();
+    });
+
+    menu.appendChild(deleteButton);
+
+    // Animate in
+    setTimeout(() => {
+      menu.style.opacity = '1';
+      menu.style.transform = 'translateY(0)';
+    }, 10);
+
+    return menu;
+  }
+
+  // Delete chat functionality
+  async deleteChat(chat) {
+    try {
+      // Show confirmation dialog
+      const confirmed = confirm(`Are you sure you want to delete the chat "${chat.workflowName}"? This action cannot be undone.`);
+      
+      if (!confirmed) return;
+
+      // Delete from storage
+      const deleted = this.chatStorage.deleteChat(chat.workflowId);
+      
+      if (deleted) {
+        console.log('Chat deleted:', chat.workflowId);
+        
+        // Reload history to update UI
+        await this.loadChatHistory();
+        
+        // If this was the current chat, clear it
+        if (this.chatStorage.getCurrentWorkflowId() === chat.workflowId) {
+          this.chatStorage.setCurrentWorkflowId(null);
+          this.chatManager.currentWorkflowId = null;
+        }
+      } else {
+        console.error('Failed to delete chat:', chat.workflowId);
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  }
+
+  // Close context menu
+  closeContextMenu() {
+    if (this.currentContextMenu) {
+      this.currentContextMenu.remove();
+      this.currentContextMenu = null;
+    }
+    document.removeEventListener('click', this.handleOutsideMenuClick.bind(this));
+  }
+
+  // Handle clicks outside context menu
+  handleOutsideMenuClick(e) {
+    if (this.currentContextMenu && !this.currentContextMenu.contains(e.target)) {
+      this.closeContextMenu();
+    }
   }
 }
