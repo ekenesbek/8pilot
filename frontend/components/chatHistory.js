@@ -40,6 +40,11 @@ export class ChatHistory {
     await this.loadChatHistory();
     this.animateIn();
     this.isVisible = true;
+    
+    // Update selection after showing history
+    setTimeout(() => {
+      this.updateChatSelection();
+    }, 100);
   }
 
   hideHistory() {
@@ -305,6 +310,13 @@ export class ChatHistory {
 
   createChatItem(chat, index) {
     const item = document.createElement('div');
+    
+    // Check if this is the current active chat
+    const isCurrentChat = this.isCurrentActiveChat(chat);
+    
+    // Add data attribute for selection updates
+    item.setAttribute('data-workflow-id', chat.workflowId);
+    
     item.style.cssText = `
       display: flex;
       align-items: center;
@@ -313,15 +325,20 @@ export class ChatHistory {
       transition: all 0.2s ease;
       border-bottom: 1px solid #2a2a2a;
       position: relative;
+      ${isCurrentChat ? 'background: linear-gradient(135deg, #1a3a5c, #2a4a6c); border-left: 3px solid #4fd1c7;' : ''}
     `;
 
     // Add hover effects
     item.addEventListener('mouseenter', () => {
-      item.style.background = '#2a2a2a';
+      if (!isCurrentChat) {
+        item.style.background = '#2a2a2a';
+      }
     });
 
     item.addEventListener('mouseleave', () => {
-      item.style.background = 'transparent';
+      if (!isCurrentChat) {
+        item.style.background = 'transparent';
+      }
     });
 
     // Get last message preview
@@ -347,17 +364,40 @@ export class ChatHistory {
         <div style="
           width: 40px;
           height: 40px;
-          background: linear-gradient(135deg, #4fd1c7, #06b6d4);
+          background: ${isCurrentChat ? 'linear-gradient(135deg, #4fd1c7, #06b6d4)' : 'linear-gradient(135deg, #4fd1c7, #06b6d4)'};
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-right: 12px;
           flex-shrink: 0;
+          position: relative;
         ">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          ${isCurrentChat ? `
+            <div class="current-indicator" style="
+              position: absolute;
+              top: -2px;
+              right: -2px;
+              width: 12px;
+              height: 12px;
+              background: #4fd1c7;
+              border: 2px solid #1a1a1a;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <div style="
+                width: 4px;
+                height: 4px;
+                background: #1a1a1a;
+                border-radius: 50%;
+              "></div>
+            </div>
+          ` : ''}
         </div>
         <div style="
           flex: 1;
@@ -445,6 +485,9 @@ export class ChatHistory {
         
         // Load chat history
         this.chatManager.loadChatHistory();
+        
+        // Update selection in history if it's still visible
+        this.updateChatSelection();
       }, 1000);
 
     } catch (error) {
@@ -614,5 +657,50 @@ export class ChatHistory {
   // Method to hide history when extension is deactivated
   hide() {
     this.hideHistory();
+  }
+
+  // Check if this chat is the current active chat
+  isCurrentActiveChat(chat) {
+    const currentWorkflowId = this.chatStorage.getCurrentWorkflowId();
+    return currentWorkflowId && chat.workflowId === currentWorkflowId;
+  }
+
+  // Update chat selection in the history list
+  updateChatSelection() {
+    if (!this.isVisible) return;
+    
+    const content = document.getElementById('8pilot-history-content');
+    if (!content) return;
+    
+    const chatItems = content.querySelectorAll('[data-workflow-id]');
+    const currentWorkflowId = this.chatStorage.getCurrentWorkflowId();
+    
+    chatItems.forEach(item => {
+      const workflowId = item.getAttribute('data-workflow-id');
+      const isCurrent = currentWorkflowId && workflowId === currentWorkflowId;
+      
+      // Update background
+      if (isCurrent) {
+        item.style.background = 'linear-gradient(135deg, #1a3a5c, #2a4a6c)';
+        item.style.borderLeft = '3px solid #4fd1c7';
+      } else {
+        item.style.background = 'transparent';
+        item.style.borderLeft = 'none';
+      }
+      
+      // Update title text (no text changes needed, just visual indicators)
+      const titleElement = item.querySelector('h4');
+      if (titleElement) {
+        // Remove any existing (Current) text if present
+        const workflowName = titleElement.textContent.replace(' (Current)', '').trim();
+        titleElement.textContent = workflowName;
+      }
+      
+      // Update indicator dot
+      const indicatorDot = item.querySelector('.current-indicator');
+      if (indicatorDot) {
+        indicatorDot.style.display = isCurrent ? 'flex' : 'none';
+      }
+    });
   }
 }
