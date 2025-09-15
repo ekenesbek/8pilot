@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionDescription = document.getElementById('sectionDescription');
     const deactivateBtn = document.getElementById('deactivateBtn');
     const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+    const activateTooltip = document.getElementById('activateTooltip');
     
     // Load saved settings on startup
     loadSavedSettings();
@@ -120,11 +121,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 activateBtn.style.opacity = '1';
                 activateBtn.style.cursor = 'pointer';
                 activateBtn.title = '';
+                // Hide tooltip when button is enabled
+                if (activateTooltip) {
+                    activateTooltip.classList.remove('show');
+                }
             } else {
                 activateBtn.disabled = true;
                 activateBtn.style.opacity = '0.5';
                 activateBtn.style.cursor = 'not-allowed';
-                activateBtn.title = 'Please enter an API key first';
+                activateBtn.title = '';
             }
         }
         
@@ -563,6 +568,20 @@ document.addEventListener('DOMContentLoaded', function() {
     checkActivationStatus();
 
     if (activateBtn) {
+        // Show tooltip on hover when button is disabled
+        activateBtn.addEventListener('mouseenter', function() {
+            if (this.disabled && activateTooltip) {
+                activateTooltip.classList.add('show');
+            }
+        });
+        
+        // Hide tooltip when mouse leaves
+        activateBtn.addEventListener('mouseleave', function() {
+            if (activateTooltip) {
+                activateTooltip.classList.remove('show');
+            }
+        });
+        
         activateBtn.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Activate button clicked');

@@ -128,6 +128,49 @@
             box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
         }
 
+        /* Activate Button Container */
+        .activate-btn-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Activate Tooltip */
+        .activate-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #374151;
+        }
+
+        .activate-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
+        }
+
+        .activate-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* Activated State */
         .activate-section.activated {
             background: #111111;
@@ -767,9 +810,14 @@
                 <div class="section-description" id="sectionDescription">
                     Activate the extension to enable AI assistance on n8n workflow pages:
                 </div>
-                <button class="activate-btn" id="activateBtn">
-                    Activate
-                </button>
+                <div class="activate-btn-container">
+                    <button class="activate-btn" id="activateBtn">
+                        Activate
+                    </button>
+                    <div class="activate-tooltip" id="activateTooltip">
+                        An API key is required to use 8pilot
+                    </div>
+                </div>
                 
                 <!-- Deactivate Button -->
                 <button class="deactivate-btn" id="deactivateBtn">Deactivate</button>
