@@ -5,13 +5,14 @@ export class BackendApiService {
     this.defaultProvider = 'openai';
   }
 
-  async sendMessage(message, workflowId, sessionId = null, provider = null, apiKeyData = {}) {
+  async sendMessage(message, workflowId, sessionId = null, provider = null, model = null, apiKeyData = {}) {
     try {
       const requestData = {
         message: message,
         workflow_id: workflowId,
         session_id: sessionId,
         provider: provider || this.defaultProvider,
+        model: model,
         context: {
           workflow_context: `Workflow ID: ${workflowId}`,
           timestamp: new Date().toISOString()
@@ -47,13 +48,14 @@ export class BackendApiService {
     }
   }
 
-  async streamMessage(message, workflowId, sessionId = null, provider = null, apiKeyData = {}, onChunk = null) {
+  async streamMessage(message, workflowId, sessionId = null, provider = null, model = null, apiKeyData = {}, onChunk = null) {
     try {
       const requestData = {
         message: message,
         workflow_id: workflowId,
         session_id: sessionId,
         provider: provider || this.defaultProvider,
+        model: model,
         context: {
           workflow_context: `Workflow ID: ${workflowId}`,
           timestamp: new Date().toISOString()

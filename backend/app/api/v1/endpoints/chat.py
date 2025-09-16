@@ -51,6 +51,7 @@ async def send_message(
         ai_response = await ai_service.get_response(
             message=request.message,
             provider=request.provider,
+            model=request.model,
             context=request.context,
             session_history=session.messages,
             api_key=api_key
@@ -107,6 +108,7 @@ async def stream_message(
                 async for chunk in ai_service.stream_response(
                     message=request.message,
                     provider=request.provider,
+                    model=request.model,
                     context=request.context,
                     session_history=session.messages,
                     api_key=api_key

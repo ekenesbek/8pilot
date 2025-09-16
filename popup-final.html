@@ -128,6 +128,49 @@
             box-shadow: 0 8px 25px rgba(79, 209, 199, 0.3);
         }
 
+        /* Activate Button Container */
+        .activate-btn-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Activate Tooltip */
+        .activate-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #374151;
+        }
+
+        .activate-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
+        }
+
+        .activate-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* Activated State */
         .activate-section.activated {
             background: #111111;
@@ -354,6 +397,43 @@
 
         .form-input::placeholder {
             color: #71717a;
+        }
+
+        /* API Key Container */
+        .api-key-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .api-key-container .form-input {
+            padding-right: 40px;
+        }
+
+        .clear-api-key-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #71717a;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .clear-api-key-btn:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .help-links {
@@ -730,9 +810,14 @@
                 <div class="section-description" id="sectionDescription">
                     Activate the extension to enable AI assistance on n8n workflow pages:
                 </div>
-                <button class="activate-btn" id="activateBtn">
-                    Activate
-                </button>
+                <div class="activate-btn-container">
+                    <button class="activate-btn" id="activateBtn">
+                        Activate
+                    </button>
+                    <div class="activate-tooltip" id="activateTooltip">
+                        An API key is required to use 8pilot
+                    </div>
+                </div>
                 
                 <!-- Deactivate Button -->
                 <button class="deactivate-btn" id="deactivateBtn">Deactivate</button>
@@ -819,16 +904,24 @@
                         <div class="form-group">
                             <label class="form-label">Model</label>
                             <select class="form-select" id="model">
-                                <option value="gpt-4o-mini">o4-mini</option>
-                                <option value="gpt-4o">gpt-4o</option>
-                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                                <!-- OpenAI models -->
+                                <option value="gpt-4o" data-provider="openai">GPT-4o</option>
+                                <option value="gpt-5" data-provider="openai">GPT-5</option>
+                                <option value="gpt-4.1" data-provider="openai">GPT-4.1</option>
+                                <!-- Anthropic models -->
+                                <option value="claude-3-7-sonnet-20250219" data-provider="anthropic">Claude 3.7 Sonnet</option>
+                                <option value="claude-sonnet-4-20250514" data-provider="anthropic">Claude 4 Sonnet</option>
+                                <option value="claude-3-5-haiku-20241022" data-provider="anthropic">Claude 3.5 Haiku</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="form-group full-width">
                         <label class="form-label" id="apiKeyLabel">OpenAI API Key</label>
-                        <input type="password" class="form-input" id="apiKey" placeholder="Enter your API key">
+                        <div class="api-key-container">
+                            <input type="password" class="form-input" id="apiKey" placeholder="Enter your API key">
+                            <button type="button" class="clear-api-key-btn" id="clearApiKeyBtn" style="display: none;">×</button>
+                        </div>
                         <div class="help-links" id="helpLinks">
                             <a href="https://platform.openai.com/api-keys" target="_blank" class="help-link">Get OpenAI API Key ↗</a>
                             <div class="help-text">You must have valid <a href="https://platform.openai.com/settings/organization/billing/payment-methods" target="_blank" class="help-link">billing information ↗</a> setup with OpenAI</div>
@@ -860,7 +953,7 @@
                     <p>Learn how to use 8pilot with comprehensive guides and tutorials</p>
                 </div>
 
-                <div class="support-item">
+                <div class="support-item" id="communityItem">
                     <h4>Community</h4>
                     <p>Join our Discord server to connect with other users and get help</p>
                 </div>
